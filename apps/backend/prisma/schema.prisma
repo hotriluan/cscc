@@ -1,0 +1,191 @@
+// Prisma Schema for Coating Schedule (CS) & Coating Cost (CC) System
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  TECHNICAL
+  SALES
+  PROJECT_LEADER
+  ADMIN
+}
+
+enum RevisionStatus {
+  DRAFT
+  APPROVED
+  LOCKED
+}
+
+enum StepRowType {
+  CHEMICAL_STEP
+  SANDING
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  fullName     String
+  passwordHash String
+  role         UserRole @default(TECHNICAL)
+  createdAt    DateTime @default(now())
+}
+
+// 1. Sheet: Customer
+model Customer {
+  id           String          @id @default(uuid())
+  customerId   String          @unique // e.g., "1200001169"
+  shortName    String                  // e.g., "NITORI-HO CHI MINH"
+  customerName String                  // e.g., "DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM"
+  quotations   QuotationItem[]
+  projects     Project[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([shortName])
+}
+
+// 2. Sheet: packing mapping
+model PackingMapping {
+  id          String   @id @default(uuid())
+  code        String   @unique // e.g., "01", "20", "K5", "L5"
+  description String           // e.g., "1 Kg", "20 Ltr", "5 Kg", "5 Ltr"
+  unitType    String           // "KG" | "LTR" | "SET"
+  nettWeight  Float            // e.g., 1, 20, 5
+}
+
+// 3. Sheet: Application Step Master
+model ApplicationStepMaster {
+  id        String @id @default(uuid())
+  stepName  String @unique // e.g., "SANDING", "WIPING FILLER", "SANDING SEALER", "TOP COAT COLOR", "GLAZE"
+  sortOrder Int    @default(0)
+}
+
+// 4. Sheet: app-method
+model ApplicationMethod {
+  id         String @id @default(uuid())
+  methodName String @unique // e.g., "SPRAY", "WIPING"
+  efficiency Float          // e.g., 0.60, 0.35
+}
+
+// 5. Sheet: quotation
+model QuotationItem {
+  id              String    @id @default(uuid())
+  sapCustomerCode String
+  customerName    String
+  sapProductCode  String
+  custProductKey  String    @unique // Composite key: sapCustomerCode + materialCode
+  materialCode    String    // e.g., "PSV-76000 SB HC MY VN"
+  materialName    String    // e.g., "PROSEAL WOOD FILLER SB HICKORY BROWN,20K"
+  packingDesc     String    // e.g., "20 Kg"
+  nett            Float     // e.g., 20
+  priceUnitVnd    Float     // Price/nett (VND/Kg or VND/Ltr)
+  validFrom       String?
+  validTo         String?
+  customerRefId   String?
+  customer        Customer? @relation(fields: [customerRefId], references: [id], onDelete: SetNull)
+
+  @@unique([sapCustomerCode, materialCode])
+  @@index([sapCustomerCode])
+  @@index([materialCode])
+}
+
+// 6. Project & Revision (CS + CC Header)
+model Project {
+  id          String            @id @default(uuid())
+  projectCode String            @unique // e.g., "NTR 001"
+  customerId  String
+  customer    Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  revisions   ProjectRevision[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model ProjectRevision {
+  id                  String         @id @default(uuid())
+  projectId           String
+  project             Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  revisionNo          Int            @default(0) // 0 -> Rev 00
+  status              RevisionStatus @default(DRAFT)
+  scheduleDate        String         @default("")
+
+  // Header metadata (CS & CC synchronized)
+  productName         String         // e.g., "BÀN NITORI"
+  colorName           String         // e.g., "MÀU HICKORY"
+  substrate           String         // e.g., "TẦN BÌ"
+  positioning         String         // e.g., "MID HIGH"
+  finishingSystem     String         // e.g., "NC-PU"
+  glossLevel          String         // e.g., "30± 3 GU"
+  referenceStandard   String         // e.g., "THEO MẪU KHÁCH HÀNG"
+
+  // Finishing conditions
+  mcWood              String         @default("<12%")
+  roomHumidity        String         @default("<80%")
+  roomTemp            String         @default("<35 oC")
+  lineSpeed           String?
+  dryingCondition     String?
+  remark              String?
+
+  // BOM calculation parameter
+  defaultAreaM2       Float          @default(100)
+
+  // Signature names
+  preparedByTa        String?
+  checkedByLeader     String?
+  approvedByPdPm      String?
+  customerConfirmName String?
+
+  steps               ScheduleStep[]
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@unique([projectId, revisionNo])
+}
+
+// 7. Schedule Step (Parent step row on CS / Merged row on CC)
+model ScheduleStep {
+  id                 String             @id @default(uuid())
+  revisionId         String
+  revision           ProjectRevision    @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  stepOrder          Int                // Sequence order in CS table
+  stepNumber         Int?               // 1..10 for CHEMICAL_STEP, null for SANDING row
+  rowType            StepRowType        @default(CHEMICAL_STEP)
+  stepName           String             // e.g., "SANDING", "WIPING FILLER", "SANDING SEALER"
+  sandingSpec        String?            // e.g., "SANDING PAPER # 180-240"
+
+  // Step-level parameters (merged across all items in step)
+  caInputRaw         String?            // User input on CS: e.g., "100-120" or "90-100"
+  caMin              Float?
+  caMax              Float?
+  caAvg              Float?             // Midpoint used in CC: e.g., 110
+  methodName         String?            // e.g., "WIPING", "SPRAY"
+  efficiencySnapshot Float?             // Snapshot from ApplicationMethod (e.g., 0.35, 0.60)
+  dryingTime         String?            // e.g., "30 MIN"
+  stepRemark         String?
+
+  items              ScheduleStepItem[]
+
+  @@index([revisionId, stepOrder])
+}
+
+// 8. Schedule Step Item (Individual chemical line inside a Step)
+model ScheduleStepItem {
+  id                String       @id @default(uuid())
+  stepId            String
+  step              ScheduleStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  itemOrder         Int          // 1..N within step
+  materialCode      String       // Product Code (e.g., "PSV-76000 SB HC MY VN")
+  materialName      String       // Product Name
+  packingDesc       String?
+  nettWeight        Float?
+  mixingRatio       Float        // Ratio part (e.g., 2, 1, 0.2, 8)
+  visco             Float?       // Viscosity in seconds (e.g., 11)
+  priceSnapshotVnd  Float        // Snapshot of Price/nett from QuotationItem
+
+  @@index([stepId, itemOrder])
+}
+
