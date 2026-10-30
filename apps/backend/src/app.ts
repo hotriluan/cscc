@@ -1,4 +1,5 @@
 import express from 'express';
+import ExcelJS from 'exceljs';
 import cors from 'cors';
 import {
   calculateCoatingCostTable,
@@ -180,6 +181,85 @@ export function createApp() {
     }
   });
 
+  // Upload templates (column layout matches excel-importer.service.ts)
+  app.get('/api/master/templates/:type', async (req, res) => {
+    try {
+      const type = String(req.params.type);
+      const workbook = new ExcelJS.Workbook();
+      if (type === 'customers') {
+        const sheet = workbook.addWorksheet('Customer');
+        sheet.addRow(['Short Name', 'Customer ID', 'Customer Name']);
+        sheet.addRow(['NITORI-HO CHI MINH', '1200001169', 'DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM']);
+        sheet.columns = [{ width: 28 }, { width: 16 }, { width: 50 }];
+        sheet.getColumn(2).numFmt = '@';
+      } else if (type === 'quotations') {
+        const sheet = workbook.addWorksheet('quotation');
+        sheet.addRow([
+          'Sold-to code',
+          'Customer Name',
+          'SAP Material Code',
+          'Material Description',
+          'Cust & product key (tự tính, bỏ qua)',
+          'Material Short Name (without pack)',
+          'Packing',
+          'Nett',
+          'Pack Price',
+          'Price/nett (VND)',
+          'Valid From',
+          'Valid To'
+        ]);
+        sheet.addRow([
+          '1200001169',
+          'DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM',
+          'PSV-76000',
+          'PSV-76000 SB HC MY VN 20 Kg',
+          '',
+          'PSV-76000 SB HC MY VN',
+          '20 Kg',
+          20,
+          10860000,
+          543000,
+          '',
+          ''
+        ]);
+        sheet.columns = [
+          { width: 16 }, { width: 40 }, { width: 20 }, { width: 32 }, { width: 22 },
+          { width: 32 }, { width: 12 }, { width: 8 }, { width: 14 }, { width: 16 },
+          { width: 12 }, { width: 12 }
+        ];
+        sheet.getColumn(1).numFmt = '@';
+      } else {
+        res.status(404).json({ error: 'Unknown template type' });
+        return;
+      }
+      workbook.getWorksheet(1)!.getRow(1).font = { bold: true };
+      const buffer = await workbook.xlsx.writeBuffer();
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="template-${type}.xlsx"`);
+      res.send(Buffer.from(buffer as ArrayBuffer));
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.post('/api/master/customers/import', async (req, res) => {
+    try {
+      const { fileBase64 } = req.body || {};
+      if (!fileBase64) {
+        res.status(400).json({ error: 'fileBase64 is required' });
+        return;
+      }
+      const imported = await importMasterDataFromExcel(Buffer.from(fileBase64, 'base64'));
+      const result = await dataStore.bulkUpsertCustomers(imported.customers);
+      res.json({ ...result, total: imported.customers.length });
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
   app.put('/api/master/customers/:id', async (req, res) => {
     try {
       const updated = await dataStore.updateCustomer(req.params.id, req.body);
@@ -271,6 +351,21 @@ export function createApp() {
         priceUnitVnd
       });
       res.status(created ? 201 : 200).json(quotation);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.post('/api/master/quotations/import', requireCostAccessMiddleware, async (req, res) => {
+    try {
+      const { fileBase64 } = req.body || {};
+      if (!fileBase64) {
+        res.status(400).json({ error: 'fileBase64 is required' });
+        return;
+      }
+      const imported = await importMasterDataFromExcel(Buffer.from(fileBase64, 'base64'));
+      const result = await dataStore.bulkUpsertQuotations(imported.quotations);
+      res.json({ ...result, total: imported.quotations.length });
     } catch (err) {
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
@@ -402,6 +497,56 @@ export function createApp() {
     try {
       const packings = await dataStore.getPackingMappings();
       res.json(packings);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  const isValidPacking = (b: Record<string, unknown>) =>
+    String(b.code || '').trim() !== '' &&
+    ['KG', 'LTR', 'SET'].includes(String(b.unitType)) &&
+    Number(b.nettWeight) > 0;
+
+  app.post('/api/master/packings', async (req, res) => {
+    try {
+      if (!isValidPacking(req.body || {})) {
+        res.status(400).json({
+          error: 'code, unitType (KG|LTR|SET) và nettWeight (> 0) là bắt buộc'
+        });
+        return;
+      }
+      res.status(201).json(await dataStore.createPackingMapping(req.body));
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.put('/api/master/packings/:id', async (req, res) => {
+    try {
+      const b = req.body || {};
+      if (
+        (b.code !== undefined && !String(b.code).trim()) ||
+        (b.unitType !== undefined && !['KG', 'LTR', 'SET'].includes(String(b.unitType))) ||
+        (b.nettWeight !== undefined && !(Number(b.nettWeight) > 0))
+      ) {
+        res.status(400).json({ error: 'Dữ liệu packing không hợp lệ' });
+        return;
+      }
+      const updated = await dataStore.updatePackingMapping(String(req.params.id), b);
+      if (!updated) {
+        res.status(404).json({ error: 'Packing not found' });
+        return;
+      }
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.delete('/api/master/packings/:id', async (req, res) => {
+    try {
+      await dataStore.deletePackingMapping(String(req.params.id));
+      res.json({ deleted: true });
     } catch (err) {
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
@@ -583,7 +728,7 @@ export function createApp() {
         res.status(404).json({ error: 'Revision not found' });
         return;
       }
-      const areaM2 = Number(req.query.areaM2) || rev.defaultAreaM2 || 100;
+      const areaM2 = Number(req.query.areaM2) || 1;
       const bomSummary = calculateBomSummary(rev.id, areaM2, rev.steps, req.userRole);
       res.json(bomSummary);
     } catch (err) {
@@ -641,7 +786,7 @@ export function createApp() {
         res.status(404).json({ error: 'Revision not found' });
         return;
       }
-      const areaM2 = Number(req.query.areaM2) || rev.defaultAreaM2 || 100;
+      const areaM2 = Number(req.query.areaM2) || 1;
       const buffer = await generateRevisionWorkbook(rev, req.userRole, areaM2);
       const revCode = String(rev.revisionNo).padStart(2, '0');
       const safeCode = rev.projectCode.replace(/[^a-zA-Z0-9_-]/g, '_');

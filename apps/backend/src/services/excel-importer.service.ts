@@ -181,9 +181,11 @@ export async function importMasterDataFromExcel(
       const sapCustomerCode = cellToString(row.getCell(1).value);
       const customerName = cellToString(row.getCell(2).value);
       const sapProductCode = cellToString(row.getCell(3).value);
-      // Use clean Name without pack (Col F) as both materialCode and clean materialName (no packing suffix)
-      const materialCode = cellToString(row.getCell(6).value);
-      const materialName = materialCode;
+      // Col C (Material) is the SAP material code and forms the key with the customer;
+      // Col F (Name without Pack, e.g. "PUL-51339 CLEAR 10 VN") is the description.
+      const materialCode = sapProductCode || cellToString(row.getCell(6).value);
+      const materialName =
+        cellToString(row.getCell(6).value) || cellToString(row.getCell(4).value) || materialCode;
       const packingDesc = cellToString(row.getCell(7).value);
       const nett = cellToNumber(row.getCell(8).value) || 20;
       const priceUnitVnd = cellToNumber(row.getCell(10).value);
@@ -247,7 +249,14 @@ export function buildGoldenDatasetNtr001(master: ImportedMasterData): {
 
   const findQuot = (materialCode: string) => {
     const key = `${customer.customerId}${materialCode}`;
-    return master.quotations.find((q) => q.custProductKey === key);
+    return (
+      master.quotations.find((q) => q.custProductKey === key) ??
+      master.quotations.find(
+        (q) =>
+          q.sapCustomerCode === customer.customerId &&
+          q.materialName === materialCode
+      )
+    );
   };
 
   const makeItem = (

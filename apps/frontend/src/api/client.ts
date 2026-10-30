@@ -62,6 +62,22 @@ async function request<T>(
 }
 
 export const apiClient = {
+  downloadTemplate: async (role: UserRole, type: 'customers' | 'quotations') => {
+    const token = getStoredAuthToken();
+    const res = await fetch(`${API_BASE}/master/templates/${type}`, {
+      headers: {
+        'x-user-role': role,
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `template-${type}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
   // Authentication & User Accounts (PostgreSQL `User` Table)
   login: (email: string, password: string) =>
     request<AuthSessionResponse>('/auth/login', 'PROJECT_LEADER', {
@@ -112,6 +128,13 @@ export const apiClient = {
   deleteCustomer: (role: UserRole, id: string) =>
     request<{ deleted: boolean }>(`/master/customers/${id}`, role, { method: 'DELETE' }),
 
+  importCustomersFile: (role: UserRole, fileBase64: string) =>
+    request<{ created: number; updated: number; skipped: number; total: number }>(
+      '/master/customers/import',
+      role,
+      { method: 'POST', body: JSON.stringify({ fileBase64 }) }
+    ),
+
   // Master Data: Quotations
   getQuotations: (role: UserRole, customerCode = '', q = '', limit = 400) =>
     request<QuotationItem[]>(
@@ -141,6 +164,13 @@ export const apiClient = {
         method: 'POST',
         body: JSON.stringify(data)
       }),
+
+  importQuotationsFile: (role: UserRole, fileBase64: string) =>
+    request<{ created: number; updated: number; skipped: number; total: number }>(
+      '/master/quotations/import',
+      role,
+      { method: 'POST', body: JSON.stringify({ fileBase64 }) }
+    ),
 
   deleteQuotation: (role: UserRole, id: string) =>
     request<{ deleted: boolean }>(`/master/quotations/${id}`, role, { method: 'DELETE' }),
@@ -181,6 +211,20 @@ export const apiClient = {
 
   getPackingsMaster: (role: UserRole) =>
     request<PackingMapping[]>('/master/packings', role),
+
+  savePackingMaster: (role: UserRole, data: Partial<PackingMapping>) =>
+    data.id
+      ? request<PackingMapping>(`/master/packings/${data.id}`, role, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      })
+      : request<PackingMapping>('/master/packings', role, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      }),
+
+  deletePackingMaster: (role: UserRole, id: string) =>
+    request<{ deleted: boolean }>(`/master/packings/${id}`, role, { method: 'DELETE' }),
 
   importExcelMaster: (
     role: UserRole,

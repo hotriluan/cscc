@@ -9,7 +9,10 @@ import {
   formatVnd
 } from '@cscc/shared';
 import { apiClient } from '../../api/client';
+import { SearchableCombobox, ComboboxOption } from '../common/SearchableCombobox';
 import {
+  Pencil,
+  Upload,
   Database,
   Users,
   FileSpreadsheet,
@@ -74,6 +77,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
   const [newCustId, setNewCustId] = React.useState('');
   const [newCustShort, setNewCustShort] = React.useState('');
   const [newCustName, setNewCustName] = React.useState('');
+  const [editingCustId, setEditingCustId] = React.useState<string | null>(null);
 
   // New Quotation Form (All empty by default)
   const [newQuotCustCode, setNewQuotCustCode] = React.useState('');
@@ -82,16 +86,45 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
   const [newQuotPacking, setNewQuotPacking] = React.useState('');
   const [newQuotNett, setNewQuotNett] = React.useState('');
   const [newQuotPrice, setNewQuotPrice] = React.useState('');
+  const [editingQuotId, setEditingQuotId] = React.useState<string | null>(null);
 
   // New Step Form (Empty by default)
   const [newStepName, setNewStepName] = React.useState('');
+  const [newStepOrder, setNewStepOrder] = React.useState('');
+  const [editingStepId, setEditingStepId] = React.useState<string | null>(null);
 
   // New Method Form (All empty by default)
   const [newMethodName, setNewMethodName] = React.useState('');
   const [newMethodEff, setNewMethodEff] = React.useState('');
+  const [editingMethodId, setEditingMethodId] = React.useState<string | null>(null);
+
+  // Packing Mapping Form
+  const [packCode, setPackCode] = React.useState('');
+  const [packDesc, setPackDesc] = React.useState('');
+  const [packUnit, setPackUnit] = React.useState<'KG' | 'LTR' | 'SET'>('KG');
+  const [packNett, setPackNett] = React.useState('');
+  const [editingPackId, setEditingPackId] = React.useState<string | null>(null);
   const [formError, setFormError] = React.useState<string | null>(null);
 
   const canEditPrice = role !== 'TECHNICAL';
+
+  const customerNameByCode = React.useMemo(
+    () => new Map(customers.map((c) => [c.customerId, c.customerName || c.shortName])),
+    [customers]
+  );
+  const customerOptions = React.useMemo<ComboboxOption[]>(
+    () =>
+      customers.map((c) => ({
+        value: c.customerId,
+        label: `${c.customerId} — ${c.shortName}`,
+        sublabel: c.customerName
+      })),
+    [customers]
+  );
+  const filterCustomerOptions = React.useMemo<ComboboxOption[]>(
+    () => [{ value: '', label: '-- Tất cả Khách hàng --' }, ...customerOptions],
+    [customerOptions]
+  );
 
   // Debounce search query (220ms) and reset page to 1 when search changes
   React.useEffect(() => {
@@ -210,22 +243,71 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
       return;
     }
     setFormError(null);
-    await apiClient.saveCustomer(role, {
-      customerId: newCustId.trim(),
-      shortName: newCustShort.trim(),
-      customerName: newCustName.trim()
-    });
+    try {
+      await apiClient.saveCustomer(role, {
+        ...(editingCustId ? { id: editingCustId } : {}),
+        customerId: newCustId.trim(),
+        shortName: newCustShort.trim(),
+        customerName: newCustName.trim()
+      });
+    } catch (err) {
+      setFormError(
+        `Không thể lưu Khách hàng: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return;
+    }
+    resetCustomerForm();
+    await onReloadMasterData();
+    await fetchCustomersPage();
+  };
+
+  const resetCustomerForm = () => {
+    setEditingCustId(null);
     setNewCustId('');
     setNewCustShort('');
     setNewCustName('');
-    await onReloadMasterData();
-    await fetchCustomersPage();
+  };
+
+  const startEditCustomer = (c: Customer) => {
+    setFormError(null);
+    setEditingCustId(c.id);
+    setNewCustId(c.customerId);
+    setNewCustShort(c.shortName);
+    setNewCustName(c.customerName);
+  };
+
+  const handleUploadCustomerFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setStatusMessage(null);
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i += 0x8000) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      }
+      const res = await apiClient.importCustomersFile(role, btoa(binary));
+      await onReloadMasterData();
+      await fetchCustomersPage();
+      setStatusMessage(
+        `Upload ${file.name}: thêm mới ${res.created}, cập nhật ${res.updated}, bỏ qua (không đổi) ${res.skipped} / ${res.total} dòng.`
+      );
+    } catch (err) {
+      setStatusMessage(
+        `Lỗi upload Customer: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setImporting(false);
+      input.value = '';
+    }
   };
 
   const handleAddQuotation = async (e: React.FormEvent) => {
     e.preventDefault();
     const missing: string[] = [];
-    if (!newQuotCustCode.trim()) missing.push('SAP Cust ID');
+    if (!newQuotCustCode.trim()) missing.push('Khách hàng');
     if (!newQuotMatCode.trim()) missing.push('Material Code');
     if (!newQuotPacking.trim()) missing.push('Packing');
     if (!newQuotNett.trim() || !(parseFloat(newQuotNett) > 0)) missing.push('Nett (> 0)');
@@ -236,22 +318,76 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
       return;
     }
     setFormError(null);
-    await apiClient.saveQuotation(role, {
-      sapCustomerCode: newQuotCustCode.trim(),
-      materialCode: newQuotMatCode.trim(),
-      materialName: newQuotMatName.trim() || newQuotMatCode.trim(),
-      packingDesc: newQuotPacking.trim(),
-      nett: parseFloat(newQuotNett),
-      priceUnitVnd: parseFloat(newQuotPrice)
-    });
+    try {
+      await apiClient.saveQuotation(role, {
+        ...(editingQuotId ? { id: editingQuotId } : {}),
+        sapCustomerCode: newQuotCustCode.trim(),
+        customerName: customerNameByCode.get(newQuotCustCode.trim()) || undefined,
+        materialCode: newQuotMatCode.trim(),
+        materialName: newQuotMatName.trim() || newQuotMatCode.trim(),
+        packingDesc: newQuotPacking.trim(),
+        nett: parseFloat(newQuotNett),
+        priceUnitVnd: parseFloat(newQuotPrice)
+      });
+    } catch (err) {
+      setFormError(
+        `Không thể lưu Báo giá: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return;
+    }
+    resetQuotationForm();
+    await onReloadMasterData();
+    await fetchQuotationsPage();
+  };
+
+  const resetQuotationForm = () => {
+    setEditingQuotId(null);
     setNewQuotCustCode('');
     setNewQuotMatCode('');
     setNewQuotMatName('');
     setNewQuotPacking('');
     setNewQuotNett('');
     setNewQuotPrice('');
-    await onReloadMasterData();
-    await fetchQuotationsPage();
+  };
+
+  const startEditQuotation = (q: QuotationItem) => {
+    setFormError(null);
+    setEditingQuotId(q.id);
+    setNewQuotCustCode(q.sapCustomerCode);
+    setNewQuotMatCode(q.materialCode);
+    setNewQuotMatName(q.materialName);
+    setNewQuotPacking(q.packingDesc);
+    setNewQuotNett(String(q.nett));
+    setNewQuotPrice(q.priceUnitVnd == null ? '' : String(q.priceUnitVnd));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleUploadQuotationFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setStatusMessage(null);
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i += 0x8000) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      }
+      const res = await apiClient.importQuotationsFile(role, btoa(binary));
+      await onReloadMasterData();
+      await fetchQuotationsPage();
+      setStatusMessage(
+        `Upload ${file.name}: thêm mới ${res.created}, cập nhật ${res.updated}, bỏ qua (không đổi) ${res.skipped} / ${res.total} dòng.`
+      );
+    } catch (err) {
+      setStatusMessage(
+        `Lỗi upload Quotation: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setImporting(false);
+      input.value = '';
+    }
   };
 
   const handleAddStep = async (e: React.FormEvent) => {
@@ -262,13 +398,97 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
       );
       return;
     }
+    const order = parseInt(newStepOrder, 10);
+    if (editingStepId && !(order >= 1)) {
+      setFormError('Không thể lưu bước. Thứ tự phải là số nguyên >= 1');
+      return;
+    }
     setFormError(null);
-    await apiClient.saveStepMaster(role, {
-      stepName: newStepName.trim().toUpperCase(),
-      sortOrder: stepsMaster.length + 1
-    });
-    setNewStepName('');
+    try {
+      await apiClient.saveStepMaster(role, {
+        ...(editingStepId ? { id: editingStepId } : {}),
+        stepName: newStepName.trim().toUpperCase(),
+        sortOrder: editingStepId ? order : stepsMaster.length + 1
+      });
+    } catch (err) {
+      setFormError(
+        `Không thể lưu bước: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return;
+    }
+    resetStepForm();
     await onReloadMasterData();
+  };
+
+  const resetStepForm = () => {
+    setEditingStepId(null);
+    setNewStepName('');
+    setNewStepOrder('');
+  };
+
+  const startEditStep = (s: ApplicationStepMaster) => {
+    setFormError(null);
+    setEditingStepId(s.id);
+    setNewStepName(s.stepName);
+    setNewStepOrder(String(s.sortOrder));
+  };
+
+  const resetPackingForm = () => {
+    setEditingPackId(null);
+    setPackCode('');
+    setPackDesc('');
+    setPackUnit('KG');
+    setPackNett('');
+  };
+
+  const startEditPacking = (p: PackingMapping) => {
+    setFormError(null);
+    setEditingPackId(p.id);
+    setPackCode(p.code);
+    setPackDesc(p.description);
+    setPackUnit(p.unitType);
+    setPackNett(String(p.nettWeight));
+  };
+
+  const handleSavePacking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const missing: string[] = [];
+    if (!packCode.trim()) missing.push('Packing Code');
+    if (!packNett.trim() || !(parseFloat(packNett) > 0)) missing.push('Nett Weight (> 0)');
+    if (missing.length > 0) {
+      setFormError(`Không thể lưu Packing. Phần còn trống: ${missing.join(', ')}`);
+      return;
+    }
+    setFormError(null);
+    try {
+      await apiClient.savePackingMaster(role, {
+        ...(editingPackId ? { id: editingPackId } : {}),
+        code: packCode.trim(),
+        description: packDesc.trim() || packCode.trim(),
+        unitType: packUnit,
+        nettWeight: parseFloat(packNett)
+      });
+    } catch (err) {
+      setFormError(
+        `Không thể lưu Packing: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return;
+    }
+    resetPackingForm();
+    await onReloadMasterData();
+  };
+
+  const resetMethodForm = () => {
+    setEditingMethodId(null);
+    setNewMethodName('');
+    setNewMethodEff('');
+  };
+
+  const startEditMethod = (m: ApplicationMethod) => {
+    setFormError(null);
+    setEditingMethodId(m.id);
+    setNewMethodName(m.methodName);
+    setNewMethodEff(String(m.efficiency));
   };
 
   const handleAddMethod = async (e: React.FormEvent) => {
@@ -286,12 +506,19 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
       return;
     }
     setFormError(null);
-    await apiClient.saveMethodMaster(role, {
-      methodName: newMethodName.trim().toUpperCase(),
-      efficiency: parseFloat(newMethodEff)
-    });
-    setNewMethodName('');
-    setNewMethodEff('');
+    try {
+      await apiClient.saveMethodMaster(role, {
+        ...(editingMethodId ? { id: editingMethodId } : {}),
+        methodName: newMethodName.trim().toUpperCase(),
+        efficiency: parseFloat(newMethodEff)
+      });
+    } catch (err) {
+      setFormError(
+        `Không thể lưu Phương pháp: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return;
+    }
+    resetMethodForm();
     await onReloadMasterData();
   };
 
@@ -450,6 +677,37 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
       {/* TAB 1: CUSTOMERS (Server-Side Paginated) */}
       {subTab === 'CUSTOMERS' && (
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed border-emerald-300 bg-emerald-50/50 px-3.5 py-2 text-xs text-slate-700">
+            <span>
+              Upload file .xlsx (sheet <strong>Customer</strong>): trùng Customer ID → cập nhật
+              nếu có thay đổi, giữ nguyên nếu không đổi; chưa có → thêm mới.
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  apiClient.downloadTemplate(role, 'customers').catch((err) =>
+                    setStatusMessage(`Lỗi tải template: ${err instanceof Error ? err.message : String(err)}`)
+                  )
+                }
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-700 bg-white px-3.5 py-1.5 font-semibold text-emerald-800 hover:bg-emerald-50"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5" />
+                Tải template
+              </button>
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-1.5 font-semibold text-white hover:bg-emerald-800">
+                <Upload className="h-3.5 w-3.5" />
+                {importing ? 'Đang xử lý...' : 'Upload Customer'}
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  disabled={importing}
+                  onChange={handleUploadCustomerFile}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
           <form
             onSubmit={handleAddCustomer}
             className="grid grid-cols-1 gap-3 sm:grid-cols-4 bg-slate-50 p-3.5 rounded-lg border border-slate-200"
@@ -475,13 +733,24 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
               onChange={(e) => setNewCustName(e.target.value)}
               className="rounded border border-slate-300 px-3 py-1.5 text-xs"
             />
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center gap-1.5 rounded bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Thêm / Cập nhật Khách hàng
-            </button>
+            <div className="flex gap-1.5">
+              <button
+                type="submit"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
+              >
+                {editingCustId ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                {editingCustId ? 'Cập nhật' : 'Thêm / Cập nhật Khách hàng'}
+              </button>
+              {editingCustId && (
+                <button
+                  type="button"
+                  onClick={resetCustomerForm}
+                  className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  Hủy
+                </button>
+              )}
+            </div>
           </form>
 
           {/* Pagination & Status Toolbar */}
@@ -552,7 +821,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                     Customer Name
                   </th>
                   <th className="border border-slate-700 px-3 py-2 text-center w-20">
-                    Xóa
+                    Sửa / Xóa
                   </th>
                 </tr>
               </thead>
@@ -568,11 +837,21 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                     <td className="border border-slate-200 px-3 py-1.5 text-slate-700">
                       {c.customerName}
                     </td>
-                    <td className="border border-slate-200 px-3 py-1.5 text-center">
+                    <td className="border border-slate-200 px-3 py-1.5 text-center whitespace-nowrap">
                       <button
                         type="button"
+                        title="Sửa"
+                        onClick={() => startEditCustomer(c)}
+                        className="rounded p-1 text-blue-700 hover:bg-blue-50"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Xóa"
                         onClick={async () => {
                           await apiClient.deleteCustomer(role, c.id);
+                          if (editingCustId === c.id) resetCustomerForm();
                           await onReloadMasterData();
                           await fetchCustomersPage();
                         }}
@@ -592,17 +871,52 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
       {/* TAB 2: QUOTATIONS (Server-Side Filtered & Paginated) */}
       {subTab === 'QUOTATIONS' && (
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+          {canEditPrice && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed border-emerald-300 bg-emerald-50/50 px-3.5 py-2 text-xs text-slate-700">
+              <span>
+                Upload file .xlsx (sheet <strong>quotation</strong>): trùng khóa Khách hàng + Material
+                Code → cập nhật nếu có thay đổi, giữ nguyên nếu không đổi; chưa có → thêm mới.
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    apiClient.downloadTemplate(role, 'quotations').catch((err) =>
+                      setStatusMessage(`Lỗi tải template: ${err instanceof Error ? err.message : String(err)}`)
+                    )
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-700 bg-white px-3.5 py-1.5 font-semibold text-emerald-800 hover:bg-emerald-50"
+                >
+                  <FileSpreadsheet className="h-3.5 w-3.5" />
+                  Tải template
+                </button>
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-1.5 font-semibold text-white hover:bg-emerald-800">
+                  <Upload className="h-3.5 w-3.5" />
+                  {importing ? 'Đang xử lý...' : 'Upload Quotation'}
+                  <input
+                    type="file"
+                    accept=".xlsx"
+                    disabled={importing}
+                    onChange={handleUploadQuotationFile}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
           {canEditPrice ? (
             <form
               onSubmit={handleAddQuotation}
               className="grid grid-cols-1 gap-2.5 sm:grid-cols-6 bg-slate-50 p-3.5 rounded-lg border border-slate-200"
             >
-              <input
-                type="text"
-                placeholder="SAP Cust ID (1200001169)"
+              <SearchableCombobox
                 value={newQuotCustCode}
-                onChange={(e) => setNewQuotCustCode(e.target.value)}
-                className="rounded border border-slate-300 px-2.5 py-1.5 text-xs"
+                options={customerOptions}
+                onChange={(v) => setNewQuotCustCode(v)}
+                placeholder="-- Chọn khách hàng --"
+                searchPlaceholder="Gõ mã hoặc tên khách hàng..."
+                compact
               />
               <input
                 type="text"
@@ -641,13 +955,28 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 onChange={(e) => setNewQuotPrice(e.target.value)}
                 className="rounded border border-slate-300 px-2.5 py-1.5 text-xs font-semibold"
               />
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center gap-1 rounded bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-800"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Lưu Báo Giá
-              </button>
+              <div className="flex gap-1.5">
+                <button
+                  type="submit"
+                  className="inline-flex flex-1 items-center justify-center gap-1 rounded bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-800"
+                >
+                  {editingQuotId ? (
+                    <Pencil className="h-3.5 w-3.5" />
+                  ) : (
+                    <Plus className="h-3.5 w-3.5" />
+                  )}
+                  {editingQuotId ? 'Cập nhật' : 'Lưu Báo Giá'}
+                </button>
+                {editingQuotId && (
+                  <button
+                    type="button"
+                    onClick={resetQuotationForm}
+                    className="rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    Hủy
+                  </button>
+                )}
+              </div>
             </form>
           ) : (
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
@@ -661,21 +990,20 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
               <div className="flex items-center gap-1.5">
                 <Filter className="h-3.5 w-3.5 text-blue-600" />
                 <span className="font-semibold">Lọc theo Khách hàng:</span>
-                <select
+                <SearchableCombobox
                   value={quotCustomerFilter}
-                  onChange={(e) => {
-                    setQuotCustomerFilter(e.target.value);
+                  options={filterCustomerOptions}
+                  onChange={(v) => {
+                    setQuotCustomerFilter(v);
                     setQuotPage(1);
                   }}
-                  className="max-w-xs rounded border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800"
-                >
-                  <option value="">-- Tất cả Khách hàng --</option>
-                  {customers.slice(0, 200).map((c) => (
-                    <option key={c.id} value={c.customerId}>
-                      {c.customerId} — {c.shortName}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="-- Tất cả Khách hàng --"
+                  searchPlaceholder="Gõ mã hoặc tên khách hàng..."
+                  popoverWidthClass="w-96"
+                  highlightEmpty={false}
+                  compact
+                  className="w-64"
+                />
                 {quotCustomerFilter && (
                   <button
                     type="button"
@@ -721,14 +1049,37 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 <button
                   type="button"
                   disabled={quotPage <= 1 || loadingQuotPaged}
+                  onClick={() => setQuotPage(1)}
+                  className="rounded border border-slate-300 bg-white px-2 py-1 font-semibold hover:bg-slate-100 disabled:opacity-40"
+                >
+                  «
+                </button>
+                <button
+                  type="button"
+                  disabled={quotPage <= 1 || loadingQuotPaged}
                   onClick={() => setQuotPage((p) => Math.max(1, p - 1))}
                   className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2.5 py-1 font-semibold hover:bg-slate-100 disabled:opacity-40"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" />
                   Trước
                 </button>
-                <span className="px-2 font-bold text-slate-800">
-                  Trang {quotPage} / {quotTotalPages}
+                <span className="inline-flex items-center gap-1 px-2 font-bold text-slate-800">
+                  Trang
+                  <input
+                    key={quotPage}
+                    type="number"
+                    min={1}
+                    max={quotTotalPages}
+                    defaultValue={quotPage}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const n = Math.floor(Number(e.currentTarget.value));
+                        if (n >= 1) setQuotPage(Math.min(n, quotTotalPages));
+                      }
+                    }}
+                    className="w-14 rounded border border-slate-300 px-1 py-0.5 text-center text-xs"
+                  />
+                  / {quotTotalPages}
                 </span>
                 <button
                   type="button"
@@ -738,6 +1089,14 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 >
                   Sau
                   <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  disabled={quotPage >= quotTotalPages || loadingQuotPaged}
+                  onClick={() => setQuotPage(quotTotalPages)}
+                  className="rounded border border-slate-300 bg-white px-2 py-1 font-semibold hover:bg-slate-100 disabled:opacity-40"
+                >
+                  »
                 </button>
               </div>
             </div>
@@ -751,21 +1110,20 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                     SAP Cust ID
                   </th>
                   <th className="border border-slate-700 px-3 py-2 text-left">
+                    Khách hàng
+                  </th>
+                  <th className="border border-slate-700 px-3 py-2 text-left">
                     Material Code
                   </th>
                   <th className="border border-slate-700 px-3 py-2 text-left">
                     Description
                   </th>
-                  <th className="border border-slate-700 px-2.5 py-2 text-center">
-                    Packing
-                  </th>
-                  <th className="border border-slate-700 px-2.5 py-2 text-right">Nett</th>
                   <th className="border border-slate-700 px-3 py-2 text-right">
                     Price/nett (VND)
                   </th>
                   {canEditPrice && (
-                    <th className="border border-slate-700 px-2.5 py-2 text-center w-16">
-                      Xóa
+                    <th className="border border-slate-700 px-2.5 py-2 text-center w-24">
+                      Sửa / Xóa
                     </th>
                   )}
                 </tr>
@@ -776,25 +1134,31 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                     <td className="border border-slate-200 px-3 py-1.5 font-mono text-slate-600">
                       {q.sapCustomerCode}
                     </td>
+                    <td className="border border-slate-200 px-3 py-1.5 text-slate-800">
+                      {customerNameByCode.get(q.sapCustomerCode) || q.customerName}
+                    </td>
                     <td className="border border-slate-200 px-3 py-1.5 font-mono font-bold text-blue-950">
                       {q.materialCode}
                     </td>
                     <td className="border border-slate-200 px-3 py-1.5 text-slate-800">
                       {q.materialName}
                     </td>
-                    <td className="border border-slate-200 px-2.5 py-1.5 text-center">
-                      {q.packingDesc}
-                    </td>
-                    <td className="border border-slate-200 px-2.5 py-1.5 text-right">
-                      {q.nett}
-                    </td>
                     <td className="border border-slate-200 px-3 py-1.5 text-right font-bold text-emerald-800">
                       {canEditPrice ? formatVnd(q.priceUnitVnd) : '🔒 Ẩn (RBAC)'}
                     </td>
                     {canEditPrice && (
-                      <td className="border border-slate-200 px-2.5 py-1.5 text-center">
+                      <td className="border border-slate-200 px-2.5 py-1.5 text-center whitespace-nowrap">
                         <button
                           type="button"
+                          title="Sửa"
+                          onClick={() => startEditQuotation(q)}
+                          className="rounded p-1 text-blue-700 hover:bg-blue-50"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Xóa"
                           onClick={async () => {
                             await apiClient.deleteQuotation(role, q.id);
                             await onReloadMasterData();
@@ -828,13 +1192,33 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
               onChange={(e) => setNewStepName(e.target.value)}
               className="flex-1 rounded border border-slate-300 px-3 py-1.5 text-xs"
             />
+            {editingStepId && (
+              <input
+                type="number"
+                min={1}
+                step={1}
+                placeholder="Thứ tự"
+                value={newStepOrder}
+                onChange={(e) => setNewStepOrder(e.target.value)}
+                className="w-24 rounded border border-slate-300 px-3 py-1.5 text-xs"
+              />
+            )}
             <button
               type="submit"
               className="inline-flex items-center gap-1.5 rounded bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
             >
-              <Plus className="h-3.5 w-3.5" />
-              Thêm Bước Thi Công
+              {editingStepId ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+              {editingStepId ? 'Cập nhật Bước' : 'Thêm Bước Thi Công'}
             </button>
+            {editingStepId && (
+              <button
+                type="button"
+                onClick={resetStepForm}
+                className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                Hủy
+              </button>
+            )}
           </form>
 
           <table className="w-full border-collapse text-xs">
@@ -847,7 +1231,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                   Application Step Name
                 </th>
                 <th className="border border-slate-700 px-3 py-2 text-center w-24">
-                  Xóa
+                  Sửa / Xóa
                 </th>
               </tr>
             </thead>
@@ -860,11 +1244,21 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                   <td className="border border-slate-200 px-3 py-2 font-bold text-slate-900">
                     {s.stepName}
                   </td>
-                  <td className="border border-slate-200 px-3 py-2 text-center">
+                  <td className="border border-slate-200 px-3 py-2 text-center whitespace-nowrap">
                     <button
                       type="button"
+                      title="Sửa"
+                      onClick={() => startEditStep(s)}
+                      className="rounded p-1 text-blue-700 hover:bg-blue-50"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Xóa"
                       onClick={async () => {
                         await apiClient.deleteStepMaster(role, s.id);
+                        if (editingStepId === s.id) resetStepForm();
                         await onReloadMasterData();
                       }}
                       className="rounded p-1 text-red-600 hover:bg-red-50"
@@ -903,13 +1297,24 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
               onChange={(e) => setNewMethodEff(e.target.value)}
               className="rounded border border-slate-300 px-3 py-1.5 text-xs"
             />
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center gap-1.5 rounded bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Lưu Phương Pháp & Hiệu Suất
-            </button>
+            <div className="flex gap-1.5">
+              <button
+                type="submit"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
+              >
+                {editingMethodId ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                {editingMethodId ? 'Cập nhật' : 'Lưu Phương Pháp & Hiệu Suất'}
+              </button>
+              {editingMethodId && (
+                <button
+                  type="button"
+                  onClick={resetMethodForm}
+                  className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  Hủy
+                </button>
+              )}
+            </div>
           </form>
 
           <table className="w-full border-collapse text-xs">
@@ -923,6 +1328,9 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 </th>
                 <th className="border border-slate-700 px-3 py-2 text-center">
                   Efficiency (%)
+                </th>
+                <th className="border border-slate-700 px-3 py-2 text-center w-24">
+                  Sửa / Xóa
                 </th>
               </tr>
             </thead>
@@ -938,6 +1346,28 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                   <td className="border border-slate-200 px-3 py-2 text-center font-bold text-emerald-700">
                     {Math.round(m.efficiency * 100)}%
                   </td>
+                  <td className="border border-slate-200 px-3 py-2 text-center whitespace-nowrap">
+                    <button
+                      type="button"
+                      title="Sửa"
+                      onClick={() => startEditMethod(m)}
+                      className="rounded p-1 text-blue-700 hover:bg-blue-50"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Xóa"
+                      onClick={async () => {
+                        await apiClient.deleteMethodMaster(role, m.id);
+                        if (editingMethodId === m.id) resetMethodForm();
+                        await onReloadMasterData();
+                      }}
+                      className="rounded p-1 text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -947,7 +1377,63 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
 
       {/* TAB 5: PACKING MAPPING */}
       {subTab === 'PACKINGS' && (
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+          <form
+            onSubmit={handleSavePacking}
+            className="grid grid-cols-1 gap-3 sm:grid-cols-5 bg-slate-50 p-3.5 rounded-lg border border-slate-200"
+          >
+            <input
+              type="text"
+              placeholder="Packing Code"
+              value={packCode}
+              onChange={(e) => setPackCode(e.target.value)}
+              className="rounded border border-slate-300 px-3 py-1.5 text-xs"
+            />
+            <input
+              type="text"
+              placeholder="Description"
+              value={packDesc}
+              onChange={(e) => setPackDesc(e.target.value)}
+              className="rounded border border-slate-300 px-3 py-1.5 text-xs"
+            />
+            <select
+              value={packUnit}
+              onChange={(e) => setPackUnit(e.target.value as 'KG' | 'LTR' | 'SET')}
+              className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs"
+            >
+              <option value="KG">KG</option>
+              <option value="LTR">LTR</option>
+              <option value="SET">SET</option>
+            </select>
+            <input
+              type="number"
+              step="any"
+              min="0"
+              placeholder="Nett Weight"
+              value={packNett}
+              onChange={(e) => setPackNett(e.target.value)}
+              className="rounded border border-slate-300 px-3 py-1.5 text-xs"
+            />
+            <div className="flex gap-1.5">
+              <button
+                type="submit"
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
+              >
+                {editingPackId ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                {editingPackId ? 'Cập nhật' : 'Thêm Packing'}
+              </button>
+              {editingPackId && (
+                <button
+                  type="button"
+                  onClick={resetPackingForm}
+                  className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  Hủy
+                </button>
+              )}
+            </div>
+          </form>
+
           <table className="w-full border-collapse text-xs">
             <thead className="bg-slate-800 text-white">
               <tr>
@@ -955,6 +1441,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 <th className="border border-slate-700 px-3 py-2 text-left">Description</th>
                 <th className="border border-slate-700 px-3 py-2 text-center">Unit Type</th>
                 <th className="border border-slate-700 px-3 py-2 text-right">Nett Weight</th>
+                <th className="border border-slate-700 px-3 py-2 text-center w-24">Sửa / Xóa</th>
               </tr>
             </thead>
             <tbody>
@@ -969,6 +1456,28 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                   </td>
                   <td className="border border-slate-200 px-3 py-1.5 text-right font-bold">
                     {p.nettWeight}
+                  </td>
+                  <td className="border border-slate-200 px-3 py-1.5 text-center whitespace-nowrap">
+                    <button
+                      type="button"
+                      title="Sửa"
+                      onClick={() => startEditPacking(p)}
+                      className="rounded p-1 text-blue-700 hover:bg-blue-50"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Xóa"
+                      onClick={async () => {
+                        await apiClient.deletePackingMaster(role, p.id);
+                        if (editingPackId === p.id) resetPackingForm();
+                        await onReloadMasterData();
+                      }}
+                      className="rounded p-1 text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </td>
                 </tr>
               ))}

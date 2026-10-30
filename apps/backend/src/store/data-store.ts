@@ -15,6 +15,7 @@ import {
   parseCaInput,
   calculateCoatingCostTable
 } from '@cscc/shared';
+import type { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
 import {
   ImportedMasterData,
@@ -725,6 +726,71 @@ class PostgresDataStore {
     await prisma.customer.deleteMany({ where: { id } });
   }
 
+  /**
+   * Merges customers keyed by customerId: new keys are inserted, existing keys
+   * with changed names are updated, identical rows are skipped.
+   */
+  public async bulkUpsertCustomers(
+    rows: Customer[]
+  ): Promise<{ created: number; updated: number; skipped: number }> {
+    const byCode = new Map<string, Customer>();
+    for (const r of rows) {
+      const customerId = r.customerId.trim();
+      if (!customerId) continue;
+      byCode.set(customerId, { ...r, customerId });
+    }
+
+    const codes = Array.from(byCode.keys());
+    const existingRows: Array<Prisma.CustomerGetPayload<object>> = [];
+    for (let i = 0; i < codes.length; i += 1000) {
+      existingRows.push(
+        ...(await prisma.customer.findMany({
+          where: { customerId: { in: codes.slice(i, i + 1000) } }
+        }))
+      );
+    }
+    const existingByCode = new Map(existingRows.map((e) => [e.customerId, e]));
+
+    const toCreate: Prisma.CustomerCreateManyInput[] = [];
+    const toUpdate: Array<{ id: string; shortName: string; customerName: string }> = [];
+    let skipped = 0;
+    const stamp = Date.now().toString(36);
+
+    for (const [code, c] of byCode) {
+      const customerName = c.customerName.trim();
+      const shortName = (c.shortName || customerName).trim();
+      const existing = existingByCode.get(code);
+      if (!existing) {
+        toCreate.push({
+          id: `cust-${code}-${stamp}`,
+          customerId: code,
+          shortName,
+          customerName
+        });
+      } else if (existing.shortName !== shortName || existing.customerName !== customerName) {
+        toUpdate.push({ id: existing.id, shortName, customerName });
+      } else {
+        skipped++;
+      }
+    }
+
+    for (let i = 0; i < toCreate.length; i += 1000) {
+      await prisma.customer.createMany({ data: toCreate.slice(i, i + 1000) });
+    }
+    for (let i = 0; i < toUpdate.length; i += 200) {
+      await prisma.$transaction(
+        toUpdate.slice(i, i + 200).map((u) =>
+          prisma.customer.update({
+            where: { id: u.id },
+            data: { shortName: u.shortName, customerName: u.customerName }
+          })
+        )
+      );
+    }
+
+    return { created: toCreate.length, updated: toUpdate.length, skipped };
+  }
+
   // ===========================================================================
   // 2. QUOTATIONS
   // ===========================================================================
@@ -735,7 +801,7 @@ class PostgresDataStore {
   }): Promise<QuotationItem[]> {
     const customerCode = (params.customerCode || '').trim();
     const q = (params.q || '').trim();
-    const limit = Math.min(Number(params.limit) || 500, 3000);
+    const limit = Math.min(Number(params.limit) || 500, 10000);
 
     const rows = await prisma.quotationItem.findMany({
       where: {
@@ -870,6 +936,100 @@ class PostgresDataStore {
       }
     });
     return { quotation: mapQuotationDto(created), created: true };
+  }
+
+  /**
+   * Merges quotation rows keyed by (customer code + material code):
+   * new keys are inserted, existing keys with changed values are updated,
+   * identical rows are skipped.
+   */
+  public async bulkUpsertQuotations(
+    rows: QuotationItem[]
+  ): Promise<{ created: number; updated: number; skipped: number }> {
+    const byKey = new Map<string, QuotationItem>();
+    for (const r of rows) {
+      const sapCustomerCode = r.sapCustomerCode.trim();
+      const materialCode = r.materialCode.trim();
+      if (!sapCustomerCode || !materialCode) continue;
+      byKey.set(`${sapCustomerCode}${materialCode}`, {
+        ...r,
+        sapCustomerCode,
+        materialCode
+      });
+    }
+
+    const keys = Array.from(byKey.keys());
+    const existingRows: Array<Prisma.QuotationItemGetPayload<object>> = [];
+    for (let i = 0; i < keys.length; i += 1000) {
+      existingRows.push(
+        ...(await prisma.quotationItem.findMany({
+          where: { custProductKey: { in: keys.slice(i, i + 1000) } }
+        }))
+      );
+    }
+    const existingByKey = new Map(existingRows.map((e) => [e.custProductKey, e]));
+
+    const dbCustomers = await prisma.customer.findMany({
+      select: { id: true, customerId: true }
+    });
+    const customerCodeToId = new Map(dbCustomers.map((c) => [c.customerId, c.id]));
+
+    const toCreate: Prisma.QuotationItemCreateManyInput[] = [];
+    const toUpdate: Array<{ id: string; data: Prisma.QuotationItemUpdateInput }> = [];
+    let skipped = 0;
+    const stamp = Date.now().toString(36);
+
+    for (const [key, q] of byKey) {
+      const existing = existingByKey.get(key);
+      const next = {
+        customerName: (q.customerName || '').trim(),
+        sapProductCode: (q.sapProductCode || '').trim(),
+        materialName: (q.materialName || q.materialCode).trim(),
+        packingDesc: (q.packingDesc || '').trim(),
+        nett: Number(q.nett) || 0,
+        priceUnitVnd: Number(q.priceUnitVnd) || 0,
+        validFrom: q.validFrom ?? null,
+        validTo: q.validTo ?? null
+      };
+      if (!existing) {
+        toCreate.push({
+          id: `quot-${stamp}-${toCreate.length}`,
+          sapCustomerCode: q.sapCustomerCode,
+          custProductKey: key,
+          materialCode: q.materialCode,
+          ...next,
+          customerRefId: customerCodeToId.get(q.sapCustomerCode) ?? null
+        });
+        continue;
+      }
+      const changed =
+        existing.customerName !== next.customerName ||
+        existing.sapProductCode !== next.sapProductCode ||
+        existing.materialName !== next.materialName ||
+        existing.packingDesc !== next.packingDesc ||
+        existing.nett !== next.nett ||
+        existing.priceUnitVnd !== next.priceUnitVnd ||
+        existing.validFrom !== next.validFrom ||
+        existing.validTo !== next.validTo;
+      if (changed) {
+        toUpdate.push({ id: existing.id, data: next });
+      } else {
+        skipped++;
+      }
+    }
+
+    for (let i = 0; i < toCreate.length; i += 1000) {
+      await prisma.quotationItem.createMany({ data: toCreate.slice(i, i + 1000) });
+    }
+    for (let i = 0; i < toUpdate.length; i += 200) {
+      await prisma.$transaction(
+        toUpdate
+          .slice(i, i + 200)
+          .map((u) => prisma.quotationItem.update({ where: { id: u.id }, data: u.data }))
+      );
+    }
+
+    return { created: toCreate.length, updated: toUpdate.length, skipped };
   }
 
   public async updateQuotation(
@@ -1099,6 +1259,78 @@ class PostgresDataStore {
       unitType: p.unitType as 'KG' | 'LTR' | 'SET',
       nettWeight: p.nettWeight
     }));
+  }
+
+  public async createPackingMapping(input: {
+    code: string;
+    description?: string;
+    unitType: string;
+    nettWeight: number;
+  }): Promise<PackingMapping> {
+    const code = input.code.trim();
+    const duplicate = await prisma.packingMapping.findFirst({ where: { code } });
+    if (duplicate) {
+      throw new Error(`Packing code "${code}" đã tồn tại.`);
+    }
+    const created = await prisma.packingMapping.create({
+      data: {
+        id: `packing-${Date.now().toString(36)}`,
+        code,
+        description: String(input.description || code).trim(),
+        unitType: input.unitType,
+        nettWeight: Number(input.nettWeight)
+      }
+    });
+    return {
+      id: created.id,
+      code: created.code,
+      description: created.description,
+      unitType: created.unitType as 'KG' | 'LTR' | 'SET',
+      nettWeight: created.nettWeight
+    };
+  }
+
+  public async updatePackingMapping(
+    id: string,
+    input: Partial<PackingMapping>
+  ): Promise<PackingMapping | null> {
+    const existing = await prisma.packingMapping.findUnique({ where: { id } });
+    if (!existing) return null;
+
+    const code = input.code !== undefined ? String(input.code).trim() : existing.code;
+    if (code !== existing.code) {
+      const duplicate = await prisma.packingMapping.findFirst({
+        where: { code, NOT: { id } }
+      });
+      if (duplicate) {
+        throw new Error(`Packing code "${code}" đã tồn tại.`);
+      }
+    }
+
+    const updated = await prisma.packingMapping.update({
+      where: { id },
+      data: {
+        code,
+        description:
+          input.description !== undefined
+            ? String(input.description).trim()
+            : existing.description,
+        unitType: input.unitType !== undefined ? input.unitType : existing.unitType,
+        nettWeight:
+          input.nettWeight !== undefined ? Number(input.nettWeight) : existing.nettWeight
+      }
+    });
+    return {
+      id: updated.id,
+      code: updated.code,
+      description: updated.description,
+      unitType: updated.unitType as 'KG' | 'LTR' | 'SET',
+      nettWeight: updated.nettWeight
+    };
+  }
+
+  public async deletePackingMapping(id: string): Promise<void> {
+    await prisma.packingMapping.deleteMany({ where: { id } });
   }
 
   // ===========================================================================
