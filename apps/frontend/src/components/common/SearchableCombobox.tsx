@@ -19,6 +19,7 @@ interface SearchableComboboxProps {
   createNewLabel?: (customValue: string) => string;
   placeholder?: string;
   searchPlaceholder?: string;
+  emptyMessage?: string;
   disabled?: boolean;
   className?: string;
   popoverWidthClass?: string;
@@ -36,6 +37,7 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
   createNewLabel,
   placeholder = '-- Hãy chọn... --',
   searchPlaceholder = 'Gõ để tìm nhanh...',
+  emptyMessage,
   disabled = false,
   className = '',
   popoverWidthClass = 'w-80',
@@ -276,7 +278,9 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
             <div className="max-h-64 overflow-y-auto p-1">
               {filteredOptions.length === 0 ? (
                 <div className="px-3 py-3 text-center text-xs text-slate-500">
-                  Không tìm thấy kết quả phù hợp cho "{query}"
+                  {query.trim()
+                    ? `Không tìm thấy kết quả phù hợp cho "${query}"`
+                    : emptyMessage || 'Không có dữ liệu phù hợp'}
                 </div>
               ) : (
                 filteredOptions.map((opt, idx) => {

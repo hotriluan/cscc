@@ -200,40 +200,33 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     [methodsMaster]
   );
 
-  // 4. Build Searchable Options for Product Codes (Clean materialCode only, no packing info)
+  // 4. Build Searchable Options for Product Codes (Strictly restricted to the active customer's quotation)
   const productOptions = React.useMemo<ComboboxOption[]>(() => {
-    const custCode = revision.customer.customerId;
+    const custCode = (revision.customer?.customerId || '').trim();
+    if (!custCode) return [];
+
     const seenCodes = new Set<string>();
     const options: ComboboxOption[] = [];
 
-    // Pass 1: Current Customer's Quoted Products
     for (const q of quotations) {
-      if (q.sapCustomerCode === custCode && !seenCodes.has(q.materialCode)) {
+      if (
+        q.sapCustomerCode.trim() === custCode &&
+        !seenCodes.has(q.materialCode)
+      ) {
         seenCodes.add(q.materialCode);
         options.push({
           value: q.materialCode,
           label: q.materialCode,
+          sublabel: q.materialName,
           badge: 'Báo giá KH',
           badgeColor: 'emerald',
-          keywords: q.materialCode
-        });
-      }
-    }
-
-    // Pass 2: Other Unique Materials across the system
-    for (const q of quotations) {
-      if (!seenCodes.has(q.materialCode)) {
-        seenCodes.add(q.materialCode);
-        options.push({
-          value: q.materialCode,
-          label: q.materialCode,
-          keywords: q.materialCode
+          keywords: `${q.materialCode} ${q.materialName || ''}`
         });
       }
     }
 
     return options;
-  }, [quotations, revision.customer.customerId]);
+  }, [quotations, revision.customer?.customerId]);
 
   const reindexSteps = (rawSteps: ScheduleStep[]): ScheduleStep[] => {
     let chemNo = 1;
@@ -510,12 +503,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
           const next = { ...item, ...patch };
           if (patch.materialCode !== undefined) {
             const codeTrimmed = patch.materialCode.trim();
-            const matchedQuot =
-              quotations.find(
-                (q) =>
-                  q.sapCustomerCode === revision.customer.customerId &&
-                  q.materialCode === codeTrimmed
-              ) ?? quotations.find((q) => q.materialCode === codeTrimmed);
+            const custCode = (revision.customer?.customerId || '').trim();
+            const matchedQuot = quotations.find(
+              (q) =>
+                q.sapCustomerCode.trim() === custCode &&
+                q.materialCode.trim() === codeTrimmed
+            );
             if (matchedQuot) {
               next.materialName = matchedQuot.materialName;
               next.packingDesc = matchedQuot.packingDesc;
@@ -1246,16 +1239,8 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                                   materialName: val
                                 })
                               }
-                              onCreateNew={(customCode) =>
-                                handleUpdateItem(step.id, item.id, {
-                                  materialCode: customCode.toUpperCase(),
-                                  materialName: customCode.toUpperCase()
-                                })
-                              }
-                              createNewLabel={(val) =>
-                                `+ Dùng mã vật tư "${val.toUpperCase()}"`
-                              }
-                              searchPlaceholder="Gõ tìm tên vật tư (VD: PSV-76000, THPU-71306)..."
+                              emptyMessage={`Khách hàng ${revision.customer?.shortName || revision.customer?.customerId || ''} chưa có sản phẩm nào trong báo giá`}
+                              searchPlaceholder="Gõ tìm vật tư trong báo giá của khách hàng..."
                               popoverWidthClass="w-96"
                             />
                           </div>
