@@ -21,7 +21,7 @@ export async function generateRevisionWorkbook(
   workbook.creator = 'ALKANA Coating System';
   workbook.created = new Date();
 
-  const effectiveArea = areaM2 && areaM2 > 0 ? areaM2 : revision.defaultAreaM2 || 100;
+  const effectiveArea = areaM2 && areaM2 > 0 ? areaM2 : 1;
   const revCode = String(revision.revisionNo).padStart(2, '0');
 
   // =========================================================================
@@ -350,25 +350,19 @@ export async function generateRevisionWorkbook(
 
   bomSheet.getCell('A1').value = `BOM SUMMARY — Project: ${revision.projectCode} (Area: ${effectiveArea} m²)`;
   bomSheet.getCell('A1').font = { bold: true, size: 13 };
-  bomSheet.mergeCells('A1:F1');
+  bomSheet.mergeCells('A1:D1');
 
   const bomHeaders =
     role === 'TECHNICAL'
       ? [
           'Product Code',
-          'Packing',
-          'Nett (Kg/Ltr)',
           'Total CA+Loss (g/m²)',
-          'Required Qty (Kg/Ltr)',
-          'Packs Needed'
+          'Required Qty (Kg/Ltr)'
         ]
       : [
           'Product Code',
-          'Packing',
-          'Nett (Kg/Ltr)',
           'Total CA+Loss (g/m²)',
           'Required Qty (Kg/Ltr)',
-          'Packs Needed',
           'Unit Price (VND)',
           'Total Cost (VND)'
         ];
@@ -384,18 +378,33 @@ export async function generateRevisionWorkbook(
   bomSummary.items.forEach((item, idx) => {
     const r = bomSheet.getRow(4 + idx);
     r.getCell(1).value = item.materialCode;
-    r.getCell(2).value = item.packingDesc ?? '';
-    r.getCell(3).value = item.nettWeight;
-    r.getCell(4).value = item.totalCaPlusLossGramPerM2Display;
-    r.getCell(5).value = item.totalRequiredKgOrLtrDisplay;
-    r.getCell(6).value = item.packsToOrderRounded;
+    r.getCell(2).value = item.totalCaPlusLossGramPerM2Display;
+    r.getCell(3).value = item.totalRequiredKgOrLtrDisplay;
     if (role !== 'TECHNICAL') {
-      r.getCell(7).value = item.priceUnitVnd ?? 0;
-      r.getCell(7).numFmt = '#,##0';
-      r.getCell(8).value = item.totalMaterialCostDisplay ?? 0;
-      r.getCell(8).numFmt = '#,##0';
+      r.getCell(4).value = item.priceUnitVnd ?? 0;
+      r.getCell(4).numFmt = '#,##0';
+      r.getCell(5).value = item.totalMaterialCostDisplay ?? 0;
+      r.getCell(5).numFmt = '#,##0';
     }
   });
+
+  if (role !== 'TECHNICAL' && bomSummary.items.length > 0) {
+    const firstBomRow = 4;
+    const lastBomRow = 3 + bomSummary.items.length;
+    const totalRow = bomSheet.getRow(lastBomRow + 1);
+    const redBold = { bold: true, color: { argb: 'FFFF0000' } };
+
+    totalRow.getCell(2).value = 'Total';
+    totalRow.getCell(2).font = redBold;
+    totalRow.getCell(2).alignment = { horizontal: 'right' };
+
+    totalRow.getCell(5).value = {
+      formula: `SUM(E${firstBomRow}:E${lastBomRow})`,
+      result: bomSummary.totalProjectMaterialCostDisplay ?? 0
+    };
+    totalRow.getCell(5).numFmt = '#,##0';
+    totalRow.getCell(5).font = redBold;
+  }
 
   const arrayBuffer = await workbook.xlsx.writeBuffer();
   return Buffer.from(arrayBuffer);

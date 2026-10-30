@@ -74,7 +74,7 @@ export function App() {
   const [activeRevision, setActiveRevision] = React.useState<ProjectRevision | null>(
     null
   );
-  const [areaM2, setAreaM2] = React.useState<number>(100);
+  const [areaM2, setAreaM2] = React.useState<number>(1);
   const [sidebarProjectSearch, setSidebarProjectSearch] = React.useState('');
 
   const [loading, setLoading] = React.useState<boolean>(true);
@@ -113,7 +113,7 @@ export function App() {
       try {
         const [custs, quots, steps, methods, packings, projs] = await Promise.all([
           apiClient.getCustomers(role),
-          apiClient.getQuotations(role, '', '', 2800),
+          apiClient.getQuotations(role, '', '', 10000),
           apiClient.getStepsMaster(role),
           apiClient.getMethodsMaster(role),
           apiClient.getPackingsMaster(role),
@@ -141,7 +141,7 @@ export function App() {
             .getRevision(role, revIdToLoad)
             .catch(() => apiClient.getRevision(role, fallbackRevId));
           setActiveRevision(rev);
-          setAreaM2(rev.defaultAreaM2 || 100);
+          setAreaM2(1);
         }
       } catch (err) {
         console.error('Failed to load initial data:', err);

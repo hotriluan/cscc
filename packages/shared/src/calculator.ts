@@ -236,7 +236,7 @@ export function calculateBomSummary(
   steps: ScheduleStep[],
   role: UserRole = 'PROJECT_LEADER'
 ): BomSummary {
-  const safeArea = Number.isFinite(areaM2) && areaM2 > 0 ? areaM2 : 100;
+  const safeArea = Number.isFinite(areaM2) && areaM2 > 0 ? areaM2 : 1;
   const isTechnical = role === 'TECHNICAL';
   const costTable = calculateCoatingCostTable(revisionId, steps);
 
