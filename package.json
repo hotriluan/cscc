@@ -1,0 +1,26 @@
+{
+  "name": "cscc-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ALKANA Coating Schedule (CS) & Coating Cost (CC) System",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "dev:backend": "npm --workspace @cscc/backend run dev",
+    "dev:frontend": "npm --workspace @cscc/frontend run dev",
+    "db:push": "npm --workspace @cscc/backend run db:push",
+    "db:migrate": "npm --workspace @cscc/backend run db:migrate",
+    "db:seed": "npm --workspace @cscc/backend run db:seed",
+    "db:reset": "npm --workspace @cscc/backend run db:reset",
+    "db:studio": "npm --workspace @cscc/backend run db:studio"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
+

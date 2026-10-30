@@ -1,0 +1,5 @@
+# Terminal 1: Khởi chạy Backend API tại http://localhost:4000
+npm run dev:backend
+
+# Terminal 2: Khởi chạy Giao diện Web tại http://localhost:5173
+npm run dev:frontend

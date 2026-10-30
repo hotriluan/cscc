@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+apps/backend/data/
+*.log
+.claude/
+.agents/
+.agentkit/
+kits/
+GEMINI.md
+
