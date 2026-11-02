@@ -1,10 +1,33 @@
 import ExcelJS from 'exceljs';
+import path from 'path';
+import fs from 'fs';
 import {
   ProjectRevision,
   UserRole,
   calculateCoatingCostTable,
   calculateBomSummary
 } from '@cscc/shared';
+
+function resolveLogoBuffer(): Buffer | null {
+  const candidates = [
+    path.resolve(process.cwd(), 'pic/LOGO_WEB.png'),
+    path.resolve(process.cwd(), 'apps/backend/src/assets/logo_web.png'),
+    path.resolve(process.cwd(), 'apps/frontend/public/logo_web.png'),
+    path.resolve(__dirname, '../assets/logo_web.png'),
+    path.resolve(__dirname, '../../../../pic/LOGO_WEB.png'),
+    path.resolve(__dirname, '../../../pic/LOGO_WEB.png')
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      try {
+        return fs.readFileSync(c);
+      } catch {
+        // ignore
+      }
+    }
+  }
+  return null;
+}
 
 /**
  * Generates an Excel (.xlsx) workbook with dynamic `mergeCells` and live Excel formulas.
@@ -23,6 +46,14 @@ export async function generateRevisionWorkbook(
 
   const effectiveArea = areaM2 && areaM2 > 0 ? areaM2 : 1;
   const revCode = String(revision.revisionNo).padStart(2, '0');
+
+  const logoBuffer = resolveLogoBuffer();
+  const logoImageId = logoBuffer
+    ? workbook.addImage({
+        base64: logoBuffer.toString('base64'),
+        extension: 'png'
+      })
+    : null;
 
   // =========================================================================
   // 1. SHEET: CS (COATING SCHEDULE)
@@ -47,6 +78,16 @@ export async function generateRevisionWorkbook(
   csTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
   csTitle.alignment = { horizontal: 'center', vertical: 'middle' };
   csSheet.getRow(1).height = 26;
+
+  // Add Brand Logo to Top-Right Corner (Column I, Rows 1-3)
+  if (logoImageId !== null) {
+    csSheet.getColumn('I').width = 16;
+    csSheet.addImage(logoImageId, {
+      tl: { col: 8.1, row: 0.1 },
+      ext: { width: 84, height: 57 },
+      editAs: 'oneCell'
+    });
+  }
 
   const headerRows: Array<[string, string, string, string, string, string]> = [
     ['Customer:', revision.customer.shortName, 'Substrate Type:', revision.substrate, 'No.:', revision.projectCode],
@@ -208,6 +249,16 @@ export async function generateRevisionWorkbook(
     ccTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF065F46' } };
     ccTitle.alignment = { horizontal: 'center', vertical: 'middle' };
     ccSheet.getRow(1).height = 26;
+
+    // Add Brand Logo to Top-Right Corner (Column L, Rows 1-3)
+    if (logoImageId !== null) {
+      ccSheet.getColumn('L').width = 16;
+      ccSheet.addImage(logoImageId, {
+        tl: { col: 11.1, row: 0.1 },
+        ext: { width: 84, height: 57 },
+        editAs: 'oneCell'
+      });
+    }
 
     headerRows.forEach((r, idx) => {
       const rowNum = idx + 2;
