@@ -8,6 +8,7 @@ import {
   formatCoverage
 } from '@cscc/shared';
 import { Printer, X } from 'lucide-react';
+import logoWeb from '../../assets/logo_web.png';
 
 interface PrintableSheetA4Props {
   revision: ProjectRevision;
@@ -81,13 +82,12 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
         {/* A4 SHEET HEADER */}
         <div className="border-2 border-slate-900 p-4">
           <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3">
-            <div>
-              <div className="text-lg font-black tracking-wider text-blue-900">
-                ALKANA
-              </div>
-              <div className="text-[11px] font-semibold italic text-slate-600">
-                Performance Coatings
-              </div>
+            <div className="flex items-center">
+              <img
+                src={logoWeb}
+                alt="Alkana Logo"
+                className="h-12 w-auto object-contain"
+              />
             </div>
             <div className="text-center">
               <h1 className="text-xl font-black uppercase tracking-widest text-slate-900">
