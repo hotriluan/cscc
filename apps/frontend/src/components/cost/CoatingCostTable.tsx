@@ -227,9 +227,9 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
                         </td>
                       )}
 
-                      {/* Col 2: Product type (Clean materialCode ONLY — no packing info) */}
+                      {/* Col 2: Product type (Clean materialName / description — no packing info) */}
                       <td className="border border-slate-200 px-2.5 py-1.5 font-mono font-semibold text-slate-900">
-                        {item.materialCode}
+                        {item.materialName || item.materialCode}
                       </td>
 
                       {/* Col 3: Price (VND/Ltr) */}

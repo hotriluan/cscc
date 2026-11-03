@@ -13,6 +13,7 @@ export interface ComboboxOption {
 
 interface SearchableComboboxProps {
   value: string;
+  displayValue?: string;
   options: ComboboxOption[];
   onChange: (newValue: string, option?: ComboboxOption) => void;
   onCreateNew?: (customValue: string) => void;
@@ -31,6 +32,7 @@ interface SearchableComboboxProps {
 
 export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
   value,
+  displayValue,
   options,
   onChange,
   onCreateNew,
@@ -216,7 +218,7 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
         title={
           selectedOption
             ? `${selectedOption.label} ${selectedOption.sublabel ? `— ${selectedOption.sublabel}` : ''}`
-            : value || placeholder
+            : displayValue || value || placeholder
         }
         className={`flex w-full items-center justify-between gap-1.5 rounded-lg border text-left transition focus:outline-none disabled:bg-slate-100 disabled:cursor-not-allowed ${
           isEmpty && highlightEmpty
@@ -231,7 +233,7 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
               : `font-semibold ${monoLabel ? 'font-mono text-blue-950' : 'text-slate-900'}`
           }`}
         >
-          {selectedOption ? selectedOption.label : value || placeholder}
+          {selectedOption ? selectedOption.label : displayValue || value || placeholder}
         </span>
         <ChevronDown
           className={`h-3.5 w-3.5 shrink-0 ${

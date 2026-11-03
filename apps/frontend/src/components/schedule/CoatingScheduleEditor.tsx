@@ -214,10 +214,14 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         !seenCodes.has(q.materialCode)
       ) {
         seenCodes.add(q.materialCode);
+        const displayName = q.materialName || q.materialCode;
         options.push({
           value: q.materialCode,
-          label: q.materialCode,
-          sublabel: q.materialName,
+          label: displayName,
+          sublabel:
+            q.materialName && q.materialName !== q.materialCode
+              ? q.materialCode
+              : undefined,
           badge: 'Báo giá KH',
           badgeColor: 'emerald',
           keywords: `${q.materialCode} ${q.materialName || ''}`
@@ -285,6 +289,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         );
         return {
           ...item,
+          materialName: q?.materialName ?? item.materialName,
           priceSnapshotVnd: q ? q.priceUnitVnd : item.priceSnapshotVnd,
           packingDesc: q?.packingDesc ?? item.packingDesc,
           nettWeight: q?.nett ?? item.nettWeight
@@ -1231,12 +1236,13 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                               monoLabel
                               disabled={isLocked}
                               value={item.materialCode || ''}
+                              displayValue={item.materialName || item.materialCode || ''}
                               placeholder="-- Chọn mã vật tư --"
                               options={productOptions}
-                              onChange={(val) =>
+                              onChange={(val, opt) =>
                                 handleUpdateItem(step.id, item.id, {
                                   materialCode: val,
-                                  materialName: val
+                                  materialName: opt?.label || val
                                 })
                               }
                               emptyMessage={`Khách hàng ${revision.customer?.shortName || revision.customer?.customerId || ''} chưa có sản phẩm nào trong báo giá`}
@@ -1301,26 +1307,31 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                         />
                       </td>
 
-                      {/* Col 5: Visco */}
-                      <td className="border border-slate-200 px-1.5 py-1.5 text-center align-middle">
-                        <input
-                          type="text"
-                          disabled={isLocked}
-                          placeholder="-"
-                          value={item.visco ?? ''}
-                          onChange={(e) =>
-                            handleUpdateItem(step.id, item.id, {
-                              visco:
-                                e.target.value.trim() === ''
-                                  ? null
-                                  : Number.isNaN(Number(e.target.value))
-                                    ? (e.target.value as unknown as number)
-                                    : parseFloat(e.target.value)
-                            })
-                          }
-                          className="w-full min-w-[44px] rounded border border-slate-200 bg-white px-1 py-1 text-center text-xs text-slate-700 focus:border-blue-600 focus:outline-none"
-                        />
-                      </td>
+                      {/* Col 5: Visco (one value per step, merged via rowSpan; stored on the first item) */}
+                      {isFirstRow && (
+                        <td
+                          rowSpan={rowSpan}
+                          className="border border-slate-300 bg-slate-50/50 px-1.5 py-2 text-center align-middle"
+                        >
+                          <input
+                            type="text"
+                            disabled={isLocked}
+                            placeholder="-"
+                            value={item.visco ?? ''}
+                            onChange={(e) =>
+                              handleUpdateItem(step.id, item.id, {
+                                visco:
+                                  e.target.value.trim() === ''
+                                    ? null
+                                    : Number.isNaN(Number(e.target.value))
+                                      ? (e.target.value as unknown as number)
+                                      : parseFloat(e.target.value)
+                              })
+                            }
+                            className="w-full min-w-[44px] rounded border border-slate-200 bg-white px-1 py-1 text-center text-xs text-slate-700 focus:border-blue-600 focus:outline-none"
+                          />
+                        </td>
+                      )}
 
                       {/* Col 6: CA (g/m²) Range Input (Merged via rowSpan) */}
                       {isFirstRow && (

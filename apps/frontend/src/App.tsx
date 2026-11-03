@@ -108,6 +108,34 @@ export function App() {
     }
   }, [role, workspaceTab]);
 
+  const enrichRevisionItemNames = React.useCallback(
+    (rev: ProjectRevision, quots: QuotationItem[]): ProjectRevision => {
+      const custCode = (rev.customer?.customerId || '').trim();
+      return {
+        ...rev,
+        steps: rev.steps.map((s) => ({
+          ...s,
+          items: s.items.map((it) => {
+            const code = (it.materialCode || '').trim();
+            if (!code || (it.materialName && it.materialName.trim() !== code)) {
+              return it;
+            }
+            const matched =
+              quots.find(
+                (q) =>
+                  q.sapCustomerCode.trim() === custCode &&
+                  q.materialCode.trim() === code
+              ) ?? quots.find((q) => q.materialCode.trim() === code);
+            return matched?.materialName
+              ? { ...it, materialName: matched.materialName }
+              : it;
+          })
+        }))
+      };
+    },
+    []
+  );
+
   const loadAllData = React.useCallback(
     async (targetRevisionId?: string) => {
       setLoading(true);
@@ -141,7 +169,7 @@ export function App() {
           const rev = await apiClient
             .getRevision(role, revIdToLoad)
             .catch(() => apiClient.getRevision(role, fallbackRevId));
-          setActiveRevision(rev);
+          setActiveRevision(enrichRevisionItemNames(rev, quots));
           setAreaM2(1);
         }
       } catch (err) {
@@ -150,7 +178,7 @@ export function App() {
         setLoading(false);
       }
     },
-    [role, activeRevision?.id]
+    [role, activeRevision?.id, enrichRevisionItemNames]
   );
 
   React.useEffect(() => {
@@ -638,7 +666,9 @@ export function App() {
                                       role,
                                       latestRev.id
                                     );
-                                    setActiveRevision(loaded);
+                                    setActiveRevision(
+                                      enrichRevisionItemNames(loaded, quotations)
+                                    );
                                     setMainSection('WORKSPACE');
                                   }
                                 }}
@@ -711,7 +741,9 @@ export function App() {
                                             role,
                                             r.id
                                           );
-                                          setActiveRevision(loaded);
+                                          setActiveRevision(
+                                            enrichRevisionItemNames(loaded, quotations)
+                                          );
                                           setMainSection('WORKSPACE');
                                         }}
                                         className="px-2 py-0.5"
@@ -1013,7 +1045,7 @@ export function App() {
               role={role}
               onSelectRevision={async (revId) => {
                 const loaded = await apiClient.getRevision(role, revId);
-                setActiveRevision(loaded);
+                setActiveRevision(enrichRevisionItemNames(loaded, quotations));
                 setMainSection('WORKSPACE');
               }}
               onCreateProject={handleCreateProjectFromExplorer}

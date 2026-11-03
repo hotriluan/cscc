@@ -219,7 +219,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                         </>
                       )}
                       <td className="border border-slate-900 px-2 py-1 font-mono font-semibold">
-                        {item.materialCode}
+                        {item.materialName || item.materialCode}
                       </td>
                       <td className="border border-slate-900 px-2 py-1 text-center">
                         {item.mixingRatio}
@@ -230,7 +230,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                             rowSpan={rowSpan}
                             className="border border-slate-900 px-2 py-1 text-center"
                           >
-                            {item.visco ? `${item.visco}" DIN4` : ''}
+                            {item.visco ?? ''}
                           </td>
                           <td
                             rowSpan={rowSpan}
@@ -311,7 +311,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                           </td>
                         )}
                         <td className="border border-slate-900 px-2 py-1 font-mono">
-                          {it.materialCode}
+                          {it.materialName || it.materialCode}
                         </td>
                         <td className="border border-slate-900 px-2 py-1 text-right">
                           {formatVnd(it.priceSnapshotVnd)}

@@ -101,7 +101,7 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
             <thead>
               <tr className="bg-slate-800 text-white uppercase tracking-wider text-[11px]">
                 <th className="border border-slate-700 px-3 py-2.5 text-center w-12">#</th>
-                <th className="border border-slate-700 px-3 py-2.5 text-left">Product Code</th>
+                <th className="border border-slate-700 px-3 py-2.5 text-left">Product Name</th>
                 <th className="border border-slate-700 px-3 py-2.5 text-right">
                   Tổng CA + Loss (g/m²)
                 </th>
@@ -130,7 +130,7 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
                     {idx + 1}
                   </td>
                   <td className="border border-slate-200 px-3 py-2 font-mono font-bold text-blue-950">
-                    {item.materialCode}
+                    {item.materialName || item.materialCode}
                   </td>
                   <td className="border border-slate-200 px-3 py-2 text-right font-semibold text-slate-800">
                     {item.totalCaPlusLossGramPerM2Display.toFixed(2)} g/m²
