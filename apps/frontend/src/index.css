@@ -3,15 +3,44 @@
 @tailwind utilities;
 
 @media print {
-  .no-print {
-    display: none !important;
-  }
-  body {
-    background: #ffffff !important;
-  }
   @page {
     size: A4 landscape;
-    margin: 8mm;
+    margin: 6mm;
+  }
+
+  /* Force hide all screen-only UI */
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #root {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
   }
 }
 

@@ -13,6 +13,7 @@ import {
   Trash2,
   Lock,
   FileEdit,
+  CheckCircle2,
   X
 } from 'lucide-react';
 import {
@@ -50,7 +51,9 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [customerFilter, setCustomerFilter] = React.useState('ALL');
-  const [statusFilter, setStatusFilter] = React.useState<'ALL' | 'DRAFT' | 'LOCKED'>('ALL');
+  const [statusFilter, setStatusFilter] = React.useState<
+    'ALL' | 'DRAFT' | 'APPROVED'
+  >('ALL');
   const [showNewModal, setShowNewModal] = React.useState(false);
 
   // New Project Form State (All empty by default so user never confuses pre-filled values)
@@ -77,10 +80,12 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
       base.push({
         value: c.customerId,
         label: c.shortName,
-        sublabel: c.customerName,
+        sublabel: c.salesmanName
+          ? `${c.customerName} • Sales: ${c.salesmanName}`
+          : c.customerName,
         badge: c.customerId,
         badgeColor: c.shortName !== c.customerName ? 'emerald' : 'slate',
-        keywords: `${c.customerId} ${c.shortName} ${c.customerName}`
+        keywords: `${c.customerId} ${c.shortName} ${c.customerName} ${c.salesmanName || ''}`
       });
     }
     return base;
@@ -98,7 +103,11 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
         return false;
       }
       if (statusFilter !== 'ALL') {
-        const hasStatus = proj.revisions.some((r) => r.status === statusFilter);
+        const hasStatus = proj.revisions.some((r) =>
+          statusFilter === 'APPROVED'
+            ? r.status === 'APPROVED' || r.status === 'LOCKED'
+            : r.status === 'DRAFT'
+        );
         if (!hasStatus) return false;
       }
       if (!q) return true;
@@ -109,7 +118,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
         )
         .join(' ');
       const hay =
-        `${proj.projectCode} ${proj.customer.shortName} ${proj.customer.customerName} ${proj.customer.customerId} ${revText}`.toLowerCase();
+        `${proj.projectCode} ${proj.customer.shortName} ${proj.customer.customerName} ${proj.customer.customerId} ${proj.customer.salesmanName || ''} ${revText}`.toLowerCase();
       return hay.includes(q);
     });
   }, [projects, searchQuery, customerFilter, statusFilter]);
@@ -216,7 +225,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
 
           {/* Status Filter */}
           <div className="flex items-center gap-1.5 md:col-span-3">
-            {(['ALL', 'DRAFT', 'LOCKED'] as const).map((st) => (
+            {(['ALL', 'DRAFT', 'APPROVED'] as const).map((st) => (
               <button
                 key={st}
                 type="button"
@@ -230,8 +239,8 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                 {st === 'ALL'
                   ? `Tất cả (${projects.length})`
                   : st === 'DRAFT'
-                    ? 'Đang soạn'
-                    : '🔒 Đã khóa'}
+                    ? 'Draft (Bản nháp)'
+                    : 'Approved (Đã duyệt)'}
               </button>
             ))}
           </div>
@@ -296,6 +305,11 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                         <div className="text-[11px] text-slate-500 truncate max-w-[250px]">
                           SAP: {proj.customer.customerId} •{' '}
                           {proj.customer.customerName}
+                          {proj.customer.salesmanName && (
+                            <span className="font-semibold text-blue-700">
+                              {' '}• Sales: {proj.customer.salesmanName}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="border border-slate-200 px-3.5 py-3">
@@ -324,17 +338,18 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                         <div className="flex flex-wrap items-center gap-1.5">
                           {proj.revisions.map((r) => {
                             const isCurrent = r.id === activeRevisionId;
+                            const isApprovedOrLocked =
+                              r.status === 'APPROVED' || r.status === 'LOCKED';
                             const canDeleteRev =
-                              proj.revisions.length > 1 &&
-                              r.status !== 'LOCKED';
+                              proj.revisions.length > 1 && !isApprovedOrLocked;
                             return (
                               <div
                                 key={r.id}
                                 className={`inline-flex items-center rounded-lg border text-xs font-bold transition ${
                                   isCurrent
                                     ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-                                    : r.status === 'LOCKED'
-                                      ? 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
+                                    : isApprovedOrLocked
+                                      ? 'border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
                                       : 'border-slate-300 bg-slate-100 text-slate-800 hover:bg-blue-50 hover:border-blue-300'
                                 }`}
                               >
@@ -343,8 +358,8 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                                   onClick={() => onSelectRevision(r.id)}
                                   className="inline-flex items-center gap-1 px-2.5 py-1"
                                 >
-                                  {r.status === 'LOCKED' ? (
-                                    <Lock className="h-3 w-3" />
+                                  {isApprovedOrLocked ? (
+                                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                                   ) : (
                                     <FileEdit className="h-3 w-3 opacity-70" />
                                   )}

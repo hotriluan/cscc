@@ -128,6 +128,9 @@ export const apiClient = {
   deleteCustomer: (role: UserRole, id: string) =>
     request<{ deleted: boolean }>(`/master/customers/${id}`, role, { method: 'DELETE' }),
 
+  clearAllCustomers: (role: UserRole) =>
+    request<{ deleted: boolean; count: number }>('/master/customers', role, { method: 'DELETE' }),
+
   importCustomersFile: (role: UserRole, fileBase64: string) =>
     request<{ created: number; updated: number; skipped: number; total: number }>(
       '/master/customers/import',
@@ -174,6 +177,9 @@ export const apiClient = {
 
   deleteQuotation: (role: UserRole, id: string) =>
     request<{ deleted: boolean }>(`/master/quotations/${id}`, role, { method: 'DELETE' }),
+
+  clearAllQuotations: (role: UserRole) =>
+    request<{ deleted: boolean; count: number }>('/master/quotations', role, { method: 'DELETE' }),
 
   getStepsMaster: (role: UserRole) =>
     request<ApplicationStepMaster[]>('/master/steps', role),

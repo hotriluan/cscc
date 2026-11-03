@@ -77,6 +77,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
   const [newCustId, setNewCustId] = React.useState('');
   const [newCustShort, setNewCustShort] = React.useState('');
   const [newCustName, setNewCustName] = React.useState('');
+  const [newCustSalesman, setNewCustSalesman] = React.useState('');
   const [editingCustId, setEditingCustId] = React.useState<string | null>(null);
 
   // New Quotation Form (All empty by default)
@@ -117,7 +118,9 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
       customers.map((c) => ({
         value: c.customerId,
         label: `${c.customerId} — ${c.shortName}`,
-        sublabel: c.customerName
+        sublabel: c.salesmanName
+          ? `${c.customerName} (Sales: ${c.salesmanName})`
+          : c.customerName
       })),
     [customers]
   );
@@ -248,7 +251,8 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
         ...(editingCustId ? { id: editingCustId } : {}),
         customerId: newCustId.trim(),
         shortName: newCustShort.trim(),
-        customerName: newCustName.trim()
+        customerName: newCustName.trim(),
+        salesmanName: newCustSalesman.trim() || null
       });
     } catch (err) {
       setFormError(
@@ -266,6 +270,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
     setNewCustId('');
     setNewCustShort('');
     setNewCustName('');
+    setNewCustSalesman('');
   };
 
   const startEditCustomer = (c: Customer) => {
@@ -274,6 +279,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
     setNewCustId(c.customerId);
     setNewCustShort(c.shortName);
     setNewCustName(c.customerName);
+    setNewCustSalesman(c.salesmanName || '');
   };
 
   const handleUploadCustomerFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -301,6 +307,34 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
     } finally {
       setImporting(false);
       input.value = '';
+    }
+  };
+
+  const handleClearAllCustomers = async () => {
+    if (custTotal === 0 && customers.length === 0) {
+      setStatusMessage('Hiện tại không có dữ liệu khách hàng nào để xóa.');
+      return;
+    }
+    const confirmed = window.confirm(
+      `CẢNH BÁO: Bạn có chắc chắn muốn làm sạch toàn bộ dữ liệu Customer (${custTotal || customers.length} khách hàng)?\n\nTất cả khách hàng sẽ bị xóa khỏi cơ sở dữ liệu để bạn tải lên danh sách mới. Hành động này không thể hoàn tác.`
+    );
+    if (!confirmed) return;
+
+    setImporting(true);
+    setStatusMessage(null);
+    try {
+      const res = await apiClient.clearAllCustomers(role);
+      await onReloadMasterData();
+      await fetchCustomersPage();
+      setStatusMessage(
+        `Đã làm sạch thành công toàn bộ ${res.count} khách hàng trong database. Bạn có thể dùng nút 'Upload Customer' để tải lên danh sách mới.`
+      );
+    } catch (err) {
+      setStatusMessage(
+        `Lỗi làm sạch database customer: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -387,6 +421,34 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
     } finally {
       setImporting(false);
       input.value = '';
+    }
+  };
+
+  const handleClearAllQuotations = async () => {
+    if (quotTotal === 0 && quotations.length === 0) {
+      setStatusMessage('Hiện tại không có dữ liệu báo giá nào để xóa.');
+      return;
+    }
+    const confirmed = window.confirm(
+      `CẢNH BÁO: Bạn có chắc chắn muốn làm sạch toàn bộ dữ liệu Quotation (${quotTotal || quotations.length} dòng)?\n\nTất cả báo giá vật tư sẽ bị xóa khỏi cơ sở dữ liệu để bạn tải lên danh sách mới. Hành động này không thể hoàn tác.`
+    );
+    if (!confirmed) return;
+
+    setImporting(true);
+    setStatusMessage(null);
+    try {
+      const res = await apiClient.clearAllQuotations(role);
+      await onReloadMasterData();
+      await fetchQuotationsPage();
+      setStatusMessage(
+        `Đã làm sạch thành công toàn bộ ${res.count} báo giá vật tư trong database. Bạn có thể dùng nút 'Upload Quotation' để thêm báo giá mới.`
+      );
+    } catch (err) {
+      setStatusMessage(
+        `Lỗi làm sạch database quotation: ${err instanceof Error ? err.message : String(err)}`
+      );
+    } finally {
+      setImporting(false);
     }
   };
 
@@ -685,6 +747,16 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                disabled={importing || (custTotal === 0 && customers.length === 0)}
+                onClick={handleClearAllCustomers}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3.5 py-1.5 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40 transition"
+                title="Xóa toàn bộ khách hàng để nạp danh sách mới"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Làm sạch Database ({custTotal || customers.length})
+              </button>
+              <button
+                type="button"
                 onClick={() =>
                   apiClient.downloadTemplate(role, 'customers').catch((err) =>
                     setStatusMessage(`Lỗi tải template: ${err instanceof Error ? err.message : String(err)}`)
@@ -710,7 +782,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
           </div>
           <form
             onSubmit={handleAddCustomer}
-            className="grid grid-cols-1 gap-3 sm:grid-cols-4 bg-slate-50 p-3.5 rounded-lg border border-slate-200"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-5 bg-slate-50 p-3.5 rounded-lg border border-slate-200"
           >
             <input
               type="text"
@@ -731,6 +803,13 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
               placeholder="Customer Full Name"
               value={newCustName}
               onChange={(e) => setNewCustName(e.target.value)}
+              className="rounded border border-slate-300 px-3 py-1.5 text-xs"
+            />
+            <input
+              type="text"
+              placeholder="Salesman Name (Tùy chọn)"
+              value={newCustSalesman}
+              onChange={(e) => setNewCustSalesman(e.target.value)}
               className="rounded border border-slate-300 px-3 py-1.5 text-xs"
             />
             <div className="flex gap-1.5">
@@ -814,11 +893,14 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                   <th className="border border-slate-700 px-3 py-2 text-left w-36">
                     Customer ID
                   </th>
-                  <th className="border border-slate-700 px-3 py-2 text-left w-60">
+                  <th className="border border-slate-700 px-3 py-2 text-left w-56">
                     Short Name
                   </th>
                   <th className="border border-slate-700 px-3 py-2 text-left">
                     Customer Name
+                  </th>
+                  <th className="border border-slate-700 px-3 py-2 text-left w-48">
+                    Salesman Name
                   </th>
                   <th className="border border-slate-700 px-3 py-2 text-center w-20">
                     Sửa / Xóa
@@ -836,6 +918,15 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                     </td>
                     <td className="border border-slate-200 px-3 py-1.5 text-slate-700">
                       {c.customerName}
+                    </td>
+                    <td className="border border-slate-200 px-3 py-1.5 text-slate-700">
+                      {c.salesmanName ? (
+                        <span className="inline-flex items-center rounded bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700 border border-blue-100">
+                          {c.salesmanName}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 italic">—</span>
+                      )}
                     </td>
                     <td className="border border-slate-200 px-3 py-1.5 text-center whitespace-nowrap">
                       <button
@@ -878,6 +969,16 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 Code → cập nhật nếu có thay đổi, giữ nguyên nếu không đổi; chưa có → thêm mới.
               </span>
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={importing || (quotTotal === 0 && quotations.length === 0)}
+                  onClick={handleClearAllQuotations}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3.5 py-1.5 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40 transition"
+                  title="Xóa toàn bộ báo giá để nạp danh sách mới"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Làm sạch Database ({quotTotal || quotations.length})
+                </button>
                 <button
                   type="button"
                   onClick={() =>
@@ -1172,6 +1273,20 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                     )}
                   </tr>
                 ))}
+                {pagedQuotations.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={canEditPrice ? 6 : 5}
+                      className="border border-slate-200 py-12 text-center text-slate-400"
+                    >
+                      <Database className="mx-auto h-8 w-8 text-slate-300 mb-2" />
+                      <div className="font-semibold text-slate-600">Database Quotation đang trống</div>
+                      <div className="text-xs text-slate-400 mt-1">
+                        Chưa có dữ liệu báo giá vật tư. Hãy bấm nút <strong>Upload Quotation</strong> ở trên để nạp dữ liệu mới.
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

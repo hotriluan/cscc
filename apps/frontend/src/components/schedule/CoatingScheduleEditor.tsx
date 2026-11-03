@@ -18,6 +18,7 @@ import {
   ArrowDown,
   Copy,
   Lock,
+  CheckCircle2,
   ChevronUp,
   ChevronDown,
   ChevronLeft,
@@ -51,7 +52,8 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
   onChangeRevision,
   onQuickCreateStepMaster
 }) => {
-  const isLocked = revision.status === 'LOCKED';
+  const isLocked =
+    revision.status === 'LOCKED' || revision.status === 'APPROVED';
   const revCode = String(revision.revisionNo).padStart(2, '0');
 
   // UX/UI Scroll & Layout states
@@ -150,12 +152,14 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     const list = customers.map((c) => ({
       value: c.customerId,
       label: c.shortName,
-      sublabel: c.customerName,
+      sublabel: c.salesmanName
+        ? `${c.customerName} • Sales: ${c.salesmanName}`
+        : c.customerName,
       badge: c.customerId,
       badgeColor: (c.shortName !== c.customerName ? 'emerald' : 'slate') as
         | 'emerald'
         | 'slate',
-      keywords: `${c.customerId} ${c.shortName} ${c.customerName}`
+      keywords: `${c.customerId} ${c.shortName} ${c.customerName} ${c.salesmanName || ''}`
     }));
     // Ensure active revision customer is always present even if custom
     if (
@@ -165,10 +169,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
       list.unshift({
         value: revision.customer.customerId,
         label: revision.customer.shortName,
-        sublabel: revision.customer.customerName,
+        sublabel: revision.customer.salesmanName
+          ? `${revision.customer.customerName} • Sales: ${revision.customer.salesmanName}`
+          : revision.customer.customerName,
         badge: revision.customer.customerId,
         badgeColor: 'emerald',
-        keywords: `${revision.customer.customerId} ${revision.customer.shortName} ${revision.customer.customerName}`
+        keywords: `${revision.customer.customerId} ${revision.customer.shortName} ${revision.customer.customerName} ${revision.customer.salesmanName || ''}`
       });
     }
     return list;
@@ -245,16 +251,33 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
           : methodsMaster.find((m) => m.methodName === s.methodName)?.efficiency ??
             s.efficiencySnapshot ??
             null;
+      const stepVisco = isSanding
+        ? null
+        : s.visco !== null && s.visco !== undefined && String(s.visco).trim() !== ''
+          ? String(s.visco).trim()
+          : s.items?.[0]?.visco !== null &&
+              s.items?.[0]?.visco !== undefined &&
+              String(s.items[0].visco).trim() !== ''
+            ? String(s.items[0].visco).trim()
+            : null;
+
       return {
         ...s,
         stepOrder: idx + 1,
         stepNumber: isSanding ? null : chemNo++,
+        visco: stepVisco,
         caMin: parsedCa.caMin,
         caMax: parsedCa.caMax,
         caAvg: isSanding ? null : parsedCa.caAvg,
         efficiencySnapshot: eff,
         items: s.items.map((it, iIdx) => ({
           ...it,
+          visco:
+            it.visco !== null && it.visco !== undefined && String(it.visco).trim() !== ''
+              ? String(it.visco).trim()
+              : iIdx === 0
+                ? stepVisco
+                : it.visco ?? null,
           itemOrder: iIdx + 1
         }))
       };
@@ -314,6 +337,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
       rowType: 'CHEMICAL_STEP',
       stepName: '',
       sandingSpec: null,
+      visco: null,
       caInputRaw: '',
       caMin: null,
       caMax: null,
@@ -450,6 +474,26 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     });
   };
 
+  const handleUpdateStepVisco = (stepId: string, val: string | null) => {
+    if (isLocked) return;
+    const cleanVal = val !== null && val.trim() !== '' ? val.trim() : null;
+    const updated = revision.steps.map((step) => {
+      if (step.id !== stepId) return step;
+      return {
+        ...step,
+        visco: cleanVal,
+        items: step.items.map((it, idx) => ({
+          ...it,
+          visco: idx === 0 ? cleanVal : it.visco
+        }))
+      };
+    });
+    onChangeRevision({
+      ...revision,
+      steps: reindexSteps(updated)
+    });
+  };
+
   const handleAddItemToStep = (stepId: string) => {
     if (isLocked) return;
     const updated = revision.steps.map((step) => {
@@ -534,13 +578,13 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
   return (
     <div className="space-y-5">
       {isLocked && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
-          <Lock className="h-4 w-4 shrink-0 text-amber-600" />
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-900">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
           <span>
-            Phiên bản <strong>Rev {revCode}</strong> đã được khóa (
-            <strong>LOCKED</strong>). Để chỉnh sửa quy trình hoặc cập nhật đơn
+            Phiên bản <strong>Rev {revCode}</strong> đã được phê duyệt (
+            <strong>APPROVED</strong>). Để chỉnh sửa quy trình hoặc cập nhật đơn
             giá mới, hãy nhấn <strong>"Nhân bản sang Rev mới"</strong> trên
-            thanh công cụ.
+            thanh công cụ hoặc chuyển trạng thái về Draft.
           </span>
         </div>
       )}
@@ -561,8 +605,14 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             <span className="rounded bg-blue-600/30 border border-blue-400/40 px-2.5 py-1 font-semibold">
               SAP Cust ID: {revision.customer.customerId}
             </span>
-            <span className="rounded bg-emerald-600/30 border border-emerald-400/40 px-2.5 py-1 font-semibold">
-              Rev. {revCode} ({revision.status})
+            <span
+              className={`rounded border px-2.5 py-1 font-semibold ${
+                isLocked
+                  ? 'border-emerald-400/40 bg-emerald-600/30 text-emerald-200'
+                  : 'border-amber-400/40 bg-amber-600/30 text-amber-200'
+              }`}
+            >
+              Rev. {revCode} ({revision.status === 'LOCKED' ? 'APPROVED' : revision.status})
             </span>
             <button
               type="button"
@@ -597,6 +647,11 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 <strong className="text-slate-900">
                   {revision.customer?.shortName || '—'}
                 </strong>
+                {revision.customer?.salesmanName && (
+                  <span className="ml-1 text-slate-600">
+                    ({revision.customer.salesmanName})
+                  </span>
+                )}
               </span>
               <span>
                 <strong className="text-slate-500">Sản phẩm:</strong>{' '}
@@ -656,6 +711,11 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 />
                 <p className="mt-1 truncate text-[11px] font-medium text-slate-500">
                   {revision.customer?.customerName || 'Chưa chọn khách hàng'}
+                  {revision.customer?.salesmanName && (
+                    <span className="ml-2 font-semibold text-blue-700">
+                      • Salesman: {revision.customer.salesmanName}
+                    </span>
+                  )}
                 </p>
               </div>
 
@@ -1066,7 +1126,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                   Application Step
                 </th>
                 <th className="border border-slate-700 px-2 py-2.5 min-w-[195px] w-[25%]">
-                  Product Code
+                  Product Name
                 </th>
                 <th className="border border-slate-700 px-1.5 py-2.5 text-center w-[64px] min-w-[60px]">
                   Mixing Ratio
@@ -1227,7 +1287,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                         </td>
                       )}
 
-                      {/* Col 3: Product Code ONLY (Clean name without packing, + Contextual "Thêm vật tư" on last row) */}
+                      {/* Col 3: Product Name ONLY (Clean name without packing, + Contextual "Thêm vật tư" on last row) */}
                       <td className="border border-slate-200 px-2 py-1.5 align-middle">
                         <div className="flex items-center gap-1">
                           <div className="flex-1 min-w-[155px]">
@@ -1307,7 +1367,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                         />
                       </td>
 
-                      {/* Col 5: Visco (one value per step, merged via rowSpan; stored on the first item) */}
+                      {/* Col 5: Visco (one value per step, merged via rowSpan; stored on step and items) */}
                       {isFirstRow && (
                         <td
                           rowSpan={rowSpan}
@@ -1317,16 +1377,9 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                             type="text"
                             disabled={isLocked}
                             placeholder="-"
-                            value={item.visco ?? ''}
+                            value={step.visco ?? item.visco ?? ''}
                             onChange={(e) =>
-                              handleUpdateItem(step.id, item.id, {
-                                visco:
-                                  e.target.value.trim() === ''
-                                    ? null
-                                    : Number.isNaN(Number(e.target.value))
-                                      ? (e.target.value as unknown as number)
-                                      : parseFloat(e.target.value)
-                              })
+                              handleUpdateStepVisco(step.id, e.target.value)
                             }
                             className="w-full min-w-[44px] rounded border border-slate-200 bg-white px-1 py-1 text-center text-xs text-slate-700 focus:border-blue-600 focus:outline-none"
                           />

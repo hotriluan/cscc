@@ -7,6 +7,7 @@ import {
   PackingMapping,
   Project,
   ProjectRevision,
+  RevisionStatus,
   UserRole,
   UserAccount,
   calculateCoatingCostTable,
@@ -34,6 +35,7 @@ import {
   Copy,
   Lock,
   Unlock,
+  FileEdit,
   Download,
   Printer,
   FolderPlus,
@@ -211,7 +213,7 @@ export function App() {
         .map((r) => `${r.productName} ${r.colorName} ${r.substrate || ''}`)
         .join(' ');
       const hay =
-        `${p.projectCode} ${p.customer.shortName} ${p.customer.customerId} ${revText}`.toLowerCase();
+        `${p.projectCode} ${p.customer.shortName} ${p.customer.customerId} ${p.customer.salesmanName || ''} ${revText}`.toLowerCase();
       return hay.includes(q);
     });
   }, [projects, sidebarProjectSearch]);
@@ -280,7 +282,7 @@ export function App() {
           step.items.forEach((item, itemIdx) => {
             if (!item.materialCode?.trim()) {
               errs.push(
-                `${stepLabel} (Vật tư dòng ${itemIdx + 1}): Chưa chọn Mã vật tư (Product Code)`
+                `${stepLabel} (Vật tư dòng ${itemIdx + 1}): Chưa chọn Tên vật tư (Product Name)`
               );
             }
             if (!item.mixingRatio || item.mixingRatio <= 0) {
@@ -297,7 +299,12 @@ export function App() {
   };
 
   const handleSaveRevision = async (revToSave = activeRevision) => {
-    if (!revToSave || revToSave.status === 'LOCKED') return;
+    if (
+      !revToSave ||
+      revToSave.status === 'LOCKED' ||
+      revToSave.status === 'APPROVED'
+    )
+      return;
 
     const missingErrors = validateRevisionBeforeSave(revToSave);
     if (missingErrors.length > 0) {
@@ -341,8 +348,10 @@ export function App() {
 
   const handleToggleLock = async () => {
     if (!activeRevision) return;
-    const nextStatus = activeRevision.status === 'LOCKED' ? 'DRAFT' : 'LOCKED';
-    if (nextStatus === 'LOCKED') {
+    const isApproved =
+      activeRevision.status === 'APPROVED' || activeRevision.status === 'LOCKED';
+    const nextStatus: RevisionStatus = isApproved ? 'DRAFT' : 'APPROVED';
+    if (nextStatus === 'APPROVED') {
       const missingErrors = validateRevisionBeforeSave(activeRevision);
       if (missingErrors.length > 0) {
         setValidationErrors(missingErrors);
@@ -361,6 +370,12 @@ export function App() {
     setActiveRevision(updated);
     const projs = await apiClient.getProjects(role);
     setProjects(projs);
+    setSaveToast(
+      nextStatus === 'APPROVED'
+        ? 'Hồ sơ đã được Phê duyệt (APPROVED) & chốt dữ liệu!'
+        : 'Đã chuyển hồ sơ về trạng thái Bản nháp (DRAFT)!'
+    );
+    setTimeout(() => setSaveToast(null), 2500);
   };
 
   const handleCreateProjectFromExplorer = async (payload: {
@@ -420,7 +435,7 @@ export function App() {
   const canViewCost = role !== 'TECHNICAL';
 
   return (
-    <div className="min-h-screen flex bg-slate-100 text-slate-900">
+    <div className="min-h-screen flex bg-slate-100 text-slate-900 print:min-h-0 print:block print:bg-white">
       {/* ===================================================================
           LEFT SIDEBAR (COLLAPSIBLE / SHOW-HIDE FULL SIDEBAR + SUB-SECTIONS)
          =================================================================== */}
@@ -722,9 +737,12 @@ export function App() {
                               <div className="flex flex-wrap gap-1 border-t border-slate-800/80 px-2.5 py-2 bg-slate-950/50 rounded-b-lg">
                                 {proj.revisions.map((r) => {
                                   const isSelected = activeRevision?.id === r.id;
+                                  const isApproved =
+                                    r.status === 'APPROVED' ||
+                                    r.status === 'LOCKED';
                                   const canDeleteRev =
                                     proj.revisions.length > 1 &&
-                                    r.status !== 'LOCKED';
+                                    !isApproved;
                                   return (
                                     <div
                                       key={r.id}
@@ -749,7 +767,11 @@ export function App() {
                                         className="px-2 py-0.5"
                                       >
                                         Rev {String(r.revisionNo).padStart(2, '0')}
-                                        {r.status === 'LOCKED' ? ' 🔒' : ''}
+                                        {r.status === 'APPROVED'
+                                          ? ' ✅'
+                                          : r.status === 'LOCKED'
+                                            ? ' 🔒'
+                                            : ''}
                                       </button>
                                       {canDeleteRev && (
                                         <button
@@ -832,7 +854,7 @@ export function App() {
       {/* ===================================================================
           MAIN WORKSPACE AREA
          =================================================================== */}
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="no-print flex-1 flex flex-col min-w-0">
         {/* Top Action Header */}
         <header className="no-print sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-6 py-3 shadow-sm">
           {mainSection === 'WORKSPACE' && activeRevision ? (
@@ -919,7 +941,11 @@ export function App() {
 
                 <button
                   type="button"
-                  disabled={saving || activeRevision.status === 'LOCKED'}
+                  disabled={
+                    saving ||
+                    activeRevision.status === 'LOCKED' ||
+                    activeRevision.status === 'APPROVED'
+                  }
                   onClick={() => handleSaveRevision(activeRevision)}
                   className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 shadow-sm"
                 >
@@ -940,20 +966,22 @@ export function App() {
                   type="button"
                   onClick={handleToggleLock}
                   className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                    activeRevision.status === 'APPROVED' ||
                     activeRevision.status === 'LOCKED'
-                      ? 'border-amber-400 bg-amber-50 text-amber-900'
+                      ? 'border-emerald-500 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
                       : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  {activeRevision.status === 'LOCKED' ? (
+                  {activeRevision.status === 'APPROVED' ||
+                  activeRevision.status === 'LOCKED' ? (
                     <>
-                      <Unlock className="h-3.5 w-3.5 text-amber-600" />
-                      Mở khóa Rev
+                      <FileEdit className="h-3.5 w-3.5 text-emerald-600" />
+                      Đã duyệt (Approved) - Về Draft
                     </>
                   ) : (
                     <>
-                      <Lock className="h-3.5 w-3.5 text-slate-600" />
-                      Khóa & Chốt giá
+                      <CheckCircle2 className="h-3.5 w-3.5 text-slate-600" />
+                      Phê duyệt (Approve)
                     </>
                   )}
                 </button>
@@ -1137,6 +1165,7 @@ export function App() {
           revision={activeRevision}
           costSummary={liveCostSummary}
           role={role}
+          initialMode={workspaceTab === 'CC' ? 'CC' : 'CS'}
           onClose={() => setShowPrintModal(false)}
         />
       )}

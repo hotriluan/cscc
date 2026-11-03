@@ -135,7 +135,7 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-xs">
+    <div className="no-print fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-xs">
       <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between bg-slate-900 px-6 py-4 text-white">

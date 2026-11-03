@@ -175,7 +175,7 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
                   Item
                 </th>
                 <th className="border border-emerald-700 px-2.5 py-2.5 text-left min-w-[175px]">
-                  Product type
+                  Product Name
                 </th>
                 <th className="border border-emerald-700 px-2 py-2.5 text-right min-w-[85px]">
                   Price (VND/Ltr)
@@ -227,7 +227,7 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
                         </td>
                       )}
 
-                      {/* Col 2: Product type (Clean materialName / description — no packing info) */}
+                      {/* Col 2: Product Name (Clean materialName / description — no packing info) */}
                       <td className="border border-slate-200 px-2.5 py-1.5 font-mono font-semibold text-slate-900">
                         {item.materialName || item.materialCode}
                       </td>
