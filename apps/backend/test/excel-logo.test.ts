@@ -73,5 +73,57 @@ describe('Excel Export Logo Verification', () => {
     const ccSheet = workbook.getWorksheet('CC');
     assert.strictEqual(ccSheet, undefined, 'CC sheet should not exist for TECHNICAL');
   });
+
+  it('renders product name (description) instead of SAP product code in CS and CC sheets', async () => {
+    const revWithItem: ProjectRevision = {
+      ...sampleRevision,
+      steps: [
+        {
+          id: 'step-1',
+          stepOrder: 1,
+          stepNumber: 1,
+          rowType: 'CHEMICAL_STEP',
+          stepName: 'CHỐNG XÌ DẦU',
+          sandingSpec: null,
+          caInputRaw: '100-120',
+          caMin: 100,
+          caMax: 120,
+          caAvg: 110,
+          methodName: 'SPRAY',
+          efficiencySnapshot: 0.6,
+          dryingTime: '45',
+          stepRemark: null,
+          items: [
+            {
+              id: 'item-1',
+              stepId: 'step-1',
+              itemOrder: 1,
+              materialCode: '100006668',
+              materialName: 'PSV-76000 SB HC MY VN',
+              packingDesc: '18KJ',
+              nettWeight: 18,
+              mixingRatio: 100,
+              visco: null,
+              priceSnapshotVnd: 543000
+            }
+          ]
+        }
+      ]
+    };
+
+    const buffer = await generateRevisionWorkbook(revWithItem, 'PROJECT_LEADER', 1);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+
+    const csSheet = workbook.getWorksheet('CS')!;
+    assert.strictEqual(csSheet.getCell('C8').value, 'PSV-76000 SB HC MY VN');
+
+    const ccSheet = workbook.getWorksheet('CC')!;
+    assert.strictEqual(ccSheet.getCell('B7').value, 'PSV-76000 SB HC MY VN');
+
+    const bomSheet = workbook.getWorksheet('BOM Summary')!;
+    assert.strictEqual(bomSheet.getCell('A3').value, 'Product Name');
+    assert.strictEqual(bomSheet.getCell('A4').value, 'PSV-76000 SB HC MY VN');
+  });
 });
 

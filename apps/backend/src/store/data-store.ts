@@ -1540,6 +1540,45 @@ class PostgresDataStore {
 
     if (!r) return null;
 
+    const mappedSteps = r.steps.map(mapStepDto);
+    const codesNeedingName = Array.from(
+      new Set(
+        mappedSteps
+          .flatMap((s) => s.items)
+          .filter(
+            (it) =>
+              it.materialCode &&
+              (!it.materialName || it.materialName.trim() === it.materialCode.trim())
+          )
+          .map((it) => it.materialCode.trim())
+      )
+    );
+
+    if (codesNeedingName.length > 0) {
+      const customerCode = r.project.customer.customerId;
+      const quots = await prisma.quotationItem.findMany({
+        where: {
+          OR: [
+            { sapCustomerCode: customerCode, materialCode: { in: codesNeedingName } },
+            { materialCode: { in: codesNeedingName } }
+          ]
+        }
+      });
+      const quotByKey = new Map(quots.map((q) => [q.custProductKey, q]));
+      const quotByCode = new Map(quots.map((q) => [q.materialCode, q]));
+      for (const s of mappedSteps) {
+        for (const it of s.items) {
+          const code = (it.materialCode || '').trim();
+          if (code && (!it.materialName || it.materialName.trim() === code)) {
+            const q = quotByKey.get(`${customerCode}${code}`) ?? quotByCode.get(code);
+            if (q?.materialName) {
+              it.materialName = q.materialName;
+            }
+          }
+        }
+      }
+    }
+
     return {
       id: r.id,
       projectId: r.projectId,
@@ -1566,7 +1605,7 @@ class PostgresDataStore {
       checkedByLeader: r.checkedByLeader,
       approvedByPdPm: r.approvedByPdPm,
       customerConfirmName: r.customerConfirmName,
-      steps: r.steps.map(mapStepDto),
+      steps: mappedSteps,
       createdAt: r.createdAt.toISOString(),
       updatedAt: r.updatedAt.toISOString()
     };
@@ -1905,7 +1944,12 @@ class PostgresDataStore {
               stepId,
               itemOrder: itemIdx + 1,
               materialCode: code,
-              materialName: item.materialName || quot?.materialName || '',
+              materialName:
+                (item.materialName && item.materialName.trim() !== code
+                  ? item.materialName
+                  : quot?.materialName) ||
+                item.materialName ||
+                '',
               packingDesc: item.packingDesc ?? quot?.packingDesc ?? null,
               nettWeight: item.nettWeight ?? quot?.nett ?? null,
               mixingRatio: Number(item.mixingRatio) || 0,

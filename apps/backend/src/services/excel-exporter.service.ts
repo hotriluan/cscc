@@ -171,7 +171,7 @@ export async function generateRevisionWorkbook(
         row.getCell(8).value = step.dryingTime ?? '';
       }
       if (item) {
-        row.getCell(3).value = item.materialCode;
+        row.getCell(3).value = item.materialName || item.materialCode;
         row.getCell(4).value = item.mixingRatio;
       }
     });
@@ -306,7 +306,7 @@ export async function generateRevisionWorkbook(
       stepCalc.items.forEach((item, idx) => {
         const rNum = startRow + idx;
         const row = ccSheet.getRow(rNum);
-        row.getCell(2).value = item.materialCode;
+        row.getCell(2).value = item.materialName || item.materialCode;
         row.getCell(3).value = item.priceSnapshotVnd;
         row.getCell(3).numFmt = '#,##0';
         row.getCell(4).value = item.mixingRatio;
@@ -399,19 +399,27 @@ export async function generateRevisionWorkbook(
   const bomSheet = workbook.addWorksheet('BOM Summary');
   const bomSummary = calculateBomSummary(revision.id, effectiveArea, revision.steps, role);
 
+  bomSheet.columns = [
+    { key: 'materialName', width: 36 },
+    { key: 'totalCaPlusLoss', width: 22 },
+    { key: 'requiredQty', width: 22 },
+    { key: 'unitPrice', width: 18 },
+    { key: 'totalCost', width: 20 }
+  ];
+
   bomSheet.getCell('A1').value = `BOM SUMMARY — Project: ${revision.projectCode} (Area: ${effectiveArea} m²)`;
   bomSheet.getCell('A1').font = { bold: true, size: 13 };
-  bomSheet.mergeCells('A1:D1');
+  bomSheet.mergeCells(role === 'TECHNICAL' ? 'A1:C1' : 'A1:E1');
 
   const bomHeaders =
     role === 'TECHNICAL'
       ? [
-          'Product Code',
+          'Product Name',
           'Total CA+Loss (g/m²)',
           'Required Qty (Kg/Ltr)'
         ]
       : [
-          'Product Code',
+          'Product Name',
           'Total CA+Loss (g/m²)',
           'Required Qty (Kg/Ltr)',
           'Unit Price (VND)',
@@ -428,7 +436,7 @@ export async function generateRevisionWorkbook(
 
   bomSummary.items.forEach((item, idx) => {
     const r = bomSheet.getRow(4 + idx);
-    r.getCell(1).value = item.materialCode;
+    r.getCell(1).value = item.materialName || item.materialCode;
     r.getCell(2).value = item.totalCaPlusLossGramPerM2Display;
     r.getCell(3).value = item.totalRequiredKgOrLtrDisplay;
     if (role !== 'TECHNICAL') {
