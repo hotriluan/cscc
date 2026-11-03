@@ -30,6 +30,7 @@ export interface Customer {
   customerId: string;   // SAP Customer ID, e.g., "1200001169"
   shortName: string;    // e.g., "NITORI-HO CHI MINH"
   customerName: string; // e.g., "DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM"
+  salesmanName?: string | null; // e.g., "Nguyễn Văn A"
 }
 
 export interface PackingMapping {
@@ -76,7 +77,7 @@ export interface ScheduleStepItem {
   packingDesc?: string | null;
   nettWeight?: number | null;
   mixingRatio: number;
-  visco?: number | null;
+  visco?: string | number | null;
   priceSnapshotVnd: number | null; // Null when redacted for TECHNICAL role
 }
 
@@ -87,6 +88,7 @@ export interface ScheduleStep {
   rowType: StepRowType;
   stepName: string;
   sandingSpec?: string | null;
+  visco?: string | number | null; // Step-level viscosity specification (e.g., "12-14", "40-60 DIN4")
   caInputRaw?: string | null; // e.g., "100-120"
   caMin?: number | null;
   caMax?: number | null;
