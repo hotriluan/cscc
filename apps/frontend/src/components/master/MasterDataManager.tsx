@@ -29,6 +29,13 @@ import {
   X
 } from 'lucide-react';
 
+export type MasterSubTab =
+  | 'CUSTOMERS'
+  | 'QUOTATIONS'
+  | 'STEPS'
+  | 'METHODS'
+  | 'PACKINGS';
+
 interface MasterDataManagerProps {
   role: UserRole;
   customers: Customer[];
@@ -36,6 +43,8 @@ interface MasterDataManagerProps {
   stepsMaster: ApplicationStepMaster[];
   methodsMaster: ApplicationMethod[];
   packingsMaster: PackingMapping[];
+  activeSubTab?: MasterSubTab;
+  onChangeSubTab?: (tab: MasterSubTab) => void;
   onReloadMasterData: () => Promise<void>;
 }
 
@@ -46,11 +55,23 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
   stepsMaster,
   methodsMaster,
   packingsMaster,
+  activeSubTab,
+  onChangeSubTab,
   onReloadMasterData
 }) => {
-  const [subTab, setSubTab] = React.useState<
-    'CUSTOMERS' | 'QUOTATIONS' | 'STEPS' | 'METHODS' | 'PACKINGS'
-  >('CUSTOMERS');
+  const [internalSubTab, setInternalSubTab] = React.useState<MasterSubTab>(
+    activeSubTab || 'CUSTOMERS'
+  );
+
+  const subTab = activeSubTab ?? internalSubTab;
+
+  const handleSelectSubTab = React.useCallback(
+    (tab: MasterSubTab) => {
+      setInternalSubTab(tab);
+      onChangeSubTab?.(tab);
+    },
+    [onChangeSubTab]
+  );
   const [searchQuery, setSearchQuery] = React.useState('');
   const [debouncedQuery, setDebouncedQuery] = React.useState('');
   const [importing, setImporting] = React.useState(false);
@@ -650,12 +671,11 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setSubTab('CUSTOMERS')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${
-                subTab === 'CUSTOMERS'
+              onClick={() => handleSelectSubTab('CUSTOMERS')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${subTab === 'CUSTOMERS'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+                }`}
             >
               <Users className="h-3.5 w-3.5" />
               Customer ({custTotal || customers.length})
@@ -663,12 +683,11 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
 
             <button
               type="button"
-              onClick={() => setSubTab('QUOTATIONS')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${
-                subTab === 'QUOTATIONS'
+              onClick={() => handleSelectSubTab('QUOTATIONS')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${subTab === 'QUOTATIONS'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+                }`}
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
               Quotation ({quotTotal || quotations.length})
@@ -676,12 +695,11 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
 
             <button
               type="button"
-              onClick={() => setSubTab('STEPS')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${
-                subTab === 'STEPS'
+              onClick={() => handleSelectSubTab('STEPS')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${subTab === 'STEPS'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+                }`}
             >
               <ListChecks className="h-3.5 w-3.5" />
               Application Step ({stepsMaster.length})
@@ -689,12 +707,11 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
 
             <button
               type="button"
-              onClick={() => setSubTab('METHODS')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${
-                subTab === 'METHODS'
+              onClick={() => handleSelectSubTab('METHODS')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${subTab === 'METHODS'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+                }`}
             >
               <Gauge className="h-3.5 w-3.5" />
               App-method ({methodsMaster.length})
@@ -702,12 +719,11 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
 
             <button
               type="button"
-              onClick={() => setSubTab('PACKINGS')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${
-                subTab === 'PACKINGS'
+              onClick={() => handleSelectSubTab('PACKINGS')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${subTab === 'PACKINGS'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
+                }`}
             >
               <Package className="h-3.5 w-3.5" />
               Packing Mapping ({packingsMaster.length})

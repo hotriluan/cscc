@@ -19,7 +19,7 @@ import { apiClient, getStoredAuthToken, setStoredAuthToken } from './api/client'
 import { CoatingScheduleEditor } from './components/schedule/CoatingScheduleEditor';
 import { CoatingCostTable } from './components/cost/CoatingCostTable';
 import { BomSummaryView } from './components/bom/BomSummaryView';
-import { MasterDataManager } from './components/master/MasterDataManager';
+import { MasterDataManager, MasterSubTab } from './components/master/MasterDataManager';
 import { ProjectExplorerView } from './components/projects/ProjectExplorerView';
 import { PrintableSheetA4 } from './components/print/PrintableSheetA4';
 import { UserAuthModal } from './components/auth/UserAuthModal';
@@ -52,14 +52,96 @@ import {
   LogIn
 } from 'lucide-react';
 
+export type MainSection = 'WORKSPACE' | 'PROJECTS' | 'MASTER_DATA';
+export type WorkspaceTab = 'CS' | 'CC' | 'BOM';
+
+interface NavState {
+  section: MainSection;
+  tab: WorkspaceTab;
+  subTab: MasterSubTab;
+  revId: string | null;
+}
+
+const NAV_STATE_KEY = 'cscc_nav_state';
+
+function parseNavState(): NavState {
+  let section: MainSection = 'WORKSPACE';
+  let tab: WorkspaceTab = 'CS';
+  let subTab: MasterSubTab = 'CUSTOMERS';
+  let revId: string | null = null;
+
+  // 1. URL search params have highest priority
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const pSection = params.get('section')?.toUpperCase();
+    if (pSection === 'WORKSPACE' || pSection === 'PROJECTS' || pSection === 'MASTER_DATA') {
+      section = pSection;
+    }
+    const pTab = params.get('tab')?.toUpperCase();
+    if (pTab === 'CS' || pTab === 'CC' || pTab === 'BOM') {
+      tab = pTab;
+    }
+    const pSubTab = params.get('subTab')?.toUpperCase();
+    if (
+      pSubTab === 'CUSTOMERS' ||
+      pSubTab === 'QUOTATIONS' ||
+      pSubTab === 'STEPS' ||
+      pSubTab === 'METHODS' ||
+      pSubTab === 'PACKINGS'
+    ) {
+      subTab = pSubTab;
+    }
+    const pRev = params.get('rev');
+    if (pRev) {
+      revId = pRev;
+    }
+  } catch (err) {
+    console.error('Failed to parse URL search params:', err);
+  }
+
+  // 2. Fall back to localStorage for any missing fields if no URL params were present
+  try {
+    const storedRaw = localStorage.getItem(NAV_STATE_KEY);
+    if (storedRaw) {
+      const stored = JSON.parse(storedRaw);
+      const hasUrlParams = window.location.search && window.location.search.length > 1;
+      if (!hasUrlParams) {
+        if (stored.section === 'WORKSPACE' || stored.section === 'PROJECTS' || stored.section === 'MASTER_DATA') {
+          section = stored.section;
+        }
+        if (stored.tab === 'CS' || stored.tab === 'CC' || stored.tab === 'BOM') {
+          tab = stored.tab;
+        }
+        if (
+          stored.subTab === 'CUSTOMERS' ||
+          stored.subTab === 'QUOTATIONS' ||
+          stored.subTab === 'STEPS' ||
+          stored.subTab === 'METHODS' ||
+          stored.subTab === 'PACKINGS'
+        ) {
+          subTab = stored.subTab;
+        }
+        if (typeof stored.revId === 'string' && stored.revId) {
+          revId = stored.revId;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to parse localStorage nav state:', err);
+  }
+
+  return { section, tab, subTab, revId };
+}
+
 export function App() {
+  const initialNav = React.useMemo(() => parseNavState(), []);
+
   const [role, setRole] = React.useState<UserRole>('PROJECT_LEADER');
   const [currentUser, setCurrentUser] = React.useState<UserAccount | null>(null);
   const [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
-  const [mainSection, setMainSection] = React.useState<
-    'WORKSPACE' | 'PROJECTS' | 'MASTER_DATA'
-  >('WORKSPACE');
-  const [workspaceTab, setWorkspaceTab] = React.useState<'CS' | 'CC' | 'BOM'>('CS');
+  const [mainSection, setMainSection] = React.useState<MainSection>(initialNav.section);
+  const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>(initialNav.tab);
+  const [masterSubTab, setMasterSubTab] = React.useState<MasterSubTab>(initialNav.subTab);
 
   // Toggle states for Sidebar & internal Sidebar sections
   const [isSidebarOpen, setIsSidebarOpen] = React.useState<boolean>(true);
@@ -110,6 +192,44 @@ export function App() {
     }
   }, [role, workspaceTab]);
 
+  // Keep URL search params and localStorage in sync with user navigation
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(
+        NAV_STATE_KEY,
+        JSON.stringify({
+          section: mainSection,
+          tab: workspaceTab,
+          subTab: masterSubTab,
+          revId: activeRevision?.id || null
+        })
+      );
+    } catch {
+      // ignore storage errors
+    }
+
+    try {
+      const params = new URLSearchParams();
+      params.set('section', mainSection);
+      if (mainSection === 'WORKSPACE') {
+        params.set('tab', workspaceTab);
+        if (activeRevision?.id) {
+          params.set('rev', activeRevision.id);
+        }
+      } else if (mainSection === 'MASTER_DATA') {
+        params.set('subTab', masterSubTab);
+      }
+
+      const newQuery = params.toString();
+      const currentQuery = window.location.search.replace(/^\?/, '');
+      if (newQuery !== currentQuery) {
+        window.history.replaceState(null, '', `${window.location.pathname}?${newQuery}`);
+      }
+    } catch (err) {
+      console.error('Failed to sync nav state to URL:', err);
+    }
+  }, [mainSection, workspaceTab, masterSubTab, activeRevision?.id]);
+
   const enrichRevisionItemNames = React.useCallback(
     (rev: ProjectRevision, quots: QuotationItem[]): ProjectRevision => {
       const custCode = (rev.customer?.customerId || '').trim();
@@ -138,9 +258,29 @@ export function App() {
     []
   );
 
+  // Handle browser Back / Forward buttons (popstate)
+  React.useEffect(() => {
+    const handlePopState = () => {
+      const nav = parseNavState();
+      setMainSection(nav.section);
+      setWorkspaceTab(nav.tab);
+      setMasterSubTab(nav.subTab);
+      if (nav.revId && nav.revId !== activeRevision?.id) {
+        apiClient
+          .getRevision(role, nav.revId)
+          .then((rev) => setActiveRevision(enrichRevisionItemNames(rev, quotations)))
+          .catch(() => {});
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [role, quotations, enrichRevisionItemNames, activeRevision?.id]);
+
   const loadAllData = React.useCallback(
-    async (targetRevisionId?: string) => {
-      setLoading(true);
+    async (targetRevisionId?: string, isInitial = false) => {
+      if (isInitial) {
+        setLoading(true);
+      }
       try {
         const [custs, quots, steps, methods, packings, projs] = await Promise.all([
           apiClient.getCustomers(role),
@@ -165,14 +305,14 @@ export function App() {
           'rev-ntr001-00';
 
         const revIdToLoad =
-          targetRevisionId || activeRevision?.id || fallbackRevId;
+          targetRevisionId || activeRevision?.id || initialNav.revId || fallbackRevId;
 
         if (revIdToLoad) {
           const rev = await apiClient
             .getRevision(role, revIdToLoad)
             .catch(() => apiClient.getRevision(role, fallbackRevId));
           setActiveRevision(enrichRevisionItemNames(rev, quots));
-          setAreaM2(1);
+          setAreaM2(rev.defaultAreaM2 && rev.defaultAreaM2 > 0 ? rev.defaultAreaM2 : 1);
         }
       } catch (err) {
         console.error('Failed to load initial data:', err);
@@ -180,11 +320,30 @@ export function App() {
         setLoading(false);
       }
     },
-    [role, activeRevision?.id, enrichRevisionItemNames]
+    [role, activeRevision?.id, enrichRevisionItemNames, initialNav.revId]
   );
 
+  const reloadMasterData = React.useCallback(async () => {
+    try {
+      const [custs, quots, steps, methods, packings] = await Promise.all([
+        apiClient.getCustomers(role),
+        apiClient.getQuotations(role, '', '', 10000),
+        apiClient.getStepsMaster(role),
+        apiClient.getMethodsMaster(role),
+        apiClient.getPackingsMaster(role)
+      ]);
+      setCustomers(custs);
+      setQuotations(quots);
+      setStepsMaster(steps);
+      setMethodsMaster(methods);
+      setPackingsMaster(packings);
+    } catch (err) {
+      console.error('Failed to reload master data:', err);
+    }
+  }, [role]);
+
   React.useEffect(() => {
-    loadAllData();
+    loadAllData(undefined, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [role]);
 
@@ -1088,7 +1247,9 @@ export function App() {
               stepsMaster={stepsMaster}
               methodsMaster={methodsMaster}
               packingsMaster={packingsMaster}
-              onReloadMasterData={() => loadAllData()}
+              activeSubTab={masterSubTab}
+              onChangeSubTab={setMasterSubTab}
+              onReloadMasterData={reloadMasterData}
             />
           ) : activeRevision ? (
             <>
