@@ -167,6 +167,8 @@ describe('Shared Calculation Engine (@cscc/shared)', () => {
   it('groups identical products in BOM Summary and calculates required Kg/Ltr and rounded Packs', () => {
     const bom = calculateBomSummary('rev-ntr001-00', 100, goldenSteps, 'PROJECT_LEADER');
     assert.equal(bom.items.length, 2);
+    assert.equal(bom.items[0].materialName, 'PROSEAL WOOD FILLER SB HICKORY BROWN,20K');
+    assert.equal(bom.items[1].materialName, 'PU THINNER STANDARD TYPE 01, 16K');
     assert.ok(bom.items[0].packsToOrderRounded > 0);
     assert.ok(bom.totalProjectMaterialCostDisplay! > 0);
   });

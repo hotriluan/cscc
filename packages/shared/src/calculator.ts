@@ -262,12 +262,15 @@ export function calculateBomSummary(
       if (existing) {
         if (stepCalc.stepNumber !== null) existing.stepNumbers.add(stepCalc.stepNumber);
         existing.totalCaPlusLossGramPerM2Raw += componentCaPlusLossRaw;
+        if ((!existing.materialName || existing.materialName === code) && item.materialName) {
+          existing.materialName = item.materialName;
+        }
       } else {
         const set = new Set<number>();
         if (stepCalc.stepNumber !== null) set.add(stepCalc.stepNumber);
         grouped.set(code, {
           materialCode: code,
-          materialName: item.materialName,
+          materialName: item.materialName || code,
           packingDesc: item.packingDesc ?? '20 Kg',
           nettWeight: item.nettWeight > 0 ? item.nettWeight : 20,
           stepNumbers: set,
