@@ -165,7 +165,7 @@ export function createApp() {
 
   app.post('/api/master/customers', async (req, res) => {
     try {
-      const { customerId, shortName, customerName } = req.body;
+      const { customerId, shortName, customerName, salesmanName } = req.body;
       if (!customerId || !customerName) {
         res.status(400).json({ error: 'customerId and customerName are required' });
         return;
@@ -173,7 +173,13 @@ export function createApp() {
       const { customer, created } = await dataStore.upsertCustomer({
         customerId: String(customerId),
         shortName: shortName ? String(shortName) : undefined,
-        customerName: String(customerName)
+        customerName: String(customerName),
+        salesmanName:
+          salesmanName !== undefined
+            ? salesmanName
+              ? String(salesmanName)
+              : null
+            : undefined
       });
       res.status(created ? 201 : 200).json(customer);
     } catch (err) {
@@ -188,9 +194,19 @@ export function createApp() {
       const workbook = new ExcelJS.Workbook();
       if (type === 'customers') {
         const sheet = workbook.addWorksheet('Customer');
-        sheet.addRow(['Short Name', 'Customer ID', 'Customer Name']);
-        sheet.addRow(['NITORI-HO CHI MINH', '1200001169', 'DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM']);
-        sheet.columns = [{ width: 28 }, { width: 16 }, { width: 50 }];
+        sheet.addRow(['Short Name', 'Customer ID', 'Customer Name', 'Salesman Name']);
+        sheet.addRow([
+          'NITORI-HO CHI MINH',
+          '1200001169',
+          'DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM',
+          'Nguyễn Văn A'
+        ]);
+        sheet.columns = [
+          { width: 28 },
+          { width: 16 },
+          { width: 50 },
+          { width: 24 }
+        ];
         sheet.getColumn(2).numFmt = '@';
       } else if (type === 'quotations') {
         const sheet = workbook.addWorksheet('quotation');
@@ -268,6 +284,15 @@ export function createApp() {
         return;
       }
       res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.delete('/api/master/customers', async (_req, res) => {
+    try {
+      const count = await dataStore.clearAllCustomers();
+      res.json({ deleted: true, count });
     } catch (err) {
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
@@ -379,6 +404,15 @@ export function createApp() {
         return;
       }
       res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.delete('/api/master/quotations', requireCostAccessMiddleware, async (_req, res) => {
+    try {
+      const count = await dataStore.clearAllQuotations();
+      res.json({ deleted: true, count });
     } catch (err) {
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
@@ -753,7 +787,7 @@ export function createApp() {
   // Update Revision Status (`DRAFT` | `APPROVED` | `LOCKED`)
   app.patch('/api/revisions/:id/status', async (req, res) => {
     try {
-      const status = String(req.body.status || 'LOCKED').toUpperCase() as RevisionStatus;
+      const status = String(req.body.status || 'APPROVED').toUpperCase() as RevisionStatus;
       const updated = await updateRevisionStatus(req.params.id, status);
       res.json(redactRevisionForRole(updated, req.userRole));
     } catch (err) {

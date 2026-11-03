@@ -17,6 +17,8 @@
     "db:migrate": "npm --workspace @cscc/backend run db:migrate",
     "db:seed": "npm --workspace @cscc/backend run db:seed",
     "db:reset": "npm --workspace @cscc/backend run db:reset",
+    "db:clean-customers": "npm --workspace @cscc/backend run db:clean-customers",
+    "db:clean-quotations": "npm --workspace @cscc/backend run db:clean-quotations",
     "db:studio": "npm --workspace @cscc/backend run db:studio"
   },
   "devDependencies": {

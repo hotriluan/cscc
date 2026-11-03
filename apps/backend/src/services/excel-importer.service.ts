@@ -72,21 +72,29 @@ export async function importMasterDataFromExcel(
       const shortRaw = cellToString(row.getCell(1).value);
       const customerId = cellToString(row.getCell(2).value);
       const customerName = cellToString(row.getCell(3).value);
+      const salesmanRaw = cellToString(row.getCell(4).value);
       if (!customerId || !customerName) return;
 
       const isNumericShort = /^\d+$/.test(shortRaw);
+      const salesmanName = salesmanRaw ? salesmanRaw.trim() : null;
       const existing = customerMap.get(customerId);
       if (!existing) {
         customerMap.set(customerId, {
           id: `cust-${customerId}`,
           customerId,
           shortName: isNumericShort ? customerName : shortRaw || customerName,
-          customerName
+          customerName,
+          salesmanName
         });
-      } else if (!isNumericShort && shortRaw) {
-        // Override numeric row index with explicit short name (e.g., "NITORI-HO CHI MINH")
-        existing.shortName = shortRaw;
+      } else {
+        if (!isNumericShort && shortRaw) {
+          // Override numeric row index with explicit short name (e.g., "NITORI-HO CHI MINH")
+          existing.shortName = shortRaw;
+        }
         existing.customerName = customerName;
+        if (salesmanName) {
+          existing.salesmanName = salesmanName;
+        }
       }
     });
   }
@@ -265,7 +273,7 @@ export function buildGoldenDatasetNtr001(master: ImportedMasterData): {
     materialCode: string,
     fallbackName: string,
     mixingRatio: number,
-    visco: number | null,
+    visco: string | number | null,
     fallbackPrice: number
   ) => {
     const q = findQuot(materialCode);
@@ -278,7 +286,7 @@ export function buildGoldenDatasetNtr001(master: ImportedMasterData): {
       packingDesc: q?.packingDesc ?? null,
       nettWeight: q?.nett ?? null,
       mixingRatio,
-      visco,
+      visco: visco !== null && visco !== undefined ? String(visco) : null,
       priceSnapshotVnd: q?.priceUnitVnd ?? fallbackPrice
     };
   };
@@ -312,7 +320,7 @@ export function buildGoldenDatasetNtr001(master: ImportedMasterData): {
       code: string;
       name: string;
       ratio: number;
-      visco: number | null;
+      visco: string | number | null;
       price: number;
     }>
   ): ScheduleStep => {
@@ -321,6 +329,7 @@ export function buildGoldenDatasetNtr001(master: ImportedMasterData): {
     const eff =
       master.applicationMethods.find((m) => m.methodName === methodName)?.efficiency ??
       (methodName === 'WIPING' ? 0.35 : 0.6);
+    const stepVisco = rawItems[0]?.visco !== null && rawItems[0]?.visco !== undefined ? String(rawItems[0].visco) : null;
 
     return {
       id: stepId,
@@ -329,6 +338,7 @@ export function buildGoldenDatasetNtr001(master: ImportedMasterData): {
       rowType: 'CHEMICAL_STEP',
       stepName,
       sandingSpec: null,
+      visco: stepVisco,
       caInputRaw,
       caMin: parsedCa.caMin,
       caMax: parsedCa.caMax,
@@ -344,40 +354,40 @@ export function buildGoldenDatasetNtr001(master: ImportedMasterData): {
   };
 
   // Clean 5-item block matching the exact CS & CC reference screenshots (PSV: 10, 10, 60; THPU: 20, 20)
-  const makeStandardFiveItems = (viscoVal: number | null = null) => [
+  const makeStandardFiveItems = (viscoVal: string | number | null = null) => [
     {
       code: 'PSV-76000 SB HC MY VN',
       name: 'PSV-76000 SB HC MY VN',
       ratio: 10,
-      visco: viscoVal,
+      visco: viscoVal !== null && viscoVal !== undefined ? String(viscoVal) : null,
       price: 543000
     },
     {
       code: 'PSV-76000 SB HC MY VN',
       name: 'PSV-76000 SB HC MY VN',
       ratio: 10,
-      visco: null as number | null,
+      visco: null as string | null,
       price: 543000
     },
     {
       code: 'PSV-76000 SB HC MY VN',
       name: 'PSV-76000 SB HC MY VN',
       ratio: 60,
-      visco: null as number | null,
+      visco: null as string | null,
       price: 543000
     },
     {
       code: 'THPU-71306 01 KD VN',
       name: 'THPU-71306 01 KD VN',
       ratio: 20,
-      visco: null as number | null,
+      visco: null as string | null,
       price: 52000
     },
     {
       code: 'THPU-71306 01 KD VN',
       name: 'THPU-71306 01 KD VN',
       ratio: 20,
-      visco: null as number | null,
+      visco: null as string | null,
       price: 52000
     }
   ];

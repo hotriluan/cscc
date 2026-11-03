@@ -116,9 +116,11 @@ describe('Excel Export Logo Verification', () => {
     await workbook.xlsx.load(buffer);
 
     const csSheet = workbook.getWorksheet('CS')!;
+    assert.strictEqual(csSheet.getCell('C7').value, 'Product Name');
     assert.strictEqual(csSheet.getCell('C8').value, 'PSV-76000 SB HC MY VN');
 
     const ccSheet = workbook.getWorksheet('CC')!;
+    assert.strictEqual(ccSheet.getCell('B6').value, 'Product Name');
     assert.strictEqual(ccSheet.getCell('B7').value, 'PSV-76000 SB HC MY VN');
 
     const bomSheet = workbook.getWorksheet('BOM Summary')!;

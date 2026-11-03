@@ -45,12 +45,14 @@ function mapCustomerDto(c: {
   customerId: string;
   shortName: string;
   customerName: string;
+  salesmanName?: string | null;
 }): Customer {
   return {
     id: c.id,
     customerId: c.customerId,
     shortName: c.shortName,
-    customerName: c.customerName
+    customerName: c.customerName,
+    salesmanName: c.salesmanName ?? null
   };
 }
 
@@ -91,6 +93,7 @@ function mapStepDto(step: {
   rowType: string;
   stepName: string;
   sandingSpec: string | null;
+  visco?: string | null;
   caInputRaw: string | null;
   caMin: number | null;
   caMax: number | null;
@@ -108,10 +111,20 @@ function mapStepDto(step: {
     packingDesc: string | null;
     nettWeight: number | null;
     mixingRatio: number;
-    visco: number | null;
+    visco: string | null;
     priceSnapshotVnd: number;
   }>;
 }): ScheduleStep {
+  const sortedItems = [...step.items].sort((a, b) => a.itemOrder - b.itemOrder);
+  const stepVisco =
+    step.visco !== null && step.visco !== undefined && String(step.visco).trim() !== ''
+      ? String(step.visco).trim()
+      : sortedItems[0]?.visco !== null &&
+          sortedItems[0]?.visco !== undefined &&
+          String(sortedItems[0].visco).trim() !== ''
+        ? String(sortedItems[0].visco).trim()
+        : null;
+
   return {
     id: step.id,
     stepOrder: step.stepOrder,
@@ -119,6 +132,7 @@ function mapStepDto(step: {
     rowType: step.rowType as StepRowType,
     stepName: step.stepName,
     sandingSpec: step.sandingSpec,
+    visco: stepVisco,
     caInputRaw: step.caInputRaw,
     caMin: step.caMin,
     caMax: step.caMax,
@@ -127,20 +141,23 @@ function mapStepDto(step: {
     efficiencySnapshot: step.efficiencySnapshot,
     dryingTime: step.dryingTime,
     stepRemark: step.stepRemark,
-    items: [...step.items]
-      .sort((a, b) => a.itemOrder - b.itemOrder)
-      .map((it) => ({
-        id: it.id,
-        stepId: it.stepId,
-        itemOrder: it.itemOrder,
-        materialCode: it.materialCode,
-        materialName: it.materialName,
-        packingDesc: it.packingDesc,
-        nettWeight: it.nettWeight,
-        mixingRatio: it.mixingRatio,
-        visco: it.visco,
-        priceSnapshotVnd: it.priceSnapshotVnd
-      }))
+    items: sortedItems.map((it, idx) => ({
+      id: it.id,
+      stepId: it.stepId,
+      itemOrder: it.itemOrder,
+      materialCode: it.materialCode,
+      materialName: it.materialName,
+      packingDesc: it.packingDesc,
+      nettWeight: it.nettWeight,
+      mixingRatio: it.mixingRatio,
+      visco:
+        it.visco !== null && it.visco !== undefined && String(it.visco).trim() !== ''
+          ? String(it.visco).trim()
+          : idx === 0
+            ? stepVisco
+            : null,
+      priceSnapshotVnd: it.priceSnapshotVnd
+    }))
   };
 }
 
@@ -152,20 +169,37 @@ class PostgresDataStore {
    * if the database is empty or if `forceReimportFromExcel` is true.
    */
   public async init(forceReimportFromExcel = false): Promise<DatabaseCounts> {
-    const [customerCount, ntrRev] = await Promise.all([
+    // Ensure visco columns are TEXT so strings and ranges like "12-14", "40-60 DIN4" are supported without NaN errors
+    await prisma
+      .$executeRawUnsafe(`
+        ALTER TABLE "ScheduleStepItem" ALTER COLUMN "visco" TYPE TEXT USING "visco"::TEXT;
+      `)
+      .catch(() => undefined);
+    await prisma
+      .$executeRawUnsafe(`
+        ALTER TABLE "ScheduleStep" ADD COLUMN IF NOT EXISTS "visco" TEXT;
+      `)
+      .catch(() => undefined);
+
+    const [customerCount, ntrRev, packingCount, stepsCount] = await Promise.all([
       prisma.customer.count(),
       prisma.projectRevision.findUnique({
         where: { id: 'rev-ntr001-00' },
         include: { steps: { include: { items: true } } }
-      })
+      }),
+      prisma.packingMapping.count(),
+      prisma.applicationStepMaster.count()
     ]);
 
-    const hasCorruptedNtr001 =
-      !ntrRev ||
-      ntrRev.productName !== 'TABLE' ||
-      ntrRev.steps.some((s) => s.items.some((it) => (it.nettWeight ?? 0) > 1000));
+    const isCompletelyEmpty =
+      customerCount === 0 && packingCount === 0 && stepsCount === 0;
 
-    if (forceReimportFromExcel || customerCount === 0 || hasCorruptedNtr001) {
+    const hasCorruptedNtr001 =
+      ntrRev &&
+      (ntrRev.productName !== 'TABLE' ||
+        ntrRev.steps.some((s) => s.items.some((it) => (it.nettWeight ?? 0) > 1000)));
+
+    if (forceReimportFromExcel || isCompletelyEmpty || hasCorruptedNtr001) {
       const excelPath = resolveDefaultExcelPath();
       const master = await importMasterDataFromExcel(excelPath);
       const { project, revision } = buildGoldenDatasetNtr001(master);
@@ -173,6 +207,14 @@ class PostgresDataStore {
     }
 
     await this.ensureDefaultUsersSeeded();
+
+    // Migrate any legacy LOCKED revisions to APPROVED
+    await prisma.projectRevision
+      .updateMany({
+        where: { status: 'LOCKED' },
+        data: { status: 'APPROVED' }
+      })
+      .catch(() => undefined);
 
     this.initialized = true;
     return this.getCounts();
@@ -216,6 +258,7 @@ class PostgresDataStore {
       rowType: s.rowType,
       stepName: s.stepName,
       sandingSpec: s.sandingSpec ?? null,
+      visco: s.visco ? String(s.visco) : s.items?.[0]?.visco ? String(s.items[0].visco) : null,
       caInputRaw: s.caInputRaw ?? null,
       caMin: s.caMin ?? null,
       caMax: s.caMax ?? null,
@@ -236,7 +279,7 @@ class PostgresDataStore {
         packingDesc: it.packingDesc ?? null,
         nettWeight: it.nettWeight ?? null,
         mixingRatio: it.mixingRatio,
-        visco: it.visco ?? null,
+        visco: it.visco ? String(it.visco) : null,
         priceSnapshotVnd: it.priceSnapshotVnd ?? 0
       }))
     );
@@ -610,7 +653,8 @@ class PostgresDataStore {
             OR: [
               { customerId: { contains: search, mode: 'insensitive' } },
               { shortName: { contains: search, mode: 'insensitive' } },
-              { customerName: { contains: search, mode: 'insensitive' } }
+              { customerName: { contains: search, mode: 'insensitive' } },
+              { salesmanName: { contains: search, mode: 'insensitive' } }
             ]
           }
         : undefined
@@ -640,7 +684,8 @@ class PostgresDataStore {
           OR: [
             { customerId: { contains: search, mode: 'insensitive' as const } },
             { shortName: { contains: search, mode: 'insensitive' as const } },
-            { customerName: { contains: search, mode: 'insensitive' as const } }
+            { customerName: { contains: search, mode: 'insensitive' as const } },
+            { salesmanName: { contains: search, mode: 'insensitive' as const } }
           ]
         }
       : undefined;
@@ -668,10 +713,17 @@ class PostgresDataStore {
     customerId: string;
     shortName?: string;
     customerName: string;
+    salesmanName?: string | null;
   }): Promise<{ customer: Customer; created: boolean }> {
     const cleanCode = input.customerId.trim();
     const cleanName = input.customerName.trim();
     const cleanShort = (input.shortName || cleanName).trim();
+    const cleanSalesman =
+      input.salesmanName !== undefined
+        ? input.salesmanName
+          ? input.salesmanName.trim()
+          : null
+        : undefined;
 
     const existing = await prisma.customer.findUnique({
       where: { customerId: cleanCode }
@@ -682,7 +734,8 @@ class PostgresDataStore {
         where: { id: existing.id },
         data: {
           shortName: cleanShort,
-          customerName: cleanName
+          customerName: cleanName,
+          ...(cleanSalesman !== undefined ? { salesmanName: cleanSalesman } : {})
         }
       });
       return { customer: mapCustomerDto(updated), created: false };
@@ -693,7 +746,8 @@ class PostgresDataStore {
         id: `cust-${cleanCode}-${Date.now().toString(36)}`,
         customerId: cleanCode,
         shortName: cleanShort,
-        customerName: cleanName
+        customerName: cleanName,
+        salesmanName: cleanSalesman ?? null
       }
     });
     return { customer: mapCustomerDto(created), created: true };
@@ -716,7 +770,13 @@ class PostgresDataStore {
         customerName:
           input.customerName !== undefined
             ? String(input.customerName).trim()
-            : existing.customerName
+            : existing.customerName,
+        salesmanName:
+          input.salesmanName !== undefined
+            ? input.salesmanName
+              ? String(input.salesmanName).trim()
+              : null
+            : existing.salesmanName
       }
     });
     return mapCustomerDto(updated);
@@ -724,6 +784,11 @@ class PostgresDataStore {
 
   public async deleteCustomer(id: string): Promise<void> {
     await prisma.customer.deleteMany({ where: { id } });
+  }
+
+  public async clearAllCustomers(): Promise<number> {
+    const res = await prisma.customer.deleteMany();
+    return res.count;
   }
 
   /**
@@ -752,23 +817,34 @@ class PostgresDataStore {
     const existingByCode = new Map(existingRows.map((e) => [e.customerId, e]));
 
     const toCreate: Prisma.CustomerCreateManyInput[] = [];
-    const toUpdate: Array<{ id: string; shortName: string; customerName: string }> = [];
+    const toUpdate: Array<{
+      id: string;
+      shortName: string;
+      customerName: string;
+      salesmanName: string | null;
+    }> = [];
     let skipped = 0;
     const stamp = Date.now().toString(36);
 
     for (const [code, c] of byCode) {
       const customerName = c.customerName.trim();
       const shortName = (c.shortName || customerName).trim();
+      const salesmanName = c.salesmanName ? c.salesmanName.trim() : null;
       const existing = existingByCode.get(code);
       if (!existing) {
         toCreate.push({
           id: `cust-${code}-${stamp}`,
           customerId: code,
           shortName,
-          customerName
+          customerName,
+          salesmanName
         });
-      } else if (existing.shortName !== shortName || existing.customerName !== customerName) {
-        toUpdate.push({ id: existing.id, shortName, customerName });
+      } else if (
+        existing.shortName !== shortName ||
+        existing.customerName !== customerName ||
+        (existing.salesmanName || null) !== salesmanName
+      ) {
+        toUpdate.push({ id: existing.id, shortName, customerName, salesmanName });
       } else {
         skipped++;
       }
@@ -782,11 +858,26 @@ class PostgresDataStore {
         toUpdate.slice(i, i + 200).map((u) =>
           prisma.customer.update({
             where: { id: u.id },
-            data: { shortName: u.shortName, customerName: u.customerName }
+            data: {
+              shortName: u.shortName,
+              customerName: u.customerName,
+              salesmanName: u.salesmanName
+            }
           })
         )
       );
     }
+
+    // Relink quotation items that match the customerId
+    await prisma
+      .$executeRawUnsafe(`
+        UPDATE "QuotationItem" q
+        SET "customerRefId" = c."id"
+        FROM "Customer" c
+        WHERE q."sapCustomerCode" = c."customerId"
+          AND (q."customerRefId" IS NULL OR q."customerRefId" != c."id");
+      `)
+      .catch(() => undefined);
 
     return { created: toCreate.length, updated: toUpdate.length, skipped };
   }
@@ -1079,6 +1170,11 @@ class PostgresDataStore {
 
   public async deleteQuotation(id: string): Promise<void> {
     await prisma.quotationItem.deleteMany({ where: { id } });
+  }
+
+  public async clearAllQuotations(): Promise<number> {
+    const res = await prisma.quotationItem.deleteMany();
+    return res.count;
   }
 
   // ===========================================================================
@@ -1618,11 +1714,11 @@ class PostgresDataStore {
     if (!rev) {
       return { ok: false, status: 404, error: 'Revision not found' };
     }
-    if (rev.status === 'LOCKED') {
+    if (rev.status === 'LOCKED' || rev.status === 'APPROVED') {
       return {
         ok: false,
         status: 400,
-        error: 'Không thể xóa phiên bản đã khóa (LOCKED).'
+        error: 'Không thể xóa phiên bản đã phê duyệt (APPROVED).'
       };
     }
     const siblingCount = await prisma.projectRevision.count({
@@ -1653,13 +1749,13 @@ class PostgresDataStore {
     if (!existing) {
       return { ok: false, status: 404, error: 'Revision not found' };
     }
-    if (existing.status === 'LOCKED') {
+    if (existing.status === 'LOCKED' || existing.status === 'APPROVED') {
       return {
         ok: false,
         status: 400,
         error: 'REVISION_LOCKED',
         message:
-          'Phiên bản này đã bị khóa (LOCKED). Vui lòng nhân bản (Clone) sang Rev mới để chỉnh sửa.'
+          'Phiên bản này đã được phê duyệt (APPROVED). Vui lòng nhân bản (Clone) sang Rev mới để chỉnh sửa.'
       };
     }
 
@@ -1801,6 +1897,14 @@ class PostgresDataStore {
           rowType: s.rowType,
           stepName: s.stepName,
           sandingSpec: s.sandingSpec ?? null,
+          visco:
+            s.visco !== null && s.visco !== undefined && String(s.visco).trim() !== ''
+              ? String(s.visco).trim()
+              : s.items?.[0]?.visco !== null &&
+                  s.items?.[0]?.visco !== undefined &&
+                  String(s.items[0].visco).trim() !== ''
+                ? String(s.items[0].visco).trim()
+                : null,
           caInputRaw: s.caInputRaw ?? null,
           caMin: s.caMin ?? null,
           caMax: s.caMax ?? null,
@@ -1827,7 +1931,12 @@ class PostgresDataStore {
               packingDesc: it.packingDesc ?? null,
               nettWeight: it.nettWeight ?? null,
               mixingRatio: it.mixingRatio,
-              visco: it.visco ?? null,
+              visco:
+                it.visco !== null && it.visco !== undefined && String(it.visco).trim() !== ''
+                  ? String(it.visco).trim()
+                  : iIdx === 0 && sr.visco
+                    ? String(sr.visco).trim()
+                    : null,
               priceSnapshotVnd: it.priceSnapshotVnd ?? 0
             }))
           );
@@ -1850,11 +1959,11 @@ class PostgresDataStore {
     if (!existing) {
       return { ok: false, status: 404, error: 'Revision not found' };
     }
-    if (existing.status === 'LOCKED') {
+    if (existing.status === 'LOCKED' || existing.status === 'APPROVED') {
       return {
         ok: false,
         status: 400,
-        error: 'Cannot refresh prices on a LOCKED revision'
+        error: 'Cannot refresh prices on an APPROVED revision'
       };
     }
 
@@ -1923,6 +2032,16 @@ class PostgresDataStore {
           : (methodObj?.efficiency ?? step.efficiencySnapshot ?? 0.6);
 
       const stepId = step.id || `step-${idx + 1}`;
+      const stepVisco = isSanding
+        ? null
+        : step.visco !== null && step.visco !== undefined && String(step.visco).trim() !== ''
+          ? String(step.visco).trim()
+          : step.items?.[0]?.visco !== null &&
+              step.items?.[0]?.visco !== undefined &&
+              String(step.items[0].visco).trim() !== ''
+            ? String(step.items[0].visco).trim()
+            : null;
+
       const items = isSanding
         ? []
         : (step.items || []).map((item, itemIdx) => {
@@ -1954,9 +2073,11 @@ class PostgresDataStore {
               nettWeight: item.nettWeight ?? quot?.nett ?? null,
               mixingRatio: Number(item.mixingRatio) || 0,
               visco:
-                item.visco !== null && item.visco !== undefined && String(item.visco) !== ''
-                  ? Number(item.visco)
-                  : null,
+                item.visco !== null && item.visco !== undefined && String(item.visco).trim() !== ''
+                  ? String(item.visco).trim()
+                  : itemIdx === 0 && stepVisco
+                    ? stepVisco
+                    : null,
               priceSnapshotVnd
             };
           });
@@ -1966,6 +2087,7 @@ class PostgresDataStore {
         id: stepId,
         stepOrder: idx + 1,
         stepNumber: isSanding ? null : chemCounter++,
+        visco: stepVisco,
         caMin: parsedCa.caMin,
         caMax: parsedCa.caMax,
         caAvg: isSanding ? null : parsedCa.caAvg,

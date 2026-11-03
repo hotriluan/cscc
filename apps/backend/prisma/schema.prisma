@@ -41,6 +41,7 @@ model Customer {
   customerId   String          @unique // e.g., "1200001169"
   shortName    String                  // e.g., "NITORI-HO CHI MINH"
   customerName String                  // e.g., "DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM"
+  salesmanName String?                 // Salesman Name
   quotations   QuotationItem[]
   projects     Project[]
   createdAt    DateTime        @default(now())
@@ -158,6 +159,7 @@ model ScheduleStep {
   sandingSpec        String?            // e.g., "SANDING PAPER # 180-240"
 
   // Step-level parameters (merged across all items in step)
+  visco              String?            // User input on CS: e.g., "12-14" or "40-60 DIN4"
   caInputRaw         String?            // User input on CS: e.g., "100-120" or "90-100"
   caMin              Float?
   caMax              Float?
@@ -183,7 +185,7 @@ model ScheduleStepItem {
   packingDesc       String?
   nettWeight        Float?
   mixingRatio       Float        // Ratio part (e.g., 2, 1, 0.2, 8)
-  visco             Float?       // Viscosity in seconds (e.g., 11)
+  visco             String?      // Viscosity specification (e.g., "12-14", "40-60 DIN4", "11")
   priceSnapshotVnd  Float        // Snapshot of Price/nett from QuotationItem
 
   @@index([stepId, itemOrder])

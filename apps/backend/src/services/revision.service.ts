@@ -84,6 +84,7 @@ export async function cloneRevision(
           rowType: s.rowType,
           stepName: s.stepName,
           sandingSpec: s.sandingSpec ?? null,
+          visco: s.visco ? String(s.visco) : s.items?.[0]?.visco ? String(s.items[0].visco) : null,
           caInputRaw: s.caInputRaw ?? null,
           caMin: s.caMin ?? null,
           caMax: s.caMax ?? null,
@@ -96,7 +97,7 @@ export async function cloneRevision(
       });
 
       const allItems = enrichedSteps.flatMap((s) =>
-        s.items.map((it) => ({
+        s.items.map((it, iIdx) => ({
           id: it.id,
           stepId: s.id,
           itemOrder: it.itemOrder,
@@ -105,7 +106,7 @@ export async function cloneRevision(
           packingDesc: it.packingDesc ?? null,
           nettWeight: it.nettWeight ?? null,
           mixingRatio: it.mixingRatio,
-          visco: it.visco ?? null,
+          visco: it.visco ? String(it.visco) : iIdx === 0 && s.visco ? String(s.visco) : null,
           priceSnapshotVnd: it.priceSnapshotVnd ?? 0
         }))
       );

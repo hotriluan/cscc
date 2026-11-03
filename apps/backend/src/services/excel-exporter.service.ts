@@ -60,14 +60,14 @@ export async function generateRevisionWorkbook(
   // =========================================================================
   const csSheet = workbook.addWorksheet('CS');
   csSheet.columns = [
-    { key: 'stepNo', width: 8 },
-    { key: 'stepName', width: 28 },
-    { key: 'materialCode', width: 32 },
-    { key: 'mixingRatio', width: 14 },
+    { key: 'stepNo', width: 6 },
+    { key: 'stepName', width: 22 },
+    { key: 'materialCode', width: 38 },
+    { key: 'mixingRatio', width: 12 },
     { key: 'visco', width: 14 },
-    { key: 'caInputRaw', width: 14 },
-    { key: 'methodName', width: 22 },
-    { key: 'dryingTime', width: 22 }
+    { key: 'caInputRaw', width: 12 },
+    { key: 'methodName', width: 20 },
+    { key: 'dryingTime', width: 20 }
   ];
 
   // Title & Header Block
@@ -118,7 +118,7 @@ export async function generateRevisionWorkbook(
   const csHeaders = [
     'No.',
     'Application Step',
-    'Product Code',
+    'Product Name',
     'Mixing Ratio',
     'Visco',
     'CA (g/m²)',
@@ -165,7 +165,7 @@ export async function generateRevisionWorkbook(
       if (idx === 0) {
         row.getCell(1).value = step.stepNumber ?? '';
         row.getCell(2).value = step.stepName;
-        row.getCell(5).value = item?.visco ?? '';
+        row.getCell(5).value = step.visco ?? item?.visco ?? '';
         row.getCell(6).value = step.caInputRaw ?? '';
         row.getCell(7).value = step.methodName ?? '';
         row.getCell(8).value = step.dryingTime ?? '';
@@ -229,17 +229,17 @@ export async function generateRevisionWorkbook(
   if (role !== 'TECHNICAL') {
     const ccSheet = workbook.addWorksheet('CC');
     ccSheet.columns = [
-      { key: 'stepName', width: 24 },       // A: Item
-      { key: 'materialCode', width: 28 },   // B: Product type (clean name without packing)
-      { key: 'priceUnit', width: 16 },      // C: Price (VND/Ltr)
-      { key: 'mixingRatio', width: 12 },    // D: Mixing Ratio
-      { key: 'mixedPrice', width: 18 },     // E: Mixed Price (VND/Ltr set)
-      { key: 'methodName', width: 16 },     // F: Application
-      { key: 'caAvg', width: 16 },          // G: Coating Amount (g/m²)
-      { key: 'efficiency', width: 14 },     // H: Application Efficiency
-      { key: 'caPlusLoss', width: 16 },     // I: CA + Loss (g/m²)
-      { key: 'coverage', width: 16 },       // J: Coverage (m²/Ltr/kg)
-      { key: 'coatingCost', width: 18 }     // K: Coating Cost (vnd/m²)
+      { key: 'stepName', width: 18 },       // A: Item
+      { key: 'materialCode', width: 36 },   // B: Product Name (clean name without packing)
+      { key: 'priceUnit', width: 14 },      // C: Price (VND/Ltr)
+      { key: 'mixingRatio', width: 10 },    // D: Mixing Ratio
+      { key: 'mixedPrice', width: 15 },     // E: Mixed Price (VND/Ltr set)
+      { key: 'methodName', width: 14 },     // F: Application
+      { key: 'caAvg', width: 14 },          // G: Coating Amount (g/m²)
+      { key: 'efficiency', width: 13 },     // H: Application Efficiency
+      { key: 'caPlusLoss', width: 14 },     // I: CA + Loss (g/m²)
+      { key: 'coverage', width: 14 },       // J: Coverage (m²/Ltr/kg)
+      { key: 'coatingCost', width: 16 }     // K: Coating Cost (vnd/m²)
     ];
 
     ccSheet.mergeCells('A1:K1');
@@ -273,7 +273,7 @@ export async function generateRevisionWorkbook(
     const ccHeaderRowNum = 6;
     const ccHeaders = [
       'Item',
-      'Product type',
+      'Product Name',
       'Price (VND/Ltr)',
       'Mixing Ratio',
       'Mixed Price (VND/Ltr set)',
