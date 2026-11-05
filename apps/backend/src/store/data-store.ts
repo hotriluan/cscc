@@ -40,6 +40,24 @@ export interface DatabaseCounts {
   revisions: number;
 }
 
+function mapUserDto(u: {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  salesmanName?: string | null;
+  createdAt: Date;
+}): UserAccount {
+  return {
+    id: u.id,
+    email: u.email,
+    fullName: u.fullName,
+    role: u.role as UserRole,
+    salesmanName: u.salesmanName ?? null,
+    createdAt: u.createdAt.toISOString()
+  };
+}
+
 function mapCustomerDto(c: {
   id: string;
   customerId: string;
@@ -234,7 +252,8 @@ class PostgresDataStore {
             email: seedUser.email.toLowerCase(),
             fullName: seedUser.fullName,
             passwordHash: hashPassword(seedUser.passwordPlain),
-            role: seedUser.role
+            role: seedUser.role,
+            salesmanName: seedUser.salesmanName ?? null
           }
         });
       }
@@ -538,25 +557,13 @@ class PostgresDataStore {
     const rows = await prisma.user.findMany({
       orderBy: { createdAt: 'asc' }
     });
-    return rows.map((u) => ({
-      id: u.id,
-      email: u.email,
-      fullName: u.fullName,
-      role: u.role as UserRole,
-      createdAt: u.createdAt.toISOString()
-    }));
+    return rows.map(mapUserDto);
   }
 
   public async getUserById(id: string): Promise<UserAccount | null> {
     const u = await prisma.user.findUnique({ where: { id } });
     if (!u) return null;
-    return {
-      id: u.id,
-      email: u.email,
-      fullName: u.fullName,
-      role: u.role as UserRole,
-      createdAt: u.createdAt.toISOString()
-    };
+    return mapUserDto(u);
   }
 
   public async verifyUserCredentials(
@@ -569,13 +576,7 @@ class PostgresDataStore {
     if (!verifyPassword(passwordPlain, u.passwordHash)) {
       return null;
     }
-    return {
-      id: u.id,
-      email: u.email,
-      fullName: u.fullName,
-      role: u.role as UserRole,
-      createdAt: u.createdAt.toISOString()
-    };
+    return mapUserDto(u);
   }
 
   public async upsertUser(input: {
@@ -583,9 +584,18 @@ class PostgresDataStore {
     fullName: string;
     passwordPlain?: string;
     role: UserRole;
+    salesmanName?: string | null;
   }): Promise<{ user: UserAccount; created: boolean }> {
     const cleanEmail = input.email.trim().toLowerCase();
     const cleanName = input.fullName.trim();
+    // Normalize salesmanName: strictly NULL for ADMIN and PROJECT_LEADER
+    const normalizedSalesman =
+      input.role === 'ADMIN' || input.role === 'PROJECT_LEADER'
+        ? null
+        : input.salesmanName && input.salesmanName.trim() !== ''
+          ? input.salesmanName.trim()
+          : null;
+
     const existing = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
     if (existing) {
@@ -594,19 +604,14 @@ class PostgresDataStore {
         data: {
           fullName: cleanName,
           role: input.role,
+          salesmanName: normalizedSalesman,
           ...(input.passwordPlain?.trim()
             ? { passwordHash: hashPassword(input.passwordPlain.trim()) }
             : {})
         }
       });
       return {
-        user: {
-          id: updated.id,
-          email: updated.email,
-          fullName: updated.fullName,
-          role: updated.role as UserRole,
-          createdAt: updated.createdAt.toISOString()
-        },
+        user: mapUserDto(updated),
         created: false
       };
     }
@@ -617,20 +622,53 @@ class PostgresDataStore {
         email: cleanEmail,
         fullName: cleanName,
         passwordHash: hashPassword(input.passwordPlain?.trim() || '123456'),
-        role: input.role
+        role: input.role,
+        salesmanName: normalizedSalesman
       }
     });
 
     return {
-      user: {
-        id: created.id,
-        email: created.email,
-        fullName: created.fullName,
-        role: created.role as UserRole,
-        createdAt: created.createdAt.toISOString()
-      },
+      user: mapUserDto(created),
       created: true
     };
+  }
+
+  public async updateUser(
+    id: string,
+    input: {
+      email?: string;
+      fullName?: string;
+      passwordPlain?: string;
+      role?: UserRole;
+      salesmanName?: string | null;
+    }
+  ): Promise<UserAccount | null> {
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) return null;
+
+    const targetRole = input.role ?? (existing.role as UserRole);
+    const normalizedSalesman =
+      targetRole === 'ADMIN' || targetRole === 'PROJECT_LEADER'
+        ? null
+        : input.salesmanName !== undefined
+          ? input.salesmanName && input.salesmanName.trim() !== ''
+            ? input.salesmanName.trim()
+            : null
+          : existing.salesmanName;
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: {
+        ...(input.email ? { email: input.email.trim().toLowerCase() } : {}),
+        ...(input.fullName ? { fullName: input.fullName.trim() } : {}),
+        ...(input.role ? { role: input.role } : {}),
+        salesmanName: normalizedSalesman,
+        ...(input.passwordPlain?.trim()
+          ? { passwordHash: hashPassword(input.passwordPlain.trim()) }
+          : {})
+      }
+    });
+    return mapUserDto(updated);
   }
 
   public async deleteUser(id: string): Promise<{ ok: boolean; error?: string }> {
@@ -642,13 +680,43 @@ class PostgresDataStore {
     return { ok: true };
   }
 
+  public async getDistinctSalesmen(): Promise<string[]> {
+    const rows = await prisma.customer.findMany({
+      where: {
+        salesmanName: {
+          not: null
+        }
+      },
+      select: {
+        salesmanName: true
+      },
+      distinct: ['salesmanName']
+    });
+
+    const uniqueNames = new Set<string>();
+    for (const r of rows) {
+      if (r.salesmanName && r.salesmanName.trim() !== '') {
+        uniqueNames.add(r.salesmanName.trim());
+      }
+    }
+
+    return Array.from(uniqueNames).sort((a, b) =>
+      a.localeCompare(b, 'vi', { sensitivity: 'base' })
+    );
+  }
+
   // ===========================================================================
   // 1. CUSTOMERS
   // ===========================================================================
-  public async getCustomers(q = ''): Promise<Customer[]> {
+  public async getCustomers(q = '', salesmanFilter?: string | null): Promise<Customer[]> {
     const search = q.trim();
-    const rows = await prisma.customer.findMany({
-      where: search
+    const cleanSalesman = salesmanFilter?.trim();
+
+    const where: Prisma.CustomerWhereInput = {
+      ...(cleanSalesman
+        ? { salesmanName: { equals: cleanSalesman, mode: 'insensitive' } }
+        : {}),
+      ...(search
         ? {
             OR: [
               { customerId: { contains: search, mode: 'insensitive' } },
@@ -657,7 +725,11 @@ class PostgresDataStore {
               { salesmanName: { contains: search, mode: 'insensitive' } }
             ]
           }
-        : undefined
+        : {})
+    };
+
+    const rows = await prisma.customer.findMany({
+      where: Object.keys(where).length > 0 ? where : undefined
     });
 
     const mapped = rows.map(mapCustomerDto);
@@ -674,26 +746,35 @@ class PostgresDataStore {
     q?: string;
     page?: number;
     pageSize?: number;
+    salesmanFilter?: string | null;
   }): Promise<PaginatedResponse<Customer>> {
     const search = (params.q || '').trim();
     const page = Math.max(1, Number(params.page) || 1);
     const pageSize = Math.min(Math.max(10, Number(params.pageSize) || 50), 500);
+    const cleanSalesman = params.salesmanFilter?.trim();
 
-    const where = search
-      ? {
-          OR: [
-            { customerId: { contains: search, mode: 'insensitive' as const } },
-            { shortName: { contains: search, mode: 'insensitive' as const } },
-            { customerName: { contains: search, mode: 'insensitive' as const } },
-            { salesmanName: { contains: search, mode: 'insensitive' as const } }
-          ]
-        }
-      : undefined;
+    const where: Prisma.CustomerWhereInput = {
+      ...(cleanSalesman
+        ? { salesmanName: { equals: cleanSalesman, mode: 'insensitive' } }
+        : {}),
+      ...(search
+        ? {
+            OR: [
+              { customerId: { contains: search, mode: 'insensitive' as const } },
+              { shortName: { contains: search, mode: 'insensitive' as const } },
+              { customerName: { contains: search, mode: 'insensitive' as const } },
+              { salesmanName: { contains: search, mode: 'insensitive' as const } }
+            ]
+          }
+        : {})
+    };
+
+    const finalWhere = Object.keys(where).length > 0 ? where : undefined;
 
     const [total, rows] = await Promise.all([
-      prisma.customer.count({ where }),
+      prisma.customer.count({ where: finalWhere }),
       prisma.customer.findMany({
-        where,
+        where: finalWhere,
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: [{ shortName: 'asc' }, { customerId: 'asc' }]
@@ -889,14 +970,36 @@ class PostgresDataStore {
     customerCode?: string;
     q?: string;
     limit?: number;
+    salesmanFilter?: string | null;
   }): Promise<QuotationItem[]> {
     const customerCode = (params.customerCode || '').trim();
     const q = (params.q || '').trim();
     const limit = Math.min(Number(params.limit) || 500, 10000);
 
+    let customerCodesFilter: string[] | null = null;
+    if (params.salesmanFilter && params.salesmanFilter.trim()) {
+      const allowedCustomers = await prisma.customer.findMany({
+        where: { salesmanName: { equals: params.salesmanFilter.trim(), mode: 'insensitive' } },
+        select: { customerId: true }
+      });
+      customerCodesFilter = allowedCustomers.map((c) => c.customerId);
+    }
+
+    if (customerCodesFilter !== null && customerCode) {
+      if (!customerCodesFilter.includes(customerCode)) {
+        return [];
+      }
+    }
+
+    const sapCodeCondition = customerCode
+      ? { sapCustomerCode: customerCode }
+      : customerCodesFilter !== null
+        ? { sapCustomerCode: { in: customerCodesFilter } }
+        : {};
+
     const rows = await prisma.quotationItem.findMany({
       where: {
-        ...(customerCode ? { sapCustomerCode: customerCode } : {}),
+        ...sapCodeCondition,
         ...(q
           ? {
               OR: [
@@ -920,14 +1023,42 @@ class PostgresDataStore {
     q?: string;
     page?: number;
     pageSize?: number;
+    salesmanFilter?: string | null;
   }): Promise<PaginatedResponse<QuotationItem>> {
     const customerCode = (params.customerCode || '').trim();
     const q = (params.q || '').trim();
     const page = Math.max(1, Number(params.page) || 1);
     const pageSize = Math.min(Math.max(10, Number(params.pageSize) || 50), 500);
 
+    let customerCodesFilter: string[] | null = null;
+    if (params.salesmanFilter && params.salesmanFilter.trim()) {
+      const allowedCustomers = await prisma.customer.findMany({
+        where: { salesmanName: { equals: params.salesmanFilter.trim(), mode: 'insensitive' } },
+        select: { customerId: true }
+      });
+      customerCodesFilter = allowedCustomers.map((c) => c.customerId);
+    }
+
+    if (customerCodesFilter !== null && customerCode) {
+      if (!customerCodesFilter.includes(customerCode)) {
+        return {
+          items: [],
+          total: 0,
+          page,
+          pageSize,
+          totalPages: 0
+        };
+      }
+    }
+
+    const sapCodeCondition = customerCode
+      ? { sapCustomerCode: customerCode }
+      : customerCodesFilter !== null
+        ? { sapCustomerCode: { in: customerCodesFilter } }
+        : {};
+
     const where = {
-      ...(customerCode ? { sapCustomerCode: customerCode } : {}),
+      ...sapCodeCondition,
       ...(q
         ? {
             OR: [
@@ -1432,8 +1563,16 @@ class PostgresDataStore {
   // ===========================================================================
   // 6. PROJECTS & REVISIONS
   // ===========================================================================
-  public async getProjects(): Promise<Project[]> {
+  public async getProjects(salesmanFilter?: string | null): Promise<Project[]> {
+    const cleanSalesman = salesmanFilter?.trim();
     const rows = await prisma.project.findMany({
+      where: cleanSalesman
+        ? {
+            customer: {
+              salesmanName: { equals: cleanSalesman, mode: 'insensitive' }
+            }
+          }
+        : undefined,
       include: {
         customer: true,
         revisions: {

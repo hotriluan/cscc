@@ -11,7 +11,8 @@ import {
 import { dataStore } from './store/data-store';
 import {
   extractRoleMiddleware,
-  requireCostAccessMiddleware
+  requireCostAccessMiddleware,
+  requireAdminMiddleware
 } from './middleware/auth-rbac.middleware';
 import { signJwtToken } from './services/auth.service';
 import { cloneRevision, updateRevisionStatus } from './services/revision.service';
@@ -90,7 +91,25 @@ export function createApp() {
     }
   });
 
-  app.get('/api/auth/users', async (_req, res) => {
+  // Helper: Extract salesmanFilter for SALES and TECHNICAL roles
+  const getSalesmanFilter = (req: express.Request): string | null => {
+    if (req.userRole === 'ADMIN' || req.userRole === 'PROJECT_LEADER') {
+      return null;
+    }
+    return req.salesmanName ?? null;
+  };
+
+  // Distinct salesmen list from Customers
+  app.get('/api/auth/salesmen', async (_req, res) => {
+    try {
+      const salesmen = await dataStore.getDistinctSalesmen();
+      res.json(salesmen);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.get('/api/auth/users', requireAdminMiddleware, async (_req, res) => {
     try {
       const users = await dataStore.getUsers();
       res.json(users);
@@ -99,15 +118,24 @@ export function createApp() {
     }
   });
 
-  app.post('/api/auth/users', async (req, res) => {
+  app.post('/api/auth/users', requireAdminMiddleware, async (req, res) => {
     try {
       const email = String(req.body?.email || '').trim().toLowerCase();
       const fullName = String(req.body?.fullName || '').trim();
       const password = req.body?.password ? String(req.body.password) : undefined;
       const role = String(req.body?.role || 'TECHNICAL').toUpperCase() as UserRole;
+      const salesmanName = req.body?.salesmanName !== undefined ? req.body.salesmanName : null;
 
       if (!email || !fullName) {
         res.status(400).json({ error: 'Email và Họ tên là bắt buộc.' });
+        return;
+      }
+
+      if ((role === 'SALES' || role === 'TECHNICAL') && (!salesmanName || !String(salesmanName).trim())) {
+        res.status(400).json({
+          error: 'SALESMAN_REQUIRED',
+          message: 'Vui lòng chọn Sales man phụ trách cho tài khoản Sales hoặc Technical.'
+        });
         return;
       }
 
@@ -115,7 +143,8 @@ export function createApp() {
         email,
         fullName,
         passwordPlain: password,
-        role
+        role,
+        salesmanName
       });
       res.status(created ? 201 : 200).json(user);
     } catch (err) {
@@ -123,9 +152,46 @@ export function createApp() {
     }
   });
 
-  app.delete('/api/auth/users/:id', async (req, res) => {
+  app.put('/api/auth/users/:id', requireAdminMiddleware, async (req, res) => {
     try {
-      const result = await dataStore.deleteUser(req.params.id);
+      const email = req.body?.email ? String(req.body.email).trim().toLowerCase() : undefined;
+      const fullName = req.body?.fullName ? String(req.body.fullName).trim() : undefined;
+      const password = req.body?.password ? String(req.body.password) : undefined;
+      const role = req.body?.role ? (String(req.body.role).toUpperCase() as UserRole) : undefined;
+      const salesmanName = req.body?.salesmanName !== undefined ? req.body.salesmanName : undefined;
+
+      if (role && (role === 'SALES' || role === 'TECHNICAL')) {
+        if (salesmanName !== undefined && (!salesmanName || !String(salesmanName).trim())) {
+          res.status(400).json({
+            error: 'SALESMAN_REQUIRED',
+            message: 'Vui lòng chọn Sales man phụ trách cho tài khoản Sales hoặc Technical.'
+          });
+          return;
+        }
+      }
+
+      const userId = Array.isArray(req.params.id) ? req.params.id[0] : String(req.params.id);
+      const updated = await dataStore.updateUser(userId, {
+        email,
+        fullName,
+        passwordPlain: password,
+        role,
+        salesmanName
+      });
+      if (!updated) {
+        res.status(404).json({ error: 'USER_NOT_FOUND', message: 'Tài khoản không tồn tại.' });
+        return;
+      }
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.delete('/api/auth/users/:id', requireAdminMiddleware, async (req, res) => {
+    try {
+      const userId = Array.isArray(req.params.id) ? req.params.id[0] : String(req.params.id);
+      const result = await dataStore.deleteUser(userId);
       if (!result.ok) {
         res.status(400).json({ error: result.error });
         return;
@@ -144,7 +210,8 @@ export function createApp() {
   app.get('/api/master/customers', async (req, res) => {
     try {
       const q = String(req.query.q || '').trim();
-      const list = await dataStore.getCustomers(q);
+      const salesmanFilter = getSalesmanFilter(req);
+      const list = await dataStore.getCustomers(q, salesmanFilter);
       res.json(list);
     } catch (err) {
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -156,7 +223,8 @@ export function createApp() {
       const q = String(req.query.q || '').trim();
       const page = Math.max(1, Number(req.query.page) || 1);
       const pageSize = Math.min(Math.max(10, Number(req.query.pageSize) || 50), 500);
-      const result = await dataStore.getCustomersPaginated({ q, page, pageSize });
+      const salesmanFilter = getSalesmanFilter(req);
+      const result = await dataStore.getCustomersPaginated({ q, page, pageSize, salesmanFilter });
       res.json(result);
     } catch (err) {
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -313,8 +381,9 @@ export function createApp() {
       const customerCode = String(req.query.customerCode || '').trim();
       const q = String(req.query.q || '').trim();
       const limit = Math.min(Number(req.query.limit) || 500, 3000);
+      const salesmanFilter = getSalesmanFilter(req);
 
-      const list = await dataStore.getQuotations({ customerCode, q, limit });
+      const list = await dataStore.getQuotations({ customerCode, q, limit, salesmanFilter });
       const redacted = list.map((item) =>
         req.userRole === 'TECHNICAL' ? { ...item, priceUnitVnd: null } : item
       );
@@ -330,12 +399,14 @@ export function createApp() {
       const q = String(req.query.q || '').trim();
       const page = Math.max(1, Number(req.query.page) || 1);
       const pageSize = Math.min(Math.max(10, Number(req.query.pageSize) || 50), 500);
+      const salesmanFilter = getSalesmanFilter(req);
 
       const result = await dataStore.getQuotationsPaginated({
         customerCode,
         q,
         page,
-        pageSize
+        pageSize,
+        salesmanFilter
       });
 
       res.json({
@@ -636,7 +707,8 @@ export function createApp() {
   app.get('/api/projects', async (req, res) => {
     try {
       const isTech = req.userRole === 'TECHNICAL';
-      const projects = await dataStore.getProjects();
+      const salesmanFilter = getSalesmanFilter(req);
+      const projects = await dataStore.getProjects(salesmanFilter);
       const list = projects.map((p) => ({
         ...p,
         revisions: p.revisions.map((r) => ({

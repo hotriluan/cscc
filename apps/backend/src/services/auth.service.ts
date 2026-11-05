@@ -9,6 +9,7 @@ export interface JwtPayload {
   email: string;
   fullName: string;
   role: UserRole;
+  salesmanName?: string | null;
   iat: number;
   exp: number;
 }
@@ -19,6 +20,7 @@ export interface DefaultSeedUser {
   fullName: string;
   passwordPlain: string;
   role: UserRole;
+  salesmanName?: string | null;
 }
 
 export const DEFAULT_SEED_USERS: DefaultSeedUser[] = [
@@ -27,28 +29,32 @@ export const DEFAULT_SEED_USERS: DefaultSeedUser[] = [
     email: 'leader@alkana.vn',
     fullName: 'Nguyễn Văn Quản Lý (Project Leader)',
     passwordPlain: '123456',
-    role: 'PROJECT_LEADER'
+    role: 'PROJECT_LEADER',
+    salesmanName: null
   },
   {
     id: 'user-sales-01',
     email: 'sales@alkana.vn',
     fullName: 'Trần Thị Kinh Doanh (Sales / Báo giá)',
     passwordPlain: '123456',
-    role: 'SALES'
+    role: 'SALES',
+    salesmanName: 'Nguyễn Văn A'
   },
   {
     id: 'user-tech-01',
     email: 'tech@alkana.vn',
     fullName: 'Lê Văn Kỹ Thuật (Technical TA)',
     passwordPlain: '123456',
-    role: 'TECHNICAL'
+    role: 'TECHNICAL',
+    salesmanName: 'Nguyễn Văn A'
   },
   {
     id: 'user-admin-01',
     email: 'admin@alkana.vn',
     fullName: 'Quản Trị Hệ Thống (System Admin)',
     passwordPlain: '123456',
-    role: 'ADMIN'
+    role: 'ADMIN',
+    salesmanName: null
   }
 ];
 
@@ -90,6 +96,7 @@ export function signJwtToken(user: UserAccount): string {
     email: user.email,
     fullName: user.fullName,
     role: user.role,
+    salesmanName: user.salesmanName ?? null,
     iat: nowSec,
     exp: nowSec + TOKEN_TTL_SECONDS
   };

@@ -5,6 +5,7 @@ export interface UserAccount {
   email: string;
   fullName: string;
   role: UserRole;
+  salesmanName?: string | null;
   createdAt: string;
 }
 
