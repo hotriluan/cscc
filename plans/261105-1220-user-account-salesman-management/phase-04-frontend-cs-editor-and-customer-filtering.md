@@ -1,7 +1,7 @@
 ---
 title: "Phase 04: Frontend CS Editor, Customer & Quotation Filtering by Salesman (EN/VI)"
 phase: 4
-status: planned
+status: completed
 effort: "1.5h"
 tags: [frontend, schedule, quotation, filter, bilingual]
 ---

@@ -1,7 +1,7 @@
 ---
 title: "Phase 03: Frontend User Management Tab & Form (Admin Only, EN/VI)"
 phase: 3
-status: planned
+status: completed
 effort: "2h"
 tags: [frontend, ui, master-data, bilingual, admin]
 ---

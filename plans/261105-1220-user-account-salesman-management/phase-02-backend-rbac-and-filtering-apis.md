@@ -1,7 +1,7 @@
 ---
 title: "Phase 02: Backend RBAC & Data Filtering APIs"
 phase: 2
-status: planned
+status: completed
 effort: "2h"
 tags: [backend, rbac, api, filter, security]
 ---

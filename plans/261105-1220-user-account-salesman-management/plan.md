@@ -1,7 +1,7 @@
 ---
 title: "User Account Management with Salesman Linking & Role Data Isolation"
 description: "Phân hệ Quản lý Tài khoản (User Accounts) cho phép Admin tạo/sửa user, phân quyền RBAC và liên kết Sales man cho nhóm Sales/Technical, giới hạn hiển thị Khách hàng & Báo giá theo Sales man song ngữ EN/VI."
-status: planned
+status: completed
 priority: P1
 effort: "8h"
 tags: [feature, rbac, auth, master-data, frontend, backend, database]
@@ -50,11 +50,11 @@ Xây dựng phân hệ **Quản lý Tài khoản Người Dùng (User Account Ma
 
 | # | Phase | Effort | Status | Description |
 |---|-------|--------|--------|-------------|
-| 1 | [Database Schema Migration & Shared Types](./phase-01-database-schema-and-shared-types.md) | 1.5h | Planned | Bổ sung `salesmanName` vào Prisma `User`, cập nhật Shared Types, JWT Payload và Seed Data. |
-| 2 | [Backend RBAC & Data Filtering APIs](./phase-02-backend-rbac-and-filtering-apis.md) | 2h | Planned | `requireAdminMiddleware`, endpoint lấy danh sách Salesman, và bộ lọc DataStore cho Customers/Quotations/Projects. |
-| 3 | [Frontend User Management Tab & Form (Admin Only, EN/VI)](./phase-03-frontend-user-management-tab.md) | 2h | Planned | Tab "User Accounts / Quản lý Tài khoản" trong Master Data, form Thêm/Sửa tài khoản với dropdown chọn Salesman song ngữ. |
-| 4 | [Frontend CS Editor & Customer Filtering by Salesman (EN/VI)](./phase-04-frontend-cs-editor-and-customer-filtering.md) | 1.5h | Planned | Ràng buộc dropdown chọn khách hàng và vật tư báo giá trong CS Editor & Project Explorer theo `user.salesmanName`. |
-| 5 | [Automated Testing & End-to-End Verification](./phase-05-automated-testing-and-verification.md) | 1h | Planned | Kiểm thử tự động (Unit test, RBAC API test, Data Isolation test) và kiểm tra tính nhất quán song ngữ. |
+| 1 | [Database Schema Migration & Shared Types](./phase-01-database-schema-and-shared-types.md) | 1.5h | Completed | Bổ sung `salesmanName` vào Prisma `User`, cập nhật Shared Types, JWT Payload và Seed Data. |
+| 2 | [Backend RBAC & Data Filtering APIs](./phase-02-backend-rbac-and-filtering-apis.md) | 2h | Completed | `requireAdminMiddleware`, endpoint lấy danh sách Salesman, và bộ lọc DataStore cho Customers/Quotations/Projects. |
+| 3 | [Frontend User Management Tab & Form (Admin Only, EN/VI)](./phase-03-frontend-user-management-tab.md) | 2h | Completed | Tab "User Accounts / Quản lý Tài khoản" trong Master Data, form Thêm/Sửa tài khoản với dropdown chọn Salesman song ngữ. |
+| 4 | [Frontend CS Editor & Customer Filtering by Salesman (EN/VI)](./phase-04-frontend-cs-editor-and-customer-filtering.md) | 1.5h | Completed | Ràng buộc dropdown chọn khách hàng và vật tư báo giá trong CS Editor & Project Explorer theo `user.salesmanName`. |
+| 5 | [Automated Testing & End-to-End Verification](./phase-05-automated-testing-and-verification.md) | 1h | Completed | Kiểm thử tự động (Unit test, RBAC API test, Data Isolation test) và kiểm tra tính nhất quán song ngữ. |
 
 ## Dependencies
 
@@ -65,12 +65,12 @@ Xây dựng phân hệ **Quản lý Tài khoản Người Dùng (User Account Ma
 
 ## Success Criteria
 
-- [ ] Model `User` lưu trữ và truy xuất chính xác `salesmanName`.
-- [ ] Chỉ có `ADMIN` mới gọi được các API thêm/sửa/xóa user; các role khác nhận mã lỗi `403 Forbidden`.
-- [ ] Dropdown chọn Salesman hiển thị danh sách chính xác các Salesman từ dữ liệu khách hàng.
-- [ ] Khi đăng nhập bằng tài khoản Sales hoặc Technical có Salesman "Nguyễn Văn A", hệ thống chỉ cho phép chọn khách hàng và xem báo giá thuộc "Nguyễn Văn A".
-- [ ] Tài khoản Admin và Project Leader tiếp tục truy cập toàn bộ khách hàng và báo giá không bị hạn chế.
-- [ ] Toàn bộ nhãn, thông báo, nút bấm, bảng biểu trên giao diện Quản lý User và Lọc dữ liệu đều là song ngữ `English / Tiếng Việt`.
+- [x] Model `User` lưu trữ và truy xuất chính xác `salesmanName`.
+- [x] Chỉ có `ADMIN` mới gọi được các API thêm/sửa/xóa user; các role khác nhận mã lỗi `403 Forbidden`.
+- [x] Dropdown chọn Salesman hiển thị danh sách chính xác các Salesman từ dữ liệu khách hàng.
+- [x] Khi đăng nhập bằng tài khoản Sales hoặc Technical có Salesman "Nguyễn Văn A", hệ thống chỉ cho phép chọn khách hàng và xem báo giá thuộc "Nguyễn Văn A".
+- [x] Tài khoản Admin và Project Leader tiếp tục truy cập toàn bộ khách hàng và báo giá không bị hạn chế.
+- [x] Toàn bộ nhãn, thông báo, nút bấm, bảng biểu trên giao diện Quản lý User và Lọc dữ liệu đều là song ngữ `English / Tiếng Việt`.
 
 <!-- slug: user-account-salesman-management -->
 
