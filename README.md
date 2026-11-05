@@ -1,6 +1,6 @@
-# ALKANA Coating — Hệ thống Lập lịch (CS) & Tính giá thành Sơn (CC)
+# ALKANA Coating — Hệ thống Qui Trình Sơn (CS) & Tính Giá Thành Sơn (CC)
 
-Ứng dụng Web Full-Stack TypeScript tự động hóa hoàn toàn quy trình lập **Coating Schedule (CS)**, tính toán **Coating Cost (CC)** theo thời gian thực và dự toán định mức vật tư **BOM Summary**, được xây dựng dựa trên đặc tả kỹ thuật [docs/coating_system_specification.md](docs/coating_system_specification.md) và bộ dữ liệu chuẩn [docs/Form CS Industry.xlsx](docs/Form CS Industry.xlsx).
+Ứng dụng Web Full-Stack TypeScript tự động hóa hoàn toàn quy trình lập **Coating Schedule (Qui Trình Sơn - CS)**, tính toán **Coating Cost (CC)** theo thời gian thực và dự toán định mức vật tư **BOM Summary**, được xây dựng dựa trên đặc tả kỹ thuật [docs/coating_system_specification.md](docs/coating_system_specification.md) và bộ dữ liệu chuẩn [docs/Form CS Industry.xlsx](docs/Form CS Industry.xlsx).
 
 ---
 
@@ -20,7 +20,7 @@
 - [`apps/frontend`](apps/frontend):
   - Giao diện `React 18` + `Vite` + `TailwindCSS` chia thành **Sidebar (Menu điều hướng & RBAC Switcher)** và **Main Workspace**:
     - **5.1 Quản trị Master Data (CRUD & Import Excel):** Quản lý `Customer`, `Quotation`, `Application Step`, `App-method`, `Packing Mapping`.
-    - **5.2 Giao diện Lập lịch (`Coating Schedule - CS`):** Biểu mẫu động (Dynamic Form) cho phép thêm bước thi công, chèn nhiều `Product Code` trong mỗi bước, chèn hàng phụ `SANDING` xen kẽ, tự động gộp ô (`rowSpan`).
+    - **5.2 Giao diện Qui Trình Sơn (`Coating Schedule - CS`):** Biểu mẫu động (Dynamic Form) cho phép thêm bước thi công, chèn nhiều `Product Code` trong mỗi bước, chèn hàng phụ `SANDING` xen kẽ, tự động gộp ô (`rowSpan`).
     - **5.3 Màn hình Báo giá (`Coating Cost - CC`):** Chế độ **Read-only**, tự động ẩn đối với `TECHNICAL`, tự động nhảy số real-time khi chỉnh sửa bên CS.
     - **BOM Summary & Bản in A4/PDF:** Dự toán số Kg/Lít và số thùng cần đặt theo diện tích $m^2$; in biểu mẫu chuẩn A4 ngang với 4 ô chữ ký (`CUSTOMER`, `PD/PM`, `TA`, `PROJECT LEADER`).
 

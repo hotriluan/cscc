@@ -17,9 +17,9 @@ Hệ thống số hóa các danh mục cốt lõi làm dữ liệu nguồn:
 
 ## 3. LUỒNG LÀM VIỆC TỰ ĐỘNG HÓA (AUTO-MAPPING) TỪ CS SANG CC
 
-Yêu cầu cốt lõi: Người dùng **chỉ cần thao tác lập Coating Schedule (CS)**, hệ thống sẽ **tự động hoàn toàn 100% bảng Coating Cost (CC)**.
+Yêu cầu cốt lõi: Người dùng **chỉ cần thao tác lập Qui Trình Sơn (Coating Schedule - CS)**, hệ thống sẽ **tự động hoàn toàn 100% bảng Coating Cost (CC)**.
 
-### 3.1. Thao tác tại Coating Schedule (Đầu vào)
+### 3.1. Thao tác tại Qui Trình Sơn (Coating Schedule - Đầu vào)
 Người dùng (Kỹ thuật viên) chỉ chọn và nhập các thông số chuyên môn kỹ thuật:
 * Bước thi công (Application Step)
 * Mã vật tư (Product Code)
@@ -59,7 +59,7 @@ Giao diện chia thành **Sidebar (Menu điều hướng)** và **Main Workspace
 * **Application Step:** Cấu hình danh sách các bước chuẩn (SANDING, GLAZE, TOP COAT...).
 * **App-method:** Cấu hình Phương pháp và Application Efficiency (%).
 
-### 5.2. Giao diện Lập lịch (Coating Schedule)
+### 5.2. Giao diện Qui Trình Sơn (Coating Schedule)
 Được thiết kế dạng **Dynamic Form (Biểu mẫu động)**:
 * **Header:** Dropdown chọn Customer, điền Product Item, Color, Substrate Type, Finishing System, Gloss Level, Reference và các điều kiện môi trường.
 * **Dynamic Table (Quy trình):**
