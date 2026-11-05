@@ -73,7 +73,7 @@ export async function generateRevisionWorkbook(
   // Title & Header Block
   csSheet.mergeCells('A1:H1');
   const csTitle = csSheet.getCell('A1');
-  csTitle.value = 'COATING SCHEDULE / BẢNG LẬP LỊCH QUY TRÌNH SƠN';
+  csTitle.value = 'COATING SCHEDULE / QUI TRÌNH SƠN';
   csTitle.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
   csTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
   csTitle.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -205,7 +205,7 @@ export async function generateRevisionWorkbook(
   csSheet.getCell(`A${currentCsRow}`).value = 'Remark / Ghi chú:';
   csSheet.getCell(`A${currentCsRow}`).font = { bold: true };
   csSheet.getCell(`B${currentCsRow}`).value =
-    'ALKANA VIET NAM does not assure the quality of the final product if: 1. The production process does not use 100% ALKANA materials. 2. The production process does not follow the ALKANA coating schedule. / ALKANA VIỆT NAM không đảm bảo chất lượng của sản phẩm cuối cùng nếu: 1. Quy trình sản xuất không sử dụng 100% nguyên vật liệu của ALKANA. 2. Quy trình sản xuất không tuân thủ theo lịch trình sơn của ALKANA.';
+    'ALKANA VIET NAM does not assure the quality of the final product if: 1. The production process does not use 100% ALKANA materials. 2. The production process does not follow the ALKANA coating schedule. / ALKANA VIỆT NAM không đảm bảo chất lượng của sản phẩm cuối cùng nếu: 1. Quy trình sản xuất không sử dụng 100% nguyên vật liệu của ALKANA. 2. Quy trình sản xuất không tuân thủ theo qui trình sơn của ALKANA.';
   csSheet.mergeCells(`B${currentCsRow}:H${currentCsRow}`);
 
   currentCsRow += 2;

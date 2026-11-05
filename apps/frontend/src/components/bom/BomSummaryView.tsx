@@ -35,7 +35,7 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
                 BOM SUMMARY / BẢNG DỰ TOÁN ĐỊNH MỨC VẬT TƯ
               </h2>
               <p className="text-xs text-slate-300">
-                Group unique materials across all Coating Schedule steps / Gộp tự động các mã vật tư trùng nhau qua tất cả các bước trong Coating Schedule
+                Group unique materials across all Coating Schedule steps / Gộp tự động các mã vật tư trùng nhau qua tất cả các bước trong Qui Trình Sơn
               </p>
             </div>
           </div>

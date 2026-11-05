@@ -485,7 +485,7 @@ export function App() {
       setActiveRevision(res.revision);
       const updatedProjects = await apiClient.getProjects(role);
       setProjects(updatedProjects);
-      setSaveToast('Đã lưu và đồng bộ Coating Schedule & Coating Cost!');
+      setSaveToast('Đã lưu và đồng bộ Qui Trình Sơn & Chi Phí Sơn!');
       setTimeout(() => setSaveToast(null), 2500);
     } catch (err) {
       alert(`Lỗi khi lưu: ${err instanceof Error ? err.message : String(err)}`);
@@ -722,7 +722,7 @@ export function App() {
                 }`}
               >
                 <ClipboardList className="h-4 w-4 shrink-0" />
-                <span>Workspace / Lập lịch & Chi phí</span>
+                <span>Workspace / Qui Trình Sơn & Chi Phí</span>
               </button>
 
               <button
@@ -996,12 +996,12 @@ export function App() {
                       </span>
                     </div>
                     <div className="text-[10px] text-slate-400">
-                      Tự động nhảy real-time khi sửa Schedule
+                      Tự động nhảy real-time khi sửa Qui Trình Sơn
                     </div>
                   </div>
                 ) : (
                   <div className="text-[11px] text-slate-400">
-                    Chỉ hiển thị thông số kỹ thuật Coating Schedule.
+                    Chỉ hiển thị thông số kỹ thuật Qui Trình Sơn.
                   </div>
                 )}
               </div>
@@ -1053,7 +1053,7 @@ export function App() {
                   }`}
                 >
                   <ClipboardList className="h-4 w-4" />
-                  1. Coating Schedule (CS) / Lập lịch quy trình
+                  1. Coating Schedule (CS) / Qui Trình Sơn
                 </button>
 
                 {canViewCost && (
@@ -1210,7 +1210,7 @@ export function App() {
                   onClick={() => setMainSection('WORKSPACE')}
                   className="rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
                 >
-                  Back to Workspace / Quay lại Lập lịch (CS/CC)
+                  Back to Workspace / Quay lại Qui Trình Sơn (CS/CC)
                 </button>
               </div>
             </div>

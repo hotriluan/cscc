@@ -58,7 +58,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
-              Coating Schedule (CS) / Lịch trình sơn
+              Coating Schedule (CS) / Qui Trình Sơn
             </button>
             {canViewCost && (
               <button
@@ -108,7 +108,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
             <div className="text-center">
               <h1 className="text-xl font-black uppercase tracking-widest text-slate-900 print:text-base print:tracking-wider">
                 {printMode === 'CS'
-                  ? 'COATING SCHEDULE / BẢNG LẬP LỊCH QUY TRÌNH SƠN'
+                  ? 'COATING SCHEDULE / QUI TRÌNH SƠN'
                   : 'COATING COST CALCULATION / BẢNG TÍNH TOÁN CHI PHÍ SƠN'}
               </h1>
               <div className="text-xs font-semibold text-slate-600 print:text-[10px]">
@@ -445,7 +445,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                 </div>
                 <div>
                   2. The production process does not follow the ALKANA coating
-                  schedule. / 2. Quy trình sản xuất không tuân thủ theo lịch trình sơn của ALKANA.
+                  schedule. / 2. Quy trình sản xuất không tuân thủ theo qui trình sơn của ALKANA.
                 </div>
               </>
             ) : (

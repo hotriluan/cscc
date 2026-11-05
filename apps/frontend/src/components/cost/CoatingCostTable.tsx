@@ -111,7 +111,7 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
                 COATING COST CALCULATION (CC) / BẢNG TÍNH TOÁN CHI PHÍ SƠN (CHẾ ĐỘ XEM / READ-ONLY)
               </h2>
               <p className="text-xs text-emerald-200">
-                Auto real-time sync from Coating Schedule (CS) / Tự động đồng bộ thời gian thực từ Coating Schedule (CS)
+                Auto real-time sync from Coating Schedule (CS) / Tự động đồng bộ thời gian thực từ Qui Trình Sơn (CS)
               </p>
             </div>
           </div>

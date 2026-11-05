@@ -594,7 +594,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-900 px-4 py-2.5 text-white rounded-t-xl">
           <div>
             <h2 className="text-sm md:text-base font-bold tracking-wide uppercase">
-              COATING SCHEDULE (CS) / BẢNG LẬP LỊCH QUY TRÌNH SƠN
+              COATING SCHEDULE (CS) / QUI TRÌNH SƠN
             </h2>
             <p className="text-[11px] text-slate-300">
               Auto real-time sync to CC & BOM / Mọi thay đổi tại đây tự động đồng bộ sang Coating Cost (CC) & BOM Summary

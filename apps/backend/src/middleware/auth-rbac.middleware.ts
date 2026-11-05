@@ -62,7 +62,7 @@ export function requireCostAccessMiddleware(
     res.status(403).json({
       error: 'FORBIDDEN_COST_ACCESS',
       message:
-        'Tài khoản Kỹ thuật viên (TECHNICAL) chỉ được phép truy cập Coating Schedule & BOM kỹ thuật, không có quyền xem bảng Coating Cost (VND/m²).'
+        'Tài khoản Kỹ thuật viên (TECHNICAL) chỉ được phép truy cập Qui Trình Sơn (Coating Schedule) & BOM kỹ thuật, không có quyền xem bảng Coating Cost (VND/m²).'
     });
     return;
   }
