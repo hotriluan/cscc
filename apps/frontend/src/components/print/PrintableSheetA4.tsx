@@ -1,14 +1,19 @@
 import React from 'react';
 import {
   ProjectRevision,
+  ScheduleStep,
   CoatingCostSummary,
+  StepCostCalculation,
   UserRole,
   formatVnd,
   formatDecimal2,
-  formatCoverage
+  formatCoverage,
+  paginateCsSteps,
+  paginateCcSteps
 } from '@cscc/shared';
 import { Printer, X } from 'lucide-react';
-import logoWeb from '../../assets/logo_web.png';
+import logoPropan from '../../assets/LOGO PROPAN.png';
+import logoAlkana from '../../assets/LOGO_Alkana.png';
 
 interface PrintableSheetA4Props {
   revision: ProjectRevision;
@@ -31,6 +36,22 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   );
   const revCode = String(revision.revisionNo).padStart(2, '0');
 
+  const csPages = React.useMemo(
+    () => paginateCsSteps(revision.steps),
+    [revision.steps]
+  );
+
+  const ccPages = React.useMemo(
+    () =>
+      costSummary
+        ? paginateCcSteps(costSummary.steps, Boolean(revision.remark?.trim()))
+        : [],
+    [costSummary, revision.remark]
+  );
+
+  const totalPages =
+    printMode === 'CS' ? csPages.length : Math.max(1, ccPages.length);
+
   const handlePrint = () => {
     const prevTitle = document.title;
     document.title = `ALKANA_${printMode}_${revision.projectCode}_Rev${revCode}`;
@@ -43,12 +64,458 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
     setTimeout(restoreTitle, 1500);
   };
 
+  const renderSheetHeader = (pageNumber: number, pageCount: number) => (
+    <div className="flex items-center justify-between gap-3 border-b-2 border-slate-900 pb-3 print:pb-1">
+      <div className="flex shrink-0 items-center justify-start">
+        <img
+          src={logoPropan}
+          alt="Propan Logo"
+          className="h-12 w-auto object-contain print:h-8"
+        />
+      </div>
+      <div className="flex-1 px-2 text-center">
+        <h1 className="text-xl font-black uppercase tracking-widest text-slate-900 print:text-base print:tracking-wider">
+          {printMode === 'CS'
+            ? 'COATING SCHEDULE / QUI TRÌNH SƠN'
+            : 'COATING COST CALCULATION / BẢNG TÍNH TOÁN CHI PHÍ SƠN'}
+        </h1>
+        <div className="mt-0.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-xs font-semibold text-slate-600 print:text-[10px] print:leading-tight">
+          <span>
+            No. / Mã: <strong className="text-slate-900">{revision.projectCode}</strong>
+          </span>
+          <span>|</span>
+          <span>
+            Rev. / Phiên bản: <strong className="text-slate-900">{revCode}</strong>
+          </span>
+          <span>|</span>
+          <span>
+            Date / Ngày: <strong className="text-slate-900">{revision.scheduleDate}</strong>
+          </span>
+          <span>|</span>
+          <span>
+            Status / Trạng thái:{' '}
+            <strong className="text-slate-900">
+              {revision.status === 'LOCKED' || revision.status === 'APPROVED'
+                ? 'APPROVED / ĐÃ PHÊ DUYỆT'
+                : 'DRAFT / BẢN NHÁP'}
+            </strong>
+          </span>
+          <span>|</span>
+          <span>
+            Page / Trang:{' '}
+            <strong className="text-slate-900">
+              {pageNumber} / {pageCount}
+            </strong>
+          </span>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center justify-end">
+        <img
+          src={logoAlkana}
+          alt="Alkana Logo"
+          className="h-12 w-auto object-contain print:h-8"
+        />
+      </div>
+    </div>
+  );
+
+  const renderMetadataGrid = () => (
+    <div className="my-3 grid grid-cols-3 gap-2 border-b border-slate-400 pb-3 text-xs print:my-1.5 print:gap-1 print:pb-1.5 print:text-[10px] print:leading-tight">
+      <div>
+        <div>
+          <strong>Customer / Khách hàng:</strong> {revision.customer.shortName}
+        </div>
+        <div>
+          <strong>Substrate Type / Loại gỗ:</strong> {revision.substrate}
+        </div>
+        <div>
+          <strong>Product Item / Tên sản phẩm:</strong> {revision.productName}
+        </div>
+      </div>
+      <div>
+        <div>
+          <strong>Positioning / Vị trí:</strong> {revision.positioning}
+        </div>
+        <div>
+          <strong>Finishing System / Hệ sơn:</strong> {revision.finishingSystem}
+        </div>
+        <div>
+          <strong>Gloss Level / Độ bóng:</strong> {revision.glossLevel}
+        </div>
+      </div>
+      <div>
+        <div>
+          <strong>Color / Màu sắc:</strong> {revision.colorName}
+        </div>
+        <div>
+          <strong>MC Wood / Độ ẩm gỗ:</strong> {revision.mcWood} |{' '}
+          <strong>Humidity / Độ ẩm:</strong> {revision.roomHumidity}
+        </div>
+        <div>
+          <strong>Room Temp. / Nhiệt độ phòng:</strong> {revision.roomTemp}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCsTable = (stepsSlice: ScheduleStep[]) => (
+    <table className="w-full table-fixed border-collapse border border-slate-900 text-[11px] print:text-[9.5px]">
+      <colgroup>
+        <col style={{ width: '4%' }} />
+        <col style={{ width: '13%' }} />
+        <col style={{ width: '30%' }} />
+        <col style={{ width: '6%' }} />
+        <col style={{ width: '11%' }} />
+        <col style={{ width: '7%' }} />
+        <col style={{ width: '14%' }} />
+        <col style={{ width: '15%' }} />
+      </colgroup>
+      <thead>
+        <tr className="bg-slate-200 font-bold uppercase print:bg-slate-100">
+          <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+            No.<br />STT
+          </th>
+          <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+            Application Step<br />Bước thi công
+          </th>
+          <th className="border border-slate-900 px-2 py-1 print:py-0.5 text-left leading-tight">
+            Product Name<br />Tên sản phẩm
+          </th>
+          <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+            Mixing Ratio<br />Tỉ lệ pha
+          </th>
+          <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+            Visco<br />Độ nhớt
+          </th>
+          <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+            CA (g/m²)<br />Lượng sơn
+          </th>
+          <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+            Application Method<br />Phương pháp thi công
+          </th>
+          <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+            Drying Time Recommended<br />Thời gian khô đề xuất
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {stepsSlice.map((step) => {
+          if (step.rowType === 'SANDING') {
+            return (
+              <tr key={step.id} className="italic">
+                <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-center" />
+                <td className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-semibold">
+                  SANDING / CHÀ NHÁM
+                </td>
+                <td className="border border-slate-900 px-2 py-1 print:py-0.5" />
+                <td className="border border-slate-900 px-1 py-1 print:py-0.5" />
+                <td className="border border-slate-900 px-1 py-1 print:py-0.5" />
+                <td className="border border-slate-900 px-1 py-1 print:py-0.5" />
+                <td className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-semibold">
+                  {step.sandingSpec}
+                </td>
+                <td className="border border-slate-900 px-1.5 py-1 print:py-0.5" />
+              </tr>
+            );
+          }
+          const rowSpan = Math.max(1, step.items.length);
+          return step.items.map((item, idx) => (
+            <tr key={item.id}>
+              {idx === 0 && (
+                <>
+                  <td
+                    rowSpan={rowSpan}
+                    className="border border-slate-900 px-1 py-1 print:py-0.5 text-center font-bold"
+                  >
+                    {step.stepNumber}
+                  </td>
+                  <td
+                    rowSpan={rowSpan}
+                    className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-bold"
+                  >
+                    {step.stepName}
+                  </td>
+                </>
+              )}
+              <td className="border border-slate-900 px-2 py-1 print:py-0.5 font-mono font-semibold break-words">
+                {item.materialName || item.materialCode}
+              </td>
+              <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-center">
+                {item.mixingRatio}
+              </td>
+              {idx === 0 && (
+                <>
+                  <td
+                    rowSpan={rowSpan}
+                    className="border border-slate-900 px-1 py-1 print:py-0.5 text-center"
+                  >
+                    {step.visco ?? item.visco ?? ''}
+                  </td>
+                  <td
+                    rowSpan={rowSpan}
+                    className="border border-slate-900 px-1 py-1 print:py-0.5 text-center font-semibold"
+                  >
+                    {step.caInputRaw}
+                  </td>
+                  <td
+                    rowSpan={rowSpan}
+                    className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-semibold"
+                  >
+                    {step.methodName}
+                  </td>
+                  <td
+                    rowSpan={rowSpan}
+                    className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center"
+                  >
+                    {step.dryingTime}
+                  </td>
+                </>
+              )}
+            </tr>
+          ));
+        })}
+      </tbody>
+    </table>
+  );
+
+  const renderCsRemark = (hasTableAbove: boolean) => (
+    <div
+      className={`${
+        hasTableAbove
+          ? 'mt-3 border-t border-slate-900 pt-2 print:mt-1.5 print:pt-1'
+          : 'mt-2 print:mt-1.5'
+      } text-[11px] space-y-0.5 print:text-[9.5px] print:space-y-0 print:leading-tight`}
+    >
+      <div className="font-semibold">Remark / Ghi chú:</div>
+      <div>
+        ALKANA VIET NAM does not assure the quality of the final product if: /
+        ALKANA VIỆT NAM không đảm bảo chất lượng của sản phẩm cuối cùng nếu:
+      </div>
+      <div>
+        1. The production process does not use 100% ALKANA materials. / 1. Quy
+        trình sản xuất không sử dụng 100% nguyên vật liệu của ALKANA.
+      </div>
+      <div>
+        2. The production process does not follow the ALKANA coating schedule. /
+        2. Quy trình sản xuất không tuân thủ theo qui trình sơn của ALKANA.
+      </div>
+    </div>
+  );
+
+  const renderCsSignatures = () => (
+    <div className="mt-4 grid grid-cols-4 gap-0 border border-slate-900 text-center text-xs print:mt-1.5 print:text-[10px] print:break-inside-avoid">
+      <div className="border-r border-slate-900 p-2 print:p-1">
+        <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
+          CUSTOMER / KHÁCH HÀNG
+        </div>
+        <div className="h-16 print:h-8" />
+        <div className="font-semibold print:text-[10px]">
+          {revision.customerConfirmName || ''}
+        </div>
+      </div>
+      <div className="border-r border-slate-900 p-2 print:p-1">
+        <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
+          PD/PM / PHÒNG DỰ ÁN
+        </div>
+        <div className="h-16 print:h-8" />
+        <div className="font-semibold print:text-[10px]">
+          {revision.approvedByPdPm || ''}
+        </div>
+      </div>
+      <div className="border-r border-slate-900 p-2 print:p-1">
+        <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
+          TA / KỸ THUẬT
+        </div>
+        <div className="h-16 print:h-8" />
+        <div className="font-semibold print:text-[10px]">
+          {revision.preparedByTa || ''}
+        </div>
+      </div>
+      <div className="p-2 print:p-1">
+        <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
+          PROJECT LEADER / TRƯỞNG DỰ ÁN
+        </div>
+        <div className="h-16 print:h-8" />
+        <div className="font-semibold print:text-[10px]">
+          {revision.checkedByLeader || ''}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCcTable = (
+    stepsSlice: StepCostCalculation[],
+    showTotalFooter: boolean
+  ) => {
+    if (!costSummary) return null;
+    return (
+      <table className="w-full table-fixed border-collapse border border-slate-900 text-[10.5px] print:text-[9px]">
+        <colgroup>
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '28%' }} />
+          <col style={{ width: '7.5%' }} />
+          <col style={{ width: '5%' }} />
+          <col style={{ width: '8.5%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7%' }} />
+          <col style={{ width: '7.5%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '8.5%' }} />
+        </colgroup>
+        {stepsSlice.length > 0 && (
+          <thead>
+            <tr className="bg-slate-200 font-bold uppercase print:bg-slate-100">
+              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+                Item<br />Bước thi công
+              </th>
+              <th className="border border-slate-900 px-2 py-1 print:py-0.5 text-left leading-tight">
+                Product Name<br />Tên sản phẩm
+              </th>
+              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+                Price<br />Đơn giá (VND/Ltr)
+              </th>
+              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+                Mixing Ratio<br />Tỉ lệ pha
+              </th>
+              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+                Mixed Price<br />Giá hỗn hợp (VND/Ltr set)
+              </th>
+              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+                Application<br />Phương pháp thi công
+              </th>
+              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+                Coating Amount<br />Lượng sơn (g/m²)
+              </th>
+              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+                Application Efficiency<br />Hiệu suất thi công
+              </th>
+              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+                CA + Loss<br />Lượng gồm hao hụt (g/m²)
+              </th>
+              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+                Coverage<br />Định mức phủ (m²/Ltr/kg)
+              </th>
+              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+                Coating Cost<br />Chi phí sơn (VND/m²)
+              </th>
+            </tr>
+          </thead>
+        )}
+        {stepsSlice.length > 0 && (
+          <tbody>
+            {stepsSlice.map((sc) => {
+              const rowSpan = Math.max(1, sc.items.length);
+              return sc.items.map((it, idx) => (
+                <tr key={it.itemId}>
+                  {idx === 0 && (
+                    <td
+                      rowSpan={rowSpan}
+                      className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-bold"
+                    >
+                      {sc.stepName}
+                    </td>
+                  )}
+                  <td className="border border-slate-900 px-2 py-1 print:py-0.5 font-mono font-semibold break-words">
+                    {it.materialName || it.materialCode}
+                  </td>
+                  <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-right">
+                    {formatVnd(it.priceSnapshotVnd)}
+                  </td>
+                  <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-center">
+                    {it.mixingRatio}
+                  </td>
+                  {idx === 0 && (
+                    <>
+                      <td
+                        rowSpan={rowSpan}
+                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-right font-semibold"
+                      >
+                        {formatVnd(sc.mixedPriceDisplay)}
+                      </td>
+                      <td
+                        rowSpan={rowSpan}
+                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-center font-semibold"
+                      >
+                        {sc.methodName}
+                      </td>
+                      <td
+                        rowSpan={rowSpan}
+                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-center"
+                      >
+                        {sc.caAvg}
+                      </td>
+                      <td
+                        rowSpan={rowSpan}
+                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-center"
+                      >
+                        {sc.efficiencyPercentDisplay}
+                      </td>
+                      <td
+                        rowSpan={rowSpan}
+                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-right"
+                      >
+                        {formatDecimal2(sc.caPlusLossDisplay)}
+                      </td>
+                      <td
+                        rowSpan={rowSpan}
+                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-right"
+                      >
+                        {formatCoverage(sc.coverageDisplay)}
+                      </td>
+                      <td
+                        rowSpan={rowSpan}
+                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-right font-bold"
+                      >
+                        {formatDecimal2(sc.coatingCostDisplay)}
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ));
+            })}
+          </tbody>
+        )}
+        {showTotalFooter && (
+          <tfoot>
+            <tr className="bg-slate-200 font-bold print:bg-slate-100">
+              <td
+                colSpan={10}
+                className="border border-slate-900 px-2 py-1.5 print:py-0.5 text-center"
+              >
+                TOTAL COATING COST / TỔNG CHI PHÍ SƠN (VND/m²)
+              </td>
+              <td className="border border-slate-900 px-1.5 py-1.5 print:py-0.5 text-right text-xs print:text-[9.5px]">
+                {formatVnd(costSummary.totalCoatingCostDisplay)}
+              </td>
+            </tr>
+          </tfoot>
+        )}
+      </table>
+    );
+  };
+
+  const renderCcNotes = () => (
+    <div className="mt-3 border-t border-slate-900 pt-2 text-[11px] space-y-0.5 print:mt-1.5 print:pt-1 print:text-[9.5px] print:space-y-0 print:leading-tight">
+      <div className="italic">
+        Notes: The price above is not including VAT 8% and valid for 30 days /
+        Ghi chú: Đơn giá trên chưa bao gồm thuế VAT 8% và có hiệu lực trong 30
+        ngày.
+      </div>
+      {revision.remark && (
+        <div>
+          <strong>REMARK / GHI CHÚ:</strong> {revision.remark}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 p-4 print:static print:bg-white print:p-0">
       <div className="mx-auto max-w-6xl rounded-xl bg-white p-6 shadow-2xl print:max-w-none print:rounded-none print:p-0 print:shadow-none">
         {/* Top Action Bar (Hidden when printing) */}
         <div className="no-print mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setPrintMode('CS')}
@@ -73,6 +540,9 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                 Coating Cost (CC) / Chi phí sơn
               </button>
             )}
+            <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+              Total / Tổng: <strong>{totalPages}</strong> trang A4
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -95,415 +565,52 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
           </div>
         </div>
 
-        {/* A4 SHEET HEADER */}
-        <div className="border-2 border-slate-900 p-4 print:p-2.5">
-          <div className="flex items-center justify-between border-b-2 border-slate-900 pb-3 print:pb-1">
-            <div className="flex items-center">
-              <img
-                src={logoWeb}
-                alt="Alkana Logo"
-                className="h-12 w-auto object-contain print:h-8"
-              />
-            </div>
-            <div className="text-center">
-              <h1 className="text-xl font-black uppercase tracking-widest text-slate-900 print:text-base print:tracking-wider">
-                {printMode === 'CS'
-                  ? 'COATING SCHEDULE / QUI TRÌNH SƠN'
-                  : 'COATING COST CALCULATION / BẢNG TÍNH TOÁN CHI PHÍ SƠN'}
-              </h1>
-              <div className="text-xs font-semibold text-slate-600 print:text-[10px]">
-                No. / Mã: {revision.projectCode} | Rev. / Phiên bản: {revCode} | Date / Ngày:{' '}
-                {revision.scheduleDate}
-              </div>
-            </div>
-            <div className="text-right text-xs print:text-[10px]">
-              <div>
-                <strong>Status / Trạng thái:</strong>{' '}
-                {revision.status === 'LOCKED' || revision.status === 'APPROVED'
-                  ? 'APPROVED / ĐÃ PHÊ DUYỆT'
-                  : 'DRAFT / BẢN NHÁP'}
-              </div>
-              <div>
-                <strong>Page / Trang:</strong> 1 / 1
-              </div>
-            </div>
-          </div>
-
-          {/* Synchronized Metadata Grid */}
-          <div className="my-3 grid grid-cols-3 gap-2 border-b border-slate-400 pb-3 text-xs print:my-1.5 print:gap-1 print:pb-1.5 print:text-[10px] print:leading-tight">
-            <div>
-              <div>
-                <strong>Customer / Khách hàng:</strong> {revision.customer.shortName}
-              </div>
-              <div>
-                <strong>Substrate Type / Loại gỗ:</strong> {revision.substrate}
-              </div>
-              <div>
-                <strong>Product Item / Tên sản phẩm:</strong> {revision.productName}
-              </div>
-            </div>
-            <div>
-              <div>
-                <strong>Positioning / Vị trí:</strong> {revision.positioning}
-              </div>
-              <div>
-                <strong>Finishing System / Hệ sơn:</strong> {revision.finishingSystem}
-              </div>
-              <div>
-                <strong>Gloss Level / Độ bóng:</strong> {revision.glossLevel}
-              </div>
-            </div>
-            <div>
-              <div>
-                <strong>Color / Màu sắc:</strong> {revision.colorName}
-              </div>
-              <div>
-                <strong>MC Wood / Độ ẩm gỗ:</strong> {revision.mcWood} |{' '}
-                <strong>Humidity / Độ ẩm:</strong> {revision.roomHumidity}
-              </div>
-              <div>
-                <strong>Room Temp. / Nhiệt độ phòng:</strong> {revision.roomTemp}
-              </div>
-            </div>
-          </div>
-
-          {/* TABLE CONTENT: CS OR CC (Clean Product Code only, no Packing info) */}
-          {printMode === 'CS' ? (
-            <table className="w-full table-fixed border-collapse border border-slate-900 text-[11px] print:text-[9.5px]">
-              <colgroup>
-                <col style={{ width: '4%' }} />
-                <col style={{ width: '13%' }} />
-                <col style={{ width: '30%' }} />
-                <col style={{ width: '6%' }} />
-                <col style={{ width: '11%' }} />
-                <col style={{ width: '7%' }} />
-                <col style={{ width: '14%' }} />
-                <col style={{ width: '15%' }} />
-              </colgroup>
-              <thead>
-                <tr className="bg-slate-200 font-bold uppercase print:bg-slate-100">
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    No.<br />STT
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Application Step<br />Bước thi công
-                  </th>
-                  <th className="border border-slate-900 px-2 py-1 print:py-0.5 text-left leading-tight">
-                    Product Name<br />Tên sản phẩm
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Mixing Ratio<br />Tỉ lệ pha
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Visco<br />Độ nhớt
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    CA (g/m²)<br />Lượng sơn
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Application Method<br />Phương pháp thi công
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Drying Time Recommended<br />Thời gian khô đề xuất
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {revision.steps.map((step) => {
-                  if (step.rowType === 'SANDING') {
-                    return (
-                      <tr key={step.id} className="italic">
-                        <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-center" />
-                        <td className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-semibold">
-                          SANDING / CHÀ NHÁM
-                        </td>
-                        <td className="border border-slate-900 px-2 py-1 print:py-0.5" />
-                        <td className="border border-slate-900 px-1 py-1 print:py-0.5" />
-                        <td className="border border-slate-900 px-1 py-1 print:py-0.5" />
-                        <td className="border border-slate-900 px-1 py-1 print:py-0.5" />
-                        <td className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-semibold">
-                          {step.sandingSpec}
-                        </td>
-                        <td className="border border-slate-900 px-1.5 py-1 print:py-0.5" />
-                      </tr>
-                    );
-                  }
-                  const rowSpan = Math.max(1, step.items.length);
-                  return step.items.map((item, idx) => (
-                    <tr key={item.id}>
-                      {idx === 0 && (
-                        <>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1 py-1 print:py-0.5 text-center font-bold"
-                          >
-                            {step.stepNumber}
-                          </td>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-bold"
-                          >
-                            {step.stepName}
-                          </td>
-                        </>
-                      )}
-                      <td className="border border-slate-900 px-2 py-1 print:py-0.5 font-mono font-semibold break-words">
-                        {item.materialName || item.materialCode}
-                      </td>
-                      <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-center">
-                        {item.mixingRatio}
-                      </td>
-                      {idx === 0 && (
-                        <>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1 py-1 print:py-0.5 text-center"
-                          >
-                            {step.visco ?? item.visco ?? ''}
-                          </td>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1 py-1 print:py-0.5 text-center font-semibold"
-                          >
-                            {step.caInputRaw}
-                          </td>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-semibold"
-                          >
-                            {step.methodName}
-                          </td>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center"
-                          >
-                            {step.dryingTime}
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ));
-                })}
-              </tbody>
-            </table>
-          ) : costSummary ? (
-            <table className="w-full table-fixed border-collapse border border-slate-900 text-[10.5px] print:text-[9px]">
-              <colgroup>
-                <col style={{ width: '7%' }} />
-                <col style={{ width: '28%' }} />
-                <col style={{ width: '7.5%' }} />
-                <col style={{ width: '5%' }} />
-                <col style={{ width: '8.5%' }} />
-                <col style={{ width: '7%' }} />
-                <col style={{ width: '7%' }} />
-                <col style={{ width: '7%' }} />
-                <col style={{ width: '7.5%' }} />
-                <col style={{ width: '8%' }} />
-                <col style={{ width: '8.5%' }} />
-              </colgroup>
-              <thead>
-                <tr className="bg-slate-200 font-bold uppercase print:bg-slate-100">
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Item<br />Bước thi công
-                  </th>
-                  <th className="border border-slate-900 px-2 py-1 print:py-0.5 text-left leading-tight">
-                    Product Name<br />Tên sản phẩm
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Price<br />Đơn giá (VND/Ltr)
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Mixing Ratio<br />Tỉ lệ pha
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Mixed Price<br />Giá hỗn hợp (VND/Ltr set)
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Application<br />Phương pháp thi công
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Coating Amount<br />Lượng sơn (g/m²)
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Application Efficiency<br />Hiệu suất thi công
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    CA + Loss<br />Lượng gồm hao hụt (g/m²)
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Coverage<br />Định mức phủ (m²/Ltr/kg)
-                  </th>
-                  <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                    Coating Cost<br />Chi phí sơn (VND/m²)
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {costSummary.steps.map((sc) => {
-                  const rowSpan = Math.max(1, sc.items.length);
-                  return sc.items.map((it, idx) => (
-                    <tr key={it.itemId}>
-                      {idx === 0 && (
-                        <td
-                          rowSpan={rowSpan}
-                          className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-bold"
-                        >
-                          {sc.stepName}
-                        </td>
-                      )}
-                      <td className="border border-slate-900 px-2 py-1 print:py-0.5 font-mono font-semibold break-words">
-                        {it.materialName || it.materialCode}
-                      </td>
-                      <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-right">
-                        {formatVnd(it.priceSnapshotVnd)}
-                      </td>
-                      <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-center">
-                        {it.mixingRatio}
-                      </td>
-                      {idx === 0 && (
-                        <>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1 py-1 print:py-0.5 text-right font-semibold"
-                          >
-                            {formatVnd(sc.mixedPriceDisplay)}
-                          </td>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1 py-1 print:py-0.5 text-center font-semibold"
-                          >
-                            {sc.methodName}
-                          </td>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1 py-1 print:py-0.5 text-center"
-                          >
-                            {sc.caAvg}
-                          </td>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1 py-1 print:py-0.5 text-center"
-                          >
-                            {sc.efficiencyPercentDisplay}
-                          </td>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1 py-1 print:py-0.5 text-right"
-                          >
-                            {formatDecimal2(sc.caPlusLossDisplay)}
-                          </td>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1 py-1 print:py-0.5 text-right"
-                          >
-                            {formatCoverage(sc.coverageDisplay)}
-                          </td>
-                          <td
-                            rowSpan={rowSpan}
-                            className="border border-slate-900 px-1 py-1 print:py-0.5 text-right font-bold"
-                          >
-                            {formatDecimal2(sc.coatingCostDisplay)}
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ));
-                })}
-              </tbody>
-              <tfoot>
-                <tr className="bg-slate-200 font-bold print:bg-slate-100">
-                  <td
-                    colSpan={10}
-                    className="border border-slate-900 px-2 py-1.5 print:py-0.5 text-center"
-                  >
-                    TOTAL COATING COST / TỔNG CHI PHÍ SƠN (VND/m²)
-                  </td>
-                  <td className="border border-slate-900 px-1.5 py-1.5 print:py-0.5 text-right text-xs print:text-[9.5px]">
-                    {formatVnd(costSummary.totalCoatingCostDisplay)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          ) : (
-            <div className="my-8 rounded-lg border border-dashed border-slate-300 p-8 text-center text-xs text-slate-500 italic">
-              No Coating Cost data or unauthorized / Không có dữ liệu chi phí sơn hoặc không có quyền truy cập.
-            </div>
-          )}
-
-          {/* REMARK & 4 SIGNATURE BOXES */}
-          <div className="mt-3 border-t border-slate-900 pt-2 text-[11px] space-y-0.5 print:mt-1.5 print:pt-1 print:text-[9.5px] print:space-y-0 print:leading-tight">
-            {printMode === 'CS' ? (
-              <>
-                <div className="font-semibold">Remark / Ghi chú:</div>
-                <div>
-                  ALKANA VIET NAM does not assure the quality of the final
-                  product if: / ALKANA VIỆT NAM không đảm bảo chất lượng của sản phẩm cuối cùng nếu:
-                </div>
-                <div>
-                  1. The production process does not use 100% ALKANA materials. /
-                  1. Quy trình sản xuất không sử dụng 100% nguyên vật liệu của ALKANA.
-                </div>
-                <div>
-                  2. The production process does not follow the ALKANA coating
-                  schedule. / 2. Quy trình sản xuất không tuân thủ theo qui trình sơn của ALKANA.
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="italic">
-                  Notes: The price above is not including VAT 8% and valid for
-                  30 days / Ghi chú: Đơn giá trên chưa bao gồm thuế VAT 8% và có hiệu lực trong 30 ngày.
-                </div>
-                {revision.remark && (
-                  <div>
-                    <strong>REMARK / GHI CHÚ:</strong> {revision.remark}
+        {/* PAGINATED A4 SHEETS */}
+        {printMode === 'CS' ? (
+          <div className="space-y-6 print:space-y-0">
+            {csPages.map((page, pageIdx) => (
+              <div
+                key={`cs-page-${pageIdx + 1}`}
+                className="a4-print-page border-2 border-slate-900 p-4 print:p-2.5"
+              >
+                {renderSheetHeader(pageIdx + 1, csPages.length)}
+                {page.showMetadata && renderMetadataGrid()}
+                {page.steps.length > 0 && (
+                  <div className={page.showMetadata ? '' : 'mt-2 print:mt-1.5'}>
+                    {renderCsTable(page.steps)}
                   </div>
                 )}
-              </>
-            )}
+                {page.showRemark && renderCsRemark(page.steps.length > 0)}
+                {page.showSignatures && renderCsSignatures()}
+              </div>
+            ))}
           </div>
-
-          {printMode === 'CS' && (
-            <div className="mt-4 grid grid-cols-4 gap-0 border border-slate-900 text-center text-xs print:mt-1.5 print:text-[10px] print:break-inside-avoid">
-              <div className="border-r border-slate-900 p-2 print:p-1">
-                <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
-                  CUSTOMER / KHÁCH HÀNG
+        ) : costSummary ? (
+          <div className="space-y-6 print:space-y-0">
+            {ccPages.map((page, pageIdx) => (
+              <div
+                key={`cc-page-${pageIdx + 1}`}
+                className="a4-print-page border-2 border-slate-900 p-4 print:p-2.5"
+              >
+                {renderSheetHeader(pageIdx + 1, ccPages.length)}
+                {page.showMetadata && renderMetadataGrid()}
+                <div className={page.showMetadata ? '' : 'mt-2 print:mt-1.5'}>
+                  {renderCcTable(page.steps, page.showTotalAndNotes)}
                 </div>
-                <div className="h-16 print:h-8" />
-                <div className="font-semibold print:text-[10px]">
-                  {revision.customerConfirmName || ''}
-                </div>
+                {page.showTotalAndNotes && renderCcNotes()}
               </div>
-              <div className="border-r border-slate-900 p-2 print:p-1">
-                <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
-                  PD/PM / PHÒNG DỰ ÁN
-                </div>
-                <div className="h-16 print:h-8" />
-                <div className="font-semibold print:text-[10px]">
-                  {revision.approvedByPdPm || ''}
-                </div>
-              </div>
-              <div className="border-r border-slate-900 p-2 print:p-1">
-                <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
-                  TA / KỸ THUẬT
-                </div>
-                <div className="h-16 print:h-8" />
-                <div className="font-semibold print:text-[10px]">
-                  {revision.preparedByTa || ''}
-                </div>
-              </div>
-              <div className="p-2 print:p-1">
-                <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
-                  PROJECT LEADER / TRƯỞNG DỰ ÁN
-                </div>
-                <div className="h-16 print:h-8" />
-                <div className="font-semibold print:text-[10px]">
-                  {revision.checkedByLeader || ''}
-                </div>
-              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="border-2 border-slate-900 p-4 print:p-2.5">
+            {renderSheetHeader(1, 1)}
+            {renderMetadataGrid()}
+            <div className="my-8 rounded-lg border border-dashed border-slate-300 p-8 text-center text-xs text-slate-500 italic">
+              No Coating Cost data or unauthorized / Không có dữ liệu chi phí sơn
+              hoặc không có quyền truy cập.
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

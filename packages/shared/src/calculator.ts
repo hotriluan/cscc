@@ -361,3 +361,249 @@ export function formatCoverage(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '-';
   return value.toFixed(2);
 }
+
+export interface CsPageSlice {
+  steps: ScheduleStep[];
+  showMetadata: boolean;
+  showRemark: boolean;
+  showSignatures: boolean;
+}
+
+export interface CcPageSlice {
+  steps: StepCostCalculation[];
+  showMetadata: boolean;
+  showTotalAndNotes: boolean;
+}
+
+const CS_FIRST_PAGE_MAX_UNITS = 30;
+const CS_NEXT_PAGE_MAX_UNITS = 30;
+const CS_REMARK_UNITS = 3.5;
+const CS_SIGNATURES_UNITS = 4.5;
+
+const CC_FIRST_PAGE_MAX_UNITS = 25;
+const CC_NEXT_PAGE_MAX_UNITS = 25;
+const CC_FOOTER_BASE_UNITS = 4.5;
+
+function estimateCsStepUnits(step: ScheduleStep): number {
+  if (step.rowType === 'SANDING') {
+    const specLen = (step.sandingSpec || '').trim().length;
+    return specLen > 32 ? 1.4 : 1;
+  }
+
+  const items = step.items || [];
+  if (items.length === 0) {
+    return 1;
+  }
+
+  let itemUnits = 0;
+  for (const item of items) {
+    const nameLen = (item.materialName || item.materialCode || '').trim().length;
+    const lines = Math.max(1, Math.ceil(nameLen / 44));
+    itemUnits += 1 + (lines - 1) * 0.7;
+  }
+
+  const stepNameLines = Math.max(1, Math.ceil((step.stepName || '').trim().length / 16));
+  const dryingLines = Math.max(1, Math.ceil((step.dryingTime || '').trim().length / 20));
+  const minMergedUnits = Math.max(stepNameLines, dryingLines) * 0.65;
+
+  return Math.max(itemUnits, minMergedUnits);
+}
+
+/**
+ * Splits Coating Schedule (CS) steps across A4 landscape pages without breaking
+ * any coating step (or its paired preceding SANDING row) across page boundaries.
+ */
+export function paginateCsSteps(steps: ScheduleStep[]): CsPageSlice[] {
+  if (!steps || steps.length === 0) {
+    return [
+      {
+        steps: [],
+        showMetadata: true,
+        showRemark: true,
+        showSignatures: true
+      }
+    ];
+  }
+
+  const groups: Array<{ steps: ScheduleStep[]; units: number }> = [];
+  let idx = 0;
+  while (idx < steps.length) {
+    const current = steps[idx];
+    const next = steps[idx + 1];
+    if (current.rowType === 'SANDING' && next && next.rowType !== 'SANDING') {
+      const groupSteps = [current, next];
+      const units = estimateCsStepUnits(current) + estimateCsStepUnits(next);
+      groups.push({ steps: groupSteps, units });
+      idx += 2;
+    } else {
+      groups.push({
+        steps: [current],
+        units: estimateCsStepUnits(current)
+      });
+      idx += 1;
+    }
+  }
+
+  const pages: Array<CsPageSlice & { usedUnits: number; maxUnits: number }> = [
+    {
+      steps: [],
+      showMetadata: true,
+      showRemark: false,
+      showSignatures: false,
+      usedUnits: 0,
+      maxUnits: CS_FIRST_PAGE_MAX_UNITS
+    }
+  ];
+
+  for (const group of groups) {
+    let currentPage = pages[pages.length - 1];
+    if (
+      currentPage.steps.length > 0 &&
+      currentPage.usedUnits + group.units > currentPage.maxUnits
+    ) {
+      currentPage = {
+        steps: [],
+        showMetadata: false,
+        showRemark: false,
+        showSignatures: false,
+        usedUnits: 0,
+        maxUnits: CS_NEXT_PAGE_MAX_UNITS
+      };
+      pages.push(currentPage);
+    }
+    currentPage.steps.push(...group.steps);
+    currentPage.usedUnits += group.units;
+  }
+
+  const lastPage = pages[pages.length - 1];
+  const fullFooterUnits = CS_REMARK_UNITS + CS_SIGNATURES_UNITS;
+  // Pages without the 3x3 metadata grid have ~2 extra row units of safe vertical room
+  const effectiveFooterBudget = lastPage.showMetadata
+    ? lastPage.maxUnits
+    : lastPage.maxUnits + 2;
+
+  if (lastPage.usedUnits + fullFooterUnits <= effectiveFooterBudget) {
+    lastPage.showRemark = true;
+    lastPage.showSignatures = true;
+  } else {
+    // Keep Remark and 4 Signature boxes together on the next page so Page 2 never overflows A4 height
+    pages.push({
+      steps: [],
+      showMetadata: false,
+      showRemark: true,
+      showSignatures: true,
+      usedUnits: fullFooterUnits,
+      maxUnits: CS_NEXT_PAGE_MAX_UNITS
+    });
+  }
+
+  return pages.map(({ steps: pageSteps, showMetadata, showRemark, showSignatures }) => ({
+    steps: pageSteps,
+    showMetadata,
+    showRemark,
+    showSignatures
+  }));
+}
+
+function estimateCcStepUnits(stepCalc: StepCostCalculation): number {
+  const items = stepCalc.items || [];
+  if (items.length === 0) {
+    return 1;
+  }
+
+  let itemUnits = 0;
+  for (const item of items) {
+    const nameLen = (item.materialName || item.materialCode || '').trim().length;
+    const lines = Math.max(1, Math.ceil(nameLen / 40));
+    itemUnits += 1 + (lines - 1) * 0.7;
+  }
+
+  const stepNameLines = Math.max(1, Math.ceil((stepCalc.stepName || '').trim().length / 12));
+  const minMergedUnits = stepNameLines * 0.65;
+
+  return Math.max(itemUnits, minMergedUnits);
+}
+
+/**
+ * Splits Coating Cost (CC) steps across A4 landscape pages so each page displays
+ * an accurate `Page / Trang: X / Y` counter and the Total + Notes footer is never cut off.
+ */
+export function paginateCcSteps(
+  steps: StepCostCalculation[],
+  hasRemark = false
+): CcPageSlice[] {
+  if (!steps || steps.length === 0) {
+    return [
+      {
+        steps: [],
+        showMetadata: true,
+        showTotalAndNotes: true
+      }
+    ];
+  }
+
+  const pages: Array<CcPageSlice & { usedUnits: number; maxUnits: number }> = [
+    {
+      steps: [],
+      showMetadata: true,
+      showTotalAndNotes: false,
+      usedUnits: 0,
+      maxUnits: CC_FIRST_PAGE_MAX_UNITS
+    }
+  ];
+
+  for (const stepCalc of steps) {
+    const units = estimateCcStepUnits(stepCalc);
+    let currentPage = pages[pages.length - 1];
+    if (
+      currentPage.steps.length > 0 &&
+      currentPage.usedUnits + units > currentPage.maxUnits
+    ) {
+      currentPage = {
+        steps: [],
+        showMetadata: false,
+        showTotalAndNotes: false,
+        usedUnits: 0,
+        maxUnits: CC_NEXT_PAGE_MAX_UNITS
+      };
+      pages.push(currentPage);
+    }
+    currentPage.steps.push(stepCalc);
+    currentPage.usedUnits += units;
+  }
+
+  const footerUnits = CC_FOOTER_BASE_UNITS + (hasRemark ? 1 : 0);
+  const lastPage = pages[pages.length - 1];
+  const effectiveCcBudget = lastPage.showMetadata
+    ? lastPage.maxUnits
+    : lastPage.maxUnits + 1;
+
+  if (lastPage.usedUnits + footerUnits <= effectiveCcBudget) {
+    lastPage.showTotalAndNotes = true;
+  } else if (lastPage.steps.length > 1) {
+    const carriedStep = lastPage.steps.pop()!;
+    const carriedUnits = estimateCcStepUnits(carriedStep);
+    lastPage.usedUnits -= carriedUnits;
+    pages.push({
+      steps: [carriedStep],
+      showMetadata: false,
+      showTotalAndNotes: true,
+      usedUnits: carriedUnits + footerUnits,
+      maxUnits: CC_NEXT_PAGE_MAX_UNITS
+    });
+  } else {
+    pages.push({
+      steps: [],
+      showMetadata: false,
+      showTotalAndNotes: true,
+      usedUnits: footerUnits,
+      maxUnits: CC_NEXT_PAGE_MAX_UNITS
+    });
+  }
+
+  return pages.map(({ steps: pageSteps, showMetadata, showTotalAndNotes }) => ({
+    steps: pageSteps,
+    showMetadata,
+    showTotalAndNotes
+  }));
+}

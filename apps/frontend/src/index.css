@@ -34,8 +34,22 @@
     background: transparent !important;
   }
 
+  .a4-print-page {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .a4-print-page + .a4-print-page {
+    break-before: page;
+    page-break-before: always;
+  }
+
   thead {
     display: table-header-group;
+  }
+
+  tfoot {
+    display: table-row-group;
   }
 
   tr {
