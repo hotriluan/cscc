@@ -5,6 +5,9 @@ import {
   calculateCoatingCostTable,
   calculateBomSummary,
   redactRevisionForRole,
+  ReportFilterQuery,
+  ReportSubTab,
+  RevisionScopeFilter,
   RevisionStatus,
   UserRole
 } from '@cscc/shared';
@@ -17,6 +20,8 @@ import {
 import { signJwtToken } from './services/auth.service';
 import { cloneRevision, updateRevisionStatus } from './services/revision.service';
 import { generateRevisionWorkbook } from './services/excel-exporter.service';
+import { generateReportsOverview } from './services/report.service';
+import { generateAnalyticsReportWorkbook } from './services/report-excel.service';
 import {
   importMasterDataFromExcel,
   resolveDefaultExcelPath
@@ -897,6 +902,131 @@ export function createApp() {
       const revCode = String(rev.revisionNo).padStart(2, '0');
       const safeCode = rev.projectCode.replace(/[^a-zA-Z0-9_-]/g, '_');
       const filename = `${safeCode}_Rev${revCode}_${req.userRole}.xlsx`;
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(buffer);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  // =========================================================================
+  // REPORTS & ANALYTICS SYSTEM (7 REPORTS + RBAC + REVISION SCOPE + EXCEL)
+  // =========================================================================
+
+  const parseReportQuery = (q: Record<string, unknown>): ReportFilterQuery => {
+    const revScopeRaw = String(q.revisionScope || 'ALL')
+      .trim()
+      .toUpperCase();
+    const revisionScope: RevisionScopeFilter =
+      revScopeRaw === 'LATEST' || revScopeRaw === 'APPROVED' ? revScopeRaw : 'ALL';
+
+    return {
+      revisionScope,
+      salesmanName: q.salesmanName ? String(q.salesmanName).trim() : undefined,
+      customerId: q.customerId ? String(q.customerId).trim() : undefined,
+      materialCode: q.materialCode ? String(q.materialCode).trim() : undefined,
+      productName: q.productName ? String(q.productName).trim() : undefined,
+      finishingSystem: q.finishingSystem ? String(q.finishingSystem).trim() : undefined,
+      substrate: q.substrate ? String(q.substrate).trim() : undefined,
+      q: q.q ? String(q.q).trim() : undefined,
+      compareProjectId: q.compareProjectId ? String(q.compareProjectId).trim() : undefined,
+      baseRevId: q.baseRevId ? String(q.baseRevId).trim() : undefined,
+      targetRevId: q.targetRevId ? String(q.targetRevId).trim() : undefined
+    };
+  };
+
+  const resolveEnforcedReportSalesman = (req: express.Request): string | null => {
+    if (req.userRole === 'ADMIN' || req.userRole === 'PROJECT_LEADER') {
+      return null;
+    }
+    if (
+      req.authUser &&
+      (req.authUser.role === 'SALES' || req.authUser.role === 'TECHNICAL')
+    ) {
+      const fromToken = (req.authUser.salesmanName || '').trim();
+      return fromToken ? fromToken : '__NO_SALESMAN_ASSIGNED__';
+    }
+    const fromReq = (req.salesmanName || '').trim();
+    if (fromReq && fromReq !== 'ALL') {
+      return fromReq;
+    }
+    return null;
+  };
+
+  app.get('/api/reports/overview', async (req, res) => {
+    try {
+      const query = parseReportQuery(req.query as Record<string, unknown>);
+      const enforcedSalesmanScope = resolveEnforcedReportSalesman(req);
+      const overview = await generateReportsOverview({
+        userRole: req.userRole,
+        enforcedSalesmanScope,
+        query
+      });
+      res.json(overview);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.post('/api/reports/bom-forecast', async (req, res) => {
+    try {
+      const query = parseReportQuery((req.body?.query || {}) as Record<string, unknown>);
+      const allocations = Array.isArray(req.body?.allocations)
+        ? req.body.allocations
+        : undefined;
+      const enforcedSalesmanScope = resolveEnforcedReportSalesman(req);
+      const overview = await generateReportsOverview({
+        userRole: req.userRole,
+        enforcedSalesmanScope,
+        query,
+        bomAllocations: allocations
+      });
+      res.json(overview.bomForecast);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.get('/api/reports/export-excel', async (req, res) => {
+    try {
+      const query = parseReportQuery(req.query as Record<string, unknown>);
+      const reportTabRaw = String(req.query.reportTab || 'ALL')
+        .trim()
+        .toUpperCase();
+      const validTabs: ReportSubTab[] = [
+        'PRODUCT_USAGE',
+        'CUSTOMER_PORTFOLIO',
+        'REVISION_VARIANCE',
+        'PRICE_DRIFT',
+        'STEP_BENCHMARK',
+        'BOM_FORECAST',
+        'ACTIVITY_FUNNEL'
+      ];
+      const reportTab: ReportSubTab | 'ALL' = validTabs.includes(
+        reportTabRaw as ReportSubTab
+      )
+        ? (reportTabRaw as ReportSubTab)
+        : 'ALL';
+
+      const enforcedSalesmanScope = resolveEnforcedReportSalesman(req);
+      const overview = await generateReportsOverview({
+        userRole: req.userRole,
+        enforcedSalesmanScope,
+        query
+      });
+      const buffer = await generateAnalyticsReportWorkbook(
+        overview,
+        req.userRole,
+        reportTab
+      );
+
+      const scopeTag = query.revisionScope || 'ALL';
+      const filename = `CSCC_Analytics_${reportTab}_${scopeTag}_${req.userRole}.xlsx`;
 
       res.setHeader(
         'Content-Type',

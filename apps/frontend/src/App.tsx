@@ -10,6 +10,7 @@ import {
   RevisionStatus,
   UserRole,
   UserAccount,
+  ReportSubTab,
   calculateCoatingCostTable,
   calculateBomSummary,
   formatVnd,
@@ -21,6 +22,7 @@ import { CoatingCostTable } from './components/cost/CoatingCostTable';
 import { BomSummaryView } from './components/bom/BomSummaryView';
 import { MasterDataManager, MasterSubTab } from './components/master/MasterDataManager';
 import { ProjectExplorerView } from './components/projects/ProjectExplorerView';
+import { ReportsAnalyticsView } from './components/reports/ReportsAnalyticsView';
 import { PrintableSheetA4 } from './components/print/PrintableSheetA4';
 import { UserAuthModal } from './components/auth/UserAuthModal';
 import logoWeb from './assets/logo_web.png';
@@ -30,6 +32,7 @@ import {
   Boxes,
   Database,
   FolderKanban,
+  BarChart3,
   Shield,
   Save,
   Copy,
@@ -52,13 +55,14 @@ import {
   LogIn
 } from 'lucide-react';
 
-export type MainSection = 'WORKSPACE' | 'PROJECTS' | 'MASTER_DATA';
+export type MainSection = 'WORKSPACE' | 'PROJECTS' | 'REPORTS' | 'MASTER_DATA';
 export type WorkspaceTab = 'CS' | 'CC' | 'BOM';
 
 interface NavState {
   section: MainSection;
   tab: WorkspaceTab;
   subTab: MasterSubTab;
+  reportTab: ReportSubTab;
   revId: string | null;
 }
 
@@ -68,13 +72,19 @@ function parseNavState(): NavState {
   let section: MainSection = 'WORKSPACE';
   let tab: WorkspaceTab = 'CS';
   let subTab: MasterSubTab = 'CUSTOMERS';
+  let reportTab: ReportSubTab = 'PRODUCT_USAGE';
   let revId: string | null = null;
 
   // 1. URL search params have highest priority
   try {
     const params = new URLSearchParams(window.location.search);
     const pSection = params.get('section')?.toUpperCase();
-    if (pSection === 'WORKSPACE' || pSection === 'PROJECTS' || pSection === 'MASTER_DATA') {
+    if (
+      pSection === 'WORKSPACE' ||
+      pSection === 'PROJECTS' ||
+      pSection === 'REPORTS' ||
+      pSection === 'MASTER_DATA'
+    ) {
       section = pSection;
     }
     const pTab = params.get('tab')?.toUpperCase();
@@ -92,6 +102,18 @@ function parseNavState(): NavState {
     ) {
       subTab = pSubTab;
     }
+    const pReportTab = params.get('reportTab')?.toUpperCase();
+    if (
+      pReportTab === 'PRODUCT_USAGE' ||
+      pReportTab === 'CUSTOMER_PORTFOLIO' ||
+      pReportTab === 'REVISION_VARIANCE' ||
+      pReportTab === 'PRICE_DRIFT' ||
+      pReportTab === 'STEP_BENCHMARK' ||
+      pReportTab === 'BOM_FORECAST' ||
+      pReportTab === 'ACTIVITY_FUNNEL'
+    ) {
+      reportTab = pReportTab;
+    }
     const pRev = params.get('rev');
     if (pRev) {
       revId = pRev;
@@ -107,7 +129,12 @@ function parseNavState(): NavState {
       const stored = JSON.parse(storedRaw);
       const hasUrlParams = window.location.search && window.location.search.length > 1;
       if (!hasUrlParams) {
-        if (stored.section === 'WORKSPACE' || stored.section === 'PROJECTS' || stored.section === 'MASTER_DATA') {
+        if (
+          stored.section === 'WORKSPACE' ||
+          stored.section === 'PROJECTS' ||
+          stored.section === 'REPORTS' ||
+          stored.section === 'MASTER_DATA'
+        ) {
           section = stored.section;
         }
         if (stored.tab === 'CS' || stored.tab === 'CC' || stored.tab === 'BOM') {
@@ -122,6 +149,17 @@ function parseNavState(): NavState {
         ) {
           subTab = stored.subTab;
         }
+        if (
+          stored.reportTab === 'PRODUCT_USAGE' ||
+          stored.reportTab === 'CUSTOMER_PORTFOLIO' ||
+          stored.reportTab === 'REVISION_VARIANCE' ||
+          stored.reportTab === 'PRICE_DRIFT' ||
+          stored.reportTab === 'STEP_BENCHMARK' ||
+          stored.reportTab === 'BOM_FORECAST' ||
+          stored.reportTab === 'ACTIVITY_FUNNEL'
+        ) {
+          reportTab = stored.reportTab;
+        }
         if (typeof stored.revId === 'string' && stored.revId) {
           revId = stored.revId;
         }
@@ -131,7 +169,7 @@ function parseNavState(): NavState {
     console.error('Failed to parse localStorage nav state:', err);
   }
 
-  return { section, tab, subTab, revId };
+  return { section, tab, subTab, reportTab, revId };
 }
 
 export function App() {
@@ -143,6 +181,7 @@ export function App() {
   const [mainSection, setMainSection] = React.useState<MainSection>(initialNav.section);
   const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>(initialNav.tab);
   const [masterSubTab, setMasterSubTab] = React.useState<MasterSubTab>(initialNav.subTab);
+  const [reportSubTab, setReportSubTab] = React.useState<ReportSubTab>(initialNav.reportTab);
 
   // Toggle states for Sidebar & internal Sidebar sections
   const [isSidebarOpen, setIsSidebarOpen] = React.useState<boolean>(true);
@@ -202,6 +241,7 @@ export function App() {
           section: mainSection,
           tab: workspaceTab,
           subTab: masterSubTab,
+          reportTab: reportSubTab,
           revId: activeRevision?.id || null
         })
       );
@@ -217,6 +257,8 @@ export function App() {
         if (activeRevision?.id) {
           params.set('rev', activeRevision.id);
         }
+      } else if (mainSection === 'REPORTS') {
+        params.set('reportTab', reportSubTab);
       } else if (mainSection === 'MASTER_DATA') {
         params.set('subTab', masterSubTab);
       }
@@ -229,7 +271,7 @@ export function App() {
     } catch (err) {
       console.error('Failed to sync nav state to URL:', err);
     }
-  }, [mainSection, workspaceTab, masterSubTab, activeRevision?.id]);
+  }, [mainSection, workspaceTab, masterSubTab, reportSubTab, activeRevision?.id]);
 
   const enrichRevisionItemNames = React.useCallback(
     (rev: ProjectRevision, quots: QuotationItem[]): ProjectRevision => {
@@ -266,6 +308,7 @@ export function App() {
       setMainSection(nav.section);
       setWorkspaceTab(nav.tab);
       setMasterSubTab(nav.subTab);
+      setReportSubTab(nav.reportTab);
       if (nav.revId && nav.revId !== activeRevision?.id) {
         apiClient
           .getRevision(role, nav.revId)
@@ -760,6 +803,24 @@ export function App() {
 
               <button
                 type="button"
+                onClick={() => setMainSection('REPORTS')}
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-bold transition ${
+                  mainSection === 'REPORTS'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-300 hover:bg-slate-900'
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <BarChart3 className="h-4 w-4 shrink-0" />
+                  <span>Reports & Analytics / Báo cáo & Phân tích</span>
+                </span>
+                <span className="rounded-full bg-emerald-900/80 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                  7
+                </span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setMainSection('MASTER_DATA')}
                 className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold transition ${
                   mainSection === 'MASTER_DATA'
@@ -1101,6 +1162,15 @@ export function App() {
                   <Boxes className="h-4 w-4" />
                   3. BOM Summary / Dự toán định mức vật tư
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMainSection('REPORTS')}
+                  className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-900 hover:bg-blue-100 transition"
+                >
+                  <BarChart3 className="h-4 w-4 text-blue-600" />
+                  Reports / Báo cáo & Phân tích
+                </button>
               </div>
 
               {/* Action Buttons: Save, Clone Rev, Lock, Export Excel, Print A4 */}
@@ -1215,7 +1285,9 @@ export function App() {
                 <div className="text-sm font-bold text-slate-800">
                   {mainSection === 'PROJECTS'
                     ? 'Projects Explorer / Quản lý & Tra cứu Hồ sơ Dự án'
-                    : 'Master Data / Quản trị Cơ sở Dữ liệu Gốc'}
+                    : mainSection === 'REPORTS'
+                      ? 'Reports & Analytics / Trung tâm Báo cáo & Phân tích Dữ liệu'
+                      : 'Master Data / Quản trị Cơ sở Dữ liệu Gốc'}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -1263,6 +1335,19 @@ export function App() {
               onCreateProject={handleCreateProjectFromExplorer}
               onDeleteProject={handleDeleteProject}
               onDeleteRevision={handleDeleteRevision}
+            />
+          ) : mainSection === 'REPORTS' ? (
+            <ReportsAnalyticsView
+              role={role}
+              currentUser={currentUser}
+              projects={projects}
+              activeReportTab={reportSubTab}
+              onChangeReportTab={setReportSubTab}
+              onSelectRevision={async (revId) => {
+                const loaded = await apiClient.getRevision(role, revId);
+                setActiveRevision(enrichRevisionItemNames(loaded, quotations));
+                setMainSection('WORKSPACE');
+              }}
             />
           ) : mainSection === 'MASTER_DATA' ? (
             <MasterDataManager

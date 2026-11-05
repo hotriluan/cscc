@@ -12,7 +12,12 @@ import {
   RevisionStatus,
   UserAccount,
   AuthSessionResponse,
-  PaginatedResponse
+  PaginatedResponse,
+  ReportFilterQuery,
+  ReportsOverviewResponse,
+  AggregatedBomForecastReport,
+  BomForecastInputAllocation,
+  ReportSubTab
 } from '@cscc/shared';
 
 const API_BASE = '/api';
@@ -314,5 +319,103 @@ export const apiClient = {
     }),
 
   getExcelDownloadUrl: (id: string, role: UserRole, areaM2: number) =>
-    `${API_BASE}/revisions/${id}/export-excel?role=${role}&areaM2=${areaM2}`
+    `${API_BASE}/revisions/${id}/export-excel?role=${role}&areaM2=${areaM2}`,
+
+  // Reports & Analytics System
+  getReportsOverview: (
+    role: UserRole,
+    query: ReportFilterQuery = {},
+    enforcedSalesman?: string | null
+  ) => {
+    const params = new URLSearchParams();
+    if (query.revisionScope) params.set('revisionScope', query.revisionScope);
+    if (query.salesmanName) params.set('salesmanName', query.salesmanName);
+    if (query.customerId) params.set('customerId', query.customerId);
+    if (query.materialCode) params.set('materialCode', query.materialCode);
+    if (query.productName) params.set('productName', query.productName);
+    if (query.finishingSystem) params.set('finishingSystem', query.finishingSystem);
+    if (query.substrate) params.set('substrate', query.substrate);
+    if (query.q) params.set('q', query.q);
+    if (query.compareProjectId) params.set('compareProjectId', query.compareProjectId);
+    if (query.baseRevId) params.set('baseRevId', query.baseRevId);
+    if (query.targetRevId) params.set('targetRevId', query.targetRevId);
+
+    const qs = params.toString();
+    return request<ReportsOverviewResponse>(
+      `/reports/overview${qs ? `?${qs}` : ''}`,
+      role,
+      {
+        headers: enforcedSalesman
+          ? { 'x-salesman-name': enforcedSalesman }
+          : undefined
+      }
+    );
+  },
+
+  calculateAggregatedBomForecast: (
+    role: UserRole,
+    payload: {
+      query?: ReportFilterQuery;
+      allocations: BomForecastInputAllocation[];
+    },
+    enforcedSalesman?: string | null
+  ) =>
+    request<AggregatedBomForecastReport>('/reports/bom-forecast', role, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: enforcedSalesman
+        ? { 'x-salesman-name': enforcedSalesman }
+        : undefined
+    }),
+
+  getReportExportExcelUrl: (
+    role: UserRole,
+    query: ReportFilterQuery = {},
+    reportTab: ReportSubTab | 'ALL' = 'ALL',
+    enforcedSalesman?: string | null
+  ) => {
+    const params = new URLSearchParams();
+    params.set('role', role);
+    params.set('reportTab', reportTab);
+    if (query.revisionScope) params.set('revisionScope', query.revisionScope);
+    const sName = enforcedSalesman || query.salesmanName;
+    if (sName) params.set('salesmanName', sName);
+    if (query.customerId) params.set('customerId', query.customerId);
+    if (query.materialCode) params.set('materialCode', query.materialCode);
+    if (query.productName) params.set('productName', query.productName);
+    if (query.finishingSystem) params.set('finishingSystem', query.finishingSystem);
+    if (query.substrate) params.set('substrate', query.substrate);
+    if (query.q) params.set('q', query.q);
+    return `${API_BASE}/reports/export-excel?${params.toString()}`;
+  },
+
+  downloadReportExcel: async (
+    role: UserRole,
+    query: ReportFilterQuery = {},
+    reportTab: ReportSubTab | 'ALL' = 'ALL',
+    enforcedSalesman?: string | null
+  ) => {
+    const token = getStoredAuthToken();
+    const url = apiClient.getReportExportExcelUrl(
+      role,
+      query,
+      reportTab,
+      enforcedSalesman
+    );
+    const res = await fetch(url, {
+      headers: {
+        'x-user-role': role,
+        ...(enforcedSalesman ? { 'x-salesman-name': enforcedSalesman } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blobUrl = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    const scopeTag = query.revisionScope || 'ALL';
+    a.download = `CSCC_Analytics_${reportTab}_${scopeTag}_${role}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(blobUrl);
+  }
 };
