@@ -50,9 +50,9 @@ export async function generateRevisionWorkbook(
   const logoBuffer = resolveLogoBuffer();
   const logoImageId = logoBuffer
     ? workbook.addImage({
-        base64: logoBuffer.toString('base64'),
-        extension: 'png'
-      })
+      base64: logoBuffer.toString('base64'),
+      extension: 'png'
+    })
     : null;
 
   // =========================================================================
@@ -60,24 +60,24 @@ export async function generateRevisionWorkbook(
   // =========================================================================
   const csSheet = workbook.addWorksheet('CS');
   csSheet.columns = [
-    { key: 'stepNo', width: 6 },
-    { key: 'stepName', width: 22 },
-    { key: 'materialCode', width: 38 },
-    { key: 'mixingRatio', width: 12 },
-    { key: 'visco', width: 14 },
-    { key: 'caInputRaw', width: 12 },
-    { key: 'methodName', width: 20 },
-    { key: 'dryingTime', width: 20 }
+    { key: 'stepNo', width: 9 },
+    { key: 'stepName', width: 26 },
+    { key: 'materialCode', width: 42 },
+    { key: 'mixingRatio', width: 14 },
+    { key: 'visco', width: 16 },
+    { key: 'caInputRaw', width: 15 },
+    { key: 'methodName', width: 24 },
+    { key: 'dryingTime', width: 24 }
   ];
 
   // Title & Header Block
   csSheet.mergeCells('A1:H1');
   const csTitle = csSheet.getCell('A1');
-  csTitle.value = 'COATING SCHEDULE';
+  csTitle.value = 'COATING SCHEDULE / BẢNG LẬP LỊCH QUY TRÌNH SƠN';
   csTitle.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
   csTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
   csTitle.alignment = { horizontal: 'center', vertical: 'middle' };
-  csSheet.getRow(1).height = 26;
+  csSheet.getRow(1).height = 28;
 
   // Add Brand Logo to Top-Right Corner (Column I, Rows 1-3)
   if (logoImageId !== null) {
@@ -90,10 +90,10 @@ export async function generateRevisionWorkbook(
   }
 
   const headerRows: Array<[string, string, string, string, string, string]> = [
-    ['Customer:', revision.customer.shortName, 'Substrate Type:', revision.substrate, 'No.:', revision.projectCode],
-    ['Product Item:', revision.productName, 'Positioning:', revision.positioning, 'Date / Rev:', `${revision.scheduleDate} (Rev.${revCode})`],
-    ['Color:', revision.colorName, 'Finishing System:', revision.finishingSystem, 'MC wood:', revision.mcWood],
-    ['Gloss Level:', revision.glossLevel, 'Reference:', revision.referenceStandard, 'Humidity / Temp:', `${revision.roomHumidity} / ${revision.roomTemp}`]
+    ['Customer / Khách hàng:', revision.customer.shortName, 'Substrate Type / Loại gỗ:', revision.substrate, 'No. / Mã:', revision.projectCode],
+    ['Product Item / Tên sản phẩm:', revision.productName, 'Positioning / Vị trí:', revision.positioning, 'Date / Rev (Ngày / Phiên bản):', `${revision.scheduleDate} (Rev.${revCode})`],
+    ['Color / Màu sắc:', revision.colorName, 'Finishing System / Hệ sơn:', revision.finishingSystem, 'MC Wood / Độ ẩm gỗ:', revision.mcWood],
+    ['Gloss Level / Độ bóng:', revision.glossLevel, 'Reference / Tiêu chuẩn:', revision.referenceStandard, 'Humidity / Temp (Độ ẩm / Nhiệt độ):', `${revision.roomHumidity} / ${revision.roomTemp}`]
   ];
 
   headerRows.forEach((r, idx) => {
@@ -116,14 +116,14 @@ export async function generateRevisionWorkbook(
   // Table Header at Row 7
   const csHeaderRowNum = 7;
   const csHeaders = [
-    'No.',
-    'Application Step',
-    'Product Name',
-    'Mixing Ratio',
-    'Visco',
-    'CA (g/m²)',
-    'Application Method',
-    'Drying Time Recommended'
+    'No. / STT',
+    'Application Step / Bước thi công',
+    'Product Name / Tên sản phẩm',
+    'Mixing Ratio / Tỉ lệ pha',
+    'Visco / Độ nhớt',
+    'CA / Lượng sơn (g/m²)',
+    'Application Method / Phương pháp thi công',
+    'Drying Time Recommended / Thời gian khô đề xuất'
   ];
   const csHeaderRow = csSheet.getRow(csHeaderRowNum);
   csHeaders.forEach((h, i) => {
@@ -133,7 +133,7 @@ export async function generateRevisionWorkbook(
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
     cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
   });
-  csHeaderRow.height = 24;
+  csHeaderRow.height = 30;
 
   // Dynamic Step & Item Rows on CS
   let currentCsRow = csHeaderRowNum + 1;
@@ -143,7 +143,7 @@ export async function generateRevisionWorkbook(
     if (step.rowType === 'SANDING') {
       const row = csSheet.getRow(currentCsRow);
       row.getCell(1).value = '';
-      row.getCell(2).value = step.stepName || 'SANDING';
+      row.getCell(2).value = step.stepName ? `${step.stepName} / CHÀ NHÁM` : 'SANDING / CHÀ NHÁM';
       row.getCell(7).value = step.sandingSpec || 'SANDING PAPER';
       for (let c = 1; c <= 8; c++) {
         row.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
@@ -202,18 +202,18 @@ export async function generateRevisionWorkbook(
 
   // Remark & Signatures on CS
   currentCsRow += 1;
-  csSheet.getCell(`A${currentCsRow}`).value = 'Remark:';
+  csSheet.getCell(`A${currentCsRow}`).value = 'Remark / Ghi chú:';
   csSheet.getCell(`A${currentCsRow}`).font = { bold: true };
   csSheet.getCell(`B${currentCsRow}`).value =
-    'ALKANA VIET NAM does not assure the quality of the final product if: 1. The production process does not use 100% ALKANA materials. 2. The production process does not follow the ALKANA coating schedule.';
+    'ALKANA VIET NAM does not assure the quality of the final product if: 1. The production process does not use 100% ALKANA materials. 2. The production process does not follow the ALKANA coating schedule. / ALKANA VIỆT NAM không đảm bảo chất lượng của sản phẩm cuối cùng nếu: 1. Quy trình sản xuất không sử dụng 100% nguyên vật liệu của ALKANA. 2. Quy trình sản xuất không tuân thủ theo lịch trình sơn của ALKANA.';
   csSheet.mergeCells(`B${currentCsRow}:H${currentCsRow}`);
 
   currentCsRow += 2;
   const sigBoxes: Array<[string, string, string]> = [
-    ['A', 'B', `CUSTOMER\n${revision.customerConfirmName || ''}`],
-    ['C', 'D', `PD/PM\n${revision.approvedByPdPm || ''}`],
-    ['E', 'F', `TA\n${revision.preparedByTa || ''}`],
-    ['G', 'H', `PROJECT LEADER\n${revision.checkedByLeader || ''}`]
+    ['A', 'B', `CUSTOMER / KHÁCH HÀNG\n${revision.customerConfirmName || ''}`],
+    ['C', 'D', `PD/PM / PHÒNG DỰ ÁN\n${revision.approvedByPdPm || ''}`],
+    ['E', 'F', `TA / KỸ THUẬT\n${revision.preparedByTa || ''}`],
+    ['G', 'H', `PROJECT LEADER / TRƯỞNG DỰ ÁN\n${revision.checkedByLeader || ''}`]
   ];
   sigBoxes.forEach(([startCol, endCol, label]) => {
     csSheet.mergeCells(`${startCol}${currentCsRow}:${endCol}${currentCsRow + 2}`);
@@ -229,26 +229,26 @@ export async function generateRevisionWorkbook(
   if (role !== 'TECHNICAL') {
     const ccSheet = workbook.addWorksheet('CC');
     ccSheet.columns = [
-      { key: 'stepName', width: 18 },       // A: Item
-      { key: 'materialCode', width: 36 },   // B: Product Name (clean name without packing)
-      { key: 'priceUnit', width: 14 },      // C: Price (VND/Ltr)
-      { key: 'mixingRatio', width: 10 },    // D: Mixing Ratio
-      { key: 'mixedPrice', width: 15 },     // E: Mixed Price (VND/Ltr set)
-      { key: 'methodName', width: 14 },     // F: Application
-      { key: 'caAvg', width: 14 },          // G: Coating Amount (g/m²)
-      { key: 'efficiency', width: 13 },     // H: Application Efficiency
-      { key: 'caPlusLoss', width: 14 },     // I: CA + Loss (g/m²)
-      { key: 'coverage', width: 14 },       // J: Coverage (m²/Ltr/kg)
-      { key: 'coatingCost', width: 16 }     // K: Coating Cost (vnd/m²)
+      { key: 'stepName', width: 22 },       // A: Item / Bước thi công
+      { key: 'materialCode', width: 40 },   // B: Product Name / Tên sản phẩm
+      { key: 'priceUnit', width: 16 },      // C: Price / Đơn giá (VND/Ltr)
+      { key: 'mixingRatio', width: 12 },    // D: Mixing Ratio / Tỉ lệ pha
+      { key: 'mixedPrice', width: 18 },     // E: Mixed Price / Giá hỗn hợp (VND/Ltr set)
+      { key: 'methodName', width: 20 },     // F: Application / Phương pháp thi công
+      { key: 'caAvg', width: 16 },          // G: Coating Amount / Lượng sơn (g/m²)
+      { key: 'efficiency', width: 16 },     // H: Application Efficiency / Hiệu suất thi công
+      { key: 'caPlusLoss', width: 16 },     // I: CA + Loss / Lượng gồm hao hụt (g/m²)
+      { key: 'coverage', width: 16 },       // J: Coverage / Định mức phủ (m²/Ltr/kg)
+      { key: 'coatingCost', width: 18 }     // K: Coating Cost / Chi phí sơn (vnd/m²)
     ];
 
     ccSheet.mergeCells('A1:K1');
     const ccTitle = ccSheet.getCell('A1');
-    ccTitle.value = 'COATING COST CALCULATION';
+    ccTitle.value = 'COATING COST CALCULATION / BẢNG TÍNH TOÁN CHI PHÍ SƠN';
     ccTitle.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
     ccTitle.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF065F46' } };
     ccTitle.alignment = { horizontal: 'center', vertical: 'middle' };
-    ccSheet.getRow(1).height = 26;
+    ccSheet.getRow(1).height = 28;
 
     // Add Brand Logo to Top-Right Corner (Column L, Rows 1-3)
     if (logoImageId !== null) {
@@ -272,17 +272,17 @@ export async function generateRevisionWorkbook(
 
     const ccHeaderRowNum = 6;
     const ccHeaders = [
-      'Item',
-      'Product Name',
-      'Price (VND/Ltr)',
-      'Mixing Ratio',
-      'Mixed Price (VND/Ltr set)',
-      'Application',
-      'Coating Amount (g/m²)',
-      'Application Efficiency',
-      'CA + Loss (g/m2)',
-      'Coverage (m2/Ltr/kg)',
-      'Coating Cost (vnd/m2)'
+      'Item / Bước thi công',
+      'Product Name / Tên sản phẩm',
+      'Price / Đơn giá (VND/Ltr)',
+      'Mixing Ratio / Tỉ lệ pha',
+      'Mixed Price / Giá hỗn hợp (VND/Ltr set)',
+      'Application / Phương pháp thi công',
+      'Coating Amount / Lượng sơn (g/m²)',
+      'Application Efficiency / Hiệu suất thi công',
+      'CA + Loss / Lượng gồm hao hụt (g/m²)',
+      'Coverage / Định mức phủ (m²/Ltr/kg)',
+      'Coating Cost / Chi phí sơn (vnd/m²)'
     ];
     const ccHeaderRow = ccSheet.getRow(ccHeaderRowNum);
     ccHeaders.forEach((h, i) => {
@@ -292,7 +292,7 @@ export async function generateRevisionWorkbook(
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF047857' } };
       cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     });
-    ccHeaderRow.height = 26;
+    ccHeaderRow.height = 30;
 
     const costSummary = calculateCoatingCostTable(revision.id, revision.steps);
     const firstDataRow = 7;
@@ -380,7 +380,7 @@ export async function generateRevisionWorkbook(
     const totalRowNum = currentCcRow;
     ccSheet.mergeCells(`A${totalRowNum}:J${totalRowNum}`);
     const totalLabelCell = ccSheet.getCell(`A${totalRowNum}`);
-    totalLabelCell.value = 'TOTAL COATING COST (VND/m²)';
+    totalLabelCell.value = 'TOTAL COATING COST / TỔNG CHI PHÍ SƠN (VND/m²)';
     totalLabelCell.font = { bold: true, size: 12 };
     totalLabelCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
@@ -400,31 +400,31 @@ export async function generateRevisionWorkbook(
   const bomSummary = calculateBomSummary(revision.id, effectiveArea, revision.steps, role);
 
   bomSheet.columns = [
-    { key: 'materialName', width: 36 },
-    { key: 'totalCaPlusLoss', width: 22 },
-    { key: 'requiredQty', width: 22 },
-    { key: 'unitPrice', width: 18 },
-    { key: 'totalCost', width: 20 }
+    { key: 'materialName', width: 40 },
+    { key: 'totalCaPlusLoss', width: 28 },
+    { key: 'requiredQty', width: 24 },
+    { key: 'unitPrice', width: 20 },
+    { key: 'totalCost', width: 22 }
   ];
 
-  bomSheet.getCell('A1').value = `BOM SUMMARY — Project: ${revision.projectCode} (Area: ${effectiveArea} m²)`;
+  bomSheet.getCell('A1').value = `BOM SUMMARY / BẢNG DỰ TOÁN ĐỊNH MỨC VẬT TƯ — Project / Dự án: ${revision.projectCode} (Area / Diện tích: ${effectiveArea} m²)`;
   bomSheet.getCell('A1').font = { bold: true, size: 13 };
   bomSheet.mergeCells(role === 'TECHNICAL' ? 'A1:C1' : 'A1:E1');
 
   const bomHeaders =
     role === 'TECHNICAL'
       ? [
-          'Product Name',
-          'Total CA+Loss (g/m²)',
-          'Required Qty (Kg/Ltr)'
-        ]
+        'Product Name / Tên sản phẩm',
+        'Total CA+Loss / Tổng lượng gồm hao hụt (g/m²)',
+        'Required Qty / Số lượng cần (Kg/Ltr)'
+      ]
       : [
-          'Product Name',
-          'Total CA+Loss (g/m²)',
-          'Required Qty (Kg/Ltr)',
-          'Unit Price (VND)',
-          'Total Cost (VND)'
-        ];
+        'Product Name / Tên sản phẩm',
+        'Total CA+Loss / Tổng lượng gồm hao hụt (g/m²)',
+        'Required Qty / Số lượng cần (Kg/Ltr)',
+        'Unit Price / Đơn giá (VND)',
+        'Total Cost / Thành tiền (VND)'
+      ];
 
   const bomHeaderRow = bomSheet.getRow(3);
   bomHeaders.forEach((h, idx) => {
@@ -453,7 +453,7 @@ export async function generateRevisionWorkbook(
     const totalRow = bomSheet.getRow(lastBomRow + 1);
     const redBold = { bold: true, color: { argb: 'FFFF0000' } };
 
-    totalRow.getCell(2).value = 'Total';
+    totalRow.getCell(2).value = 'Total / Tổng cộng';
     totalRow.getCell(2).font = redBold;
     totalRow.getCell(2).alignment = { horizontal: 'right' };
 

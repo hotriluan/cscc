@@ -1,5 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import ExcelJS from 'exceljs';
 import { generateRevisionWorkbook } from '../src/services/excel-exporter.service';
 import { ProjectRevision } from '@cscc/shared';
@@ -59,6 +62,14 @@ describe('Excel Export Logo Verification', () => {
     const ccImages = ccSheet.getImages();
     assert.strictEqual(ccImages.length, 1, 'CC sheet should contain 1 image');
     assert.strictEqual(ccImages[0].type, 'image', 'Image type should be image');
+
+    // Verify embedded logo matches pic/LOGO_WEB.png exactly
+    const expectedLogoBuffer = fs.readFileSync(path.resolve(process.cwd(), 'pic/LOGO_WEB.png'));
+    const expectedHash = crypto.createHash('sha256').update(expectedLogoBuffer).digest('hex');
+    const embeddedLogo = workbook.getImage(Number(csImages[0].imageId));
+    assert.ok(embeddedLogo, 'Embedded logo image should exist');
+    const embeddedHash = crypto.createHash('sha256').update(embeddedLogo.buffer).digest('hex');
+    assert.strictEqual(embeddedHash, expectedHash, 'Embedded logo in Excel must match pic/LOGO_WEB.png hash');
   });
 
   it('omits CC sheet but retains CS sheet logo for TECHNICAL role', async () => {
@@ -116,15 +127,15 @@ describe('Excel Export Logo Verification', () => {
     await workbook.xlsx.load(buffer);
 
     const csSheet = workbook.getWorksheet('CS')!;
-    assert.strictEqual(csSheet.getCell('C7').value, 'Product Name');
+    assert.strictEqual(csSheet.getCell('C7').value, 'Product Name / Tên sản phẩm');
     assert.strictEqual(csSheet.getCell('C8').value, 'PSV-76000 SB HC MY VN');
 
     const ccSheet = workbook.getWorksheet('CC')!;
-    assert.strictEqual(ccSheet.getCell('B6').value, 'Product Name');
+    assert.strictEqual(ccSheet.getCell('B6').value, 'Product Name / Tên sản phẩm');
     assert.strictEqual(ccSheet.getCell('B7').value, 'PSV-76000 SB HC MY VN');
 
     const bomSheet = workbook.getWorksheet('BOM Summary')!;
-    assert.strictEqual(bomSheet.getCell('A3').value, 'Product Name');
+    assert.strictEqual(bomSheet.getCell('A3').value, 'Product Name / Tên sản phẩm');
     assert.strictEqual(bomSheet.getCell('A4').value, 'PSV-76000 SB HC MY VN');
   });
 });
