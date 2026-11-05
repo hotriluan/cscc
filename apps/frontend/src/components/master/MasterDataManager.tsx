@@ -638,12 +638,12 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
               className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-3.5 py-2 text-xs font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${importing ? 'animate-spin' : ''}`} />
-              Đồng bộ từ docs/Form CS Industry.xlsx
+              Sync from Excel / Đồng bộ từ Form CS Industry.xlsx
             </button>
 
             <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800">
               <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
-              Import File .xlsx mới
+              Import .xlsx / Nhập File Excel
               <input
                 type="file"
                 accept=".xlsx"
@@ -678,7 +678,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 }`}
             >
               <Users className="h-3.5 w-3.5" />
-              Customer ({custTotal || customers.length})
+              Customer / Khách hàng ({custTotal || customers.length})
             </button>
 
             <button
@@ -690,7 +690,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 }`}
             >
               <FileSpreadsheet className="h-3.5 w-3.5" />
-              Quotation ({quotTotal || quotations.length})
+              Quotation / Báo giá ({quotTotal || quotations.length})
             </button>
 
             <button
@@ -702,7 +702,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 }`}
             >
               <ListChecks className="h-3.5 w-3.5" />
-              Application Step ({stepsMaster.length})
+              Application Step / Bước thi công ({stepsMaster.length})
             </button>
 
             <button
@@ -714,7 +714,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 }`}
             >
               <Gauge className="h-3.5 w-3.5" />
-              App-method ({methodsMaster.length})
+              Application Method / Phương pháp ({methodsMaster.length})
             </button>
 
             <button
@@ -726,7 +726,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                 }`}
             >
               <Package className="h-3.5 w-3.5" />
-              Packing Mapping ({packingsMaster.length})
+              Packing Mapping / Quy cách ({packingsMaster.length})
             </button>
           </div>
 

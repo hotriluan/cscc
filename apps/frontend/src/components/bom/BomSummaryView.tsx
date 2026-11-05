@@ -32,17 +32,17 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
             <Boxes className="h-5 w-5 text-blue-400" />
             <div>
               <h2 className="text-base font-bold uppercase tracking-wide">
-                BOM SUMMARY — BẢNG DỰ TOÁN ĐỊNH MỨC VẬT TƯ
+                BOM SUMMARY / BẢNG DỰ TOÁN ĐỊNH MỨC VẬT TƯ
               </h2>
               <p className="text-xs text-slate-300">
-                Gộp tự động các mã vật tư trùng nhau qua tất cả các bước trong Coating Schedule
+                Group unique materials across all Coating Schedule steps / Gộp tự động các mã vật tư trùng nhau qua tất cả các bước trong Coating Schedule
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3 rounded-lg bg-slate-800 px-3.5 py-2 border border-slate-700">
             <label className="text-xs font-semibold uppercase text-slate-300">
-              Diện tích cần sơn (m²):
+              Coating Area / Diện tích cần sơn (m²):
             </label>
             <input
               type="number"
@@ -59,7 +59,7 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
         {/* Summary KPI Cards */}
         <div className="grid grid-cols-1 gap-4 border-b border-slate-200 bg-slate-50 p-4 sm:grid-cols-3">
           <div className="rounded-lg border border-slate-200 bg-white p-3.5">
-            <div className="text-xs font-medium text-slate-500">Tổng số Mã Hóa Chất (Unique)</div>
+            <div className="text-xs font-medium text-slate-500">Unique Materials / Tổng số mã vật tư</div>
             <div className="mt-1 text-2xl font-extrabold text-slate-900">
               {bomSummary.items.length} <span className="text-sm font-normal text-slate-500">mã</span>
             </div>
@@ -67,7 +67,7 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
 
           <div className="rounded-lg border border-slate-200 bg-white p-3.5">
             <div className="text-xs font-medium text-slate-500">
-              Tổng Khối lượng Sơn cần dùng (cho {areaM2.toLocaleString()} m²)
+              Total Paint Needed / Tổng lượng sơn cần dùng ({areaM2.toLocaleString()} m²)
             </div>
             <div className="mt-1 text-2xl font-extrabold text-blue-700">
               {bomSummary.totalRequiredKgOrLtrDisplay.toLocaleString('en-US')}{' '}
@@ -78,7 +78,7 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
           {showPrice ? (
             <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3.5">
               <div className="text-xs font-semibold text-emerald-800">
-                Tổng Chi phí Vật tư Dự kiến ({areaM2.toLocaleString()} m²)
+                Estimated Material Cost / Tổng chi phí vật tư dự kiến ({areaM2.toLocaleString()} m²)
               </div>
               <div className="mt-1 text-2xl font-extrabold text-emerald-800">
                 {formatVnd(bomSummary.totalProjectMaterialCostDisplay)}{' '}
@@ -87,9 +87,9 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
             </div>
           ) : (
             <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5">
-              <div className="text-xs font-semibold text-amber-800">Chế độ Kỹ thuật viên</div>
+              <div className="text-xs font-semibold text-amber-800">Technical Mode / Chế độ Kỹ thuật viên</div>
               <div className="mt-1 text-xs text-amber-900">
-                Hiển thị định mức kỹ thuật (g/m², Kg/Ltr). Đơn giá được ẩn theo phân quyền.
+                Technical metrics displayed (g/m², Kg/Ltr). Prices hidden by role / Hiển thị định mức kỹ thuật (g/m², Kg/Ltr). Đơn giá được ẩn theo phân quyền.
               </div>
             </div>
           )}
@@ -100,21 +100,21 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr className="bg-slate-800 text-white uppercase tracking-wider text-[11px]">
-                <th className="border border-slate-700 px-3 py-2.5 text-center w-12">#</th>
-                <th className="border border-slate-700 px-3 py-2.5 text-left">Product Name</th>
+                <th className="border border-slate-700 px-3 py-2.5 text-center w-14"># / STT</th>
+                <th className="border border-slate-700 px-3 py-2.5 text-left">Product Name / Tên sản phẩm</th>
                 <th className="border border-slate-700 px-3 py-2.5 text-right">
-                  Tổng CA + Loss (g/m²)
+                  Total CA + Loss / Tổng lượng gồm hao hụt (g/m²)
                 </th>
                 <th className="border border-slate-700 px-3 py-2.5 text-right bg-blue-900/50">
-                  Lượng cần ({areaM2} m²)
+                  Required Qty / Lượng cần ({areaM2} m²)
                 </th>
                 {showPrice && (
                   <>
                     <th className="border border-slate-700 px-3 py-2.5 text-right">
-                      Đơn giá (VND/Kg)
+                      Unit Price / Đơn giá (VND/Kg)
                     </th>
                     <th className="border border-slate-700 px-3 py-2.5 text-right bg-emerald-950">
-                      Thành tiền (VND)
+                      Total Cost / Thành tiền (VND)
                     </th>
                   </>
                 )}
@@ -158,7 +158,7 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
                     colSpan={5}
                     className="border border-slate-200 px-3 py-2.5 text-right font-bold uppercase text-red-600"
                   >
-                    Total
+                    Total / Tổng cộng
                   </td>
                   <td className="border border-slate-200 bg-emerald-50/40 px-3 py-2.5 text-right font-extrabold text-red-600">
                     {formatVnd(bomSummary.totalProjectMaterialCostDisplay)}

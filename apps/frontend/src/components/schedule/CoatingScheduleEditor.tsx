@@ -594,16 +594,15 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-900 px-4 py-2.5 text-white rounded-t-xl">
           <div>
             <h2 className="text-sm md:text-base font-bold tracking-wide uppercase">
-              COATING SCHEDULE (CS) — BIỂU MẪU LẬP LỊCH QUY TRÌNH SƠN
+              COATING SCHEDULE (CS) / BẢNG LẬP LỊCH QUY TRÌNH SƠN
             </h2>
             <p className="text-[11px] text-slate-300">
-              Mọi thay đổi tại đây sẽ tự động đồng bộ thời gian thực sang bảng
-              Coating Cost (CC) & BOM Summary
+              Auto real-time sync to CC & BOM / Mọi thay đổi tại đây tự động đồng bộ sang Coating Cost (CC) & BOM Summary
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="rounded bg-blue-600/30 border border-blue-400/40 px-2.5 py-1 font-semibold">
-              SAP Cust ID: {revision.customer.customerId}
+              SAP Cust ID / Mã SAP: {revision.customer.customerId}
             </span>
             <span
               className={`rounded border px-2.5 py-1 font-semibold ${
@@ -612,7 +611,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                   : 'border-amber-400/40 bg-amber-600/30 text-amber-200'
               }`}
             >
-              Rev. {revCode} ({revision.status === 'LOCKED' ? 'APPROVED' : revision.status})
+              Rev. / Phiên bản: {revCode} ({revision.status === 'LOCKED' || revision.status === 'APPROVED' ? 'APPROVED / ĐÃ PHÊ DUYỆT' : revision.status})
             </span>
             <button
               type="button"
@@ -620,19 +619,19 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               className="inline-flex items-center gap-1 rounded-lg border border-slate-600 bg-slate-800 px-2.5 py-1 text-xs font-bold text-slate-100 hover:bg-slate-700 hover:text-white transition"
               title={
                 isHeaderCollapsed
-                  ? 'Mở rộng khung Thông tin chung (Header Metadata)'
-                  : 'Thu gọn khung Thông tin chung để ưu tiên không gian cho bảng Quy trình thi công'
+                  ? 'Expand Header / Mở rộng thông tin chung'
+                  : 'Collapse Header / Thu gọn thông tin chung'
               }
             >
               {isHeaderCollapsed ? (
                 <>
                   <ChevronDown className="h-3.5 w-3.5 text-blue-400" />
-                  <span>Mở rộng Thông tin chung</span>
+                  <span>Expand / Mở rộng thông tin</span>
                 </>
               ) : (
                 <>
                   <ChevronUp className="h-3.5 w-3.5 text-slate-300" />
-                  <span>Thu gọn Thông tin chung</span>
+                  <span>Collapse / Thu gọn thông tin</span>
                 </>
               )}
             </button>
@@ -643,7 +642,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-50 px-4 py-2 text-xs text-slate-700 rounded-b-xl">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
               <span>
-                <strong className="text-slate-500">KH:</strong>{' '}
+                <strong className="text-slate-500">Customer / KH:</strong>{' '}
                 <strong className="text-slate-900">
                   {revision.customer?.shortName || '—'}
                 </strong>
@@ -654,31 +653,31 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 )}
               </span>
               <span>
-                <strong className="text-slate-500">Sản phẩm:</strong>{' '}
+                <strong className="text-slate-500">Product / Sản phẩm:</strong>{' '}
                 <strong className="text-slate-900">
                   {revision.productName || '—'}
                 </strong>
               </span>
               <span>
-                <strong className="text-slate-500">Màu:</strong>{' '}
+                <strong className="text-slate-500">Color / Màu:</strong>{' '}
                 <strong className="text-slate-900">
                   {revision.colorName || '—'}
                 </strong>
               </span>
               <span>
-                <strong className="text-slate-500">Gỗ:</strong>{' '}
+                <strong className="text-slate-500">Substrate / Gỗ:</strong>{' '}
                 <strong className="text-slate-900">
                   {revision.substrate || '—'}
                 </strong>
               </span>
               <span>
-                <strong className="text-slate-500">Hệ sơn:</strong>{' '}
+                <strong className="text-slate-500">System / Hệ sơn:</strong>{' '}
                 <strong className="text-slate-900">
                   {revision.finishingSystem || '—'}
                 </strong>
               </span>
               <span>
-                <strong className="text-slate-500">Mã HS:</strong>{' '}
+                <strong className="text-slate-500">No. / Mã HS:</strong>{' '}
                 <strong className="text-blue-700">
                   {revision.projectCode || '—'}
                 </strong>
@@ -689,7 +688,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               onClick={() => setIsHeaderCollapsed(false)}
               className="text-[11px] font-bold text-blue-600 hover:underline"
             >
-              Chỉnh sửa Header
+              Edit Header / Chỉnh sửa thông tin
             </button>
           </div>
         ) : (
@@ -698,19 +697,19 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">
-                  Customer (Khách hàng — Gõ tên hoặc mã SAP để tìm)
+                  Customer / Khách hàng (Search name or SAP ID / Tìm tên hoặc mã SAP)
                 </label>
                 <SearchableCombobox
                   disabled={isLocked}
                   value={revision.customer?.customerId || ''}
-                  placeholder="-- Hãy chọn Khách hàng --"
+                  placeholder="-- Select Customer / Chọn Khách hàng --"
                   options={customerOptions}
                   onChange={(val) => handleCustomerSelect(val)}
-                  searchPlaceholder="Gõ tên KH (VD: NITORI) hoặc mã SAP (1200001169)..."
+                  searchPlaceholder="Search customer name or SAP code / Tìm tên KH hoặc mã SAP..."
                   popoverWidthClass="w-96"
                 />
                 <p className="mt-1 truncate text-[11px] font-medium text-slate-500">
-                  {revision.customer?.customerName || 'Chưa chọn khách hàng'}
+                  {revision.customer?.customerName || 'No customer selected / Chưa chọn khách hàng'}
                   {revision.customer?.salesmanName && (
                     <span className="ml-2 font-semibold text-blue-700">
                       • Salesman: {revision.customer.salesmanName}
@@ -721,12 +720,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-600">
-                  Product / Item (Sản phẩm)
+                  Product Item / Tên sản phẩm
                 </label>
                 <input
                   type="text"
                   disabled={isLocked}
-                  placeholder="Hãy nhập tên sản phẩm..."
+                  placeholder="Enter product name / Nhập tên sản phẩm..."
                   value={revision.productName}
                   onChange={(e) =>
                     handleHeaderChange('productName', e.target.value)
@@ -741,12 +740,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-600">
-                  Color (Màu sắc)
+                  Color / Màu sắc
                 </label>
                 <input
                   type="text"
                   disabled={isLocked}
-                  placeholder="Hãy nhập màu sắc..."
+                  placeholder="Enter color / Nhập màu sắc..."
                   value={revision.colorName}
                   onChange={(e) =>
                     handleHeaderChange('colorName', e.target.value)
@@ -765,12 +764,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-600">
-                    Substrate (Loại gỗ)
+                    Substrate / Loại gỗ
                   </label>
                   <input
                     type="text"
                     disabled={isLocked}
-                    placeholder="Hãy nhập loại gỗ..."
+                    placeholder="Enter substrate / Nhập loại gỗ..."
                     value={revision.substrate}
                     onChange={(e) =>
                       handleHeaderChange('substrate', e.target.value)
@@ -784,12 +783,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-600">
-                    Positioning
+                    Positioning / Vị trí áp dụng
                   </label>
                   <input
                     type="text"
                     disabled={isLocked}
-                    placeholder="VD: Interior / Mid High"
+                    placeholder="e.g. Interior / Mid High"
                     value={revision.positioning}
                     onChange={(e) =>
                       handleHeaderChange('positioning', e.target.value)
@@ -802,12 +801,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-600">
-                    System (Hệ sơn)
+                    Finishing System / Hệ sơn
                   </label>
                   <input
                     type="text"
                     disabled={isLocked}
-                    placeholder="Hãy nhập hệ sơn..."
+                    placeholder="Enter system / Nhập hệ sơn..."
                     value={revision.finishingSystem}
                     onChange={(e) =>
                       handleHeaderChange('finishingSystem', e.target.value)
@@ -821,12 +820,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-600">
-                    Gloss (Độ bóng)
+                    Gloss Level / Độ bóng
                   </label>
                   <input
                     type="text"
                     disabled={isLocked}
-                    placeholder="VD: 15±5 SHEEN"
+                    placeholder="e.g. 15±5 SHEEN"
                     value={revision.glossLevel}
                     onChange={(e) =>
                       handleHeaderChange('glossLevel', e.target.value)
@@ -838,12 +837,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold uppercase text-slate-600">
-                  Reference (Tiêu chuẩn đối chiếu)
+                  Reference / Tiêu chuẩn tham chiếu
                 </label>
                 <input
                   type="text"
                   disabled={isLocked}
-                  placeholder="Nhập tiêu chuẩn đối chiếu (nếu có)..."
+                  placeholder="Enter reference / Nhập tiêu chuẩn đối chiếu (nếu có)..."
                   value={revision.referenceStandard}
                   onChange={(e) =>
                     handleHeaderChange('referenceStandard', e.target.value)
@@ -858,12 +857,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-600">
-                    No. (Mã Hồ Sơ)
+                    No. / Mã hồ sơ
                   </label>
                   <input
                     type="text"
                     disabled={isLocked}
-                    placeholder="Hãy nhập mã hồ sơ..."
+                    placeholder="Enter code / Nhập mã hồ sơ..."
                     value={revision.projectCode}
                     onChange={(e) =>
                       handleHeaderChange('projectCode', e.target.value)
@@ -877,7 +876,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-semibold uppercase text-slate-600">
-                    Date (Ngày lập)
+                    Date / Ngày lập
                   </label>
                   <input
                     type="date"
@@ -894,12 +893,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               {/* Finishing Conditions */}
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
                 <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">
-                  Finishing Condition (Điều kiện môi trường)
+                  Finishing Condition / Điều kiện môi trường
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <label className="block text-[10px] font-medium text-slate-500">
-                      MC wood
+                      MC Wood / Độ ẩm gỗ
                     </label>
                     <input
                       type="text"
@@ -913,7 +912,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                   </div>
                   <div>
                     <label className="block text-[10px] font-medium text-slate-500">
-                      Humidity
+                      Humidity / Độ ẩm
                     </label>
                     <input
                       type="text"
@@ -927,7 +926,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                   </div>
                   <div>
                     <label className="block text-[10px] font-medium text-slate-500">
-                      Room Temp
+                      Room Temp / Nhiệt độ phòng
                     </label>
                     <input
                       type="text"
@@ -953,17 +952,17 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             <Layers className="h-5 w-5 text-blue-700 shrink-0" />
             <div>
               <h3 className="text-sm font-bold uppercase text-slate-800">
-                Quy trình Thi công (Dynamic Coating Process —{' '}
+                Coating Process / Quy trình Thi công ({' '}
                 {
                   revision.steps.filter((s) => s.rowType === 'CHEMICAL_STEP')
                     .length
                 }{' '}
-                Bước sơn,{' '}
+                Chemical Steps / Bước sơn,{' '}
                 {revision.steps.filter((s) => s.rowType === 'SANDING').length}{' '}
-                Bước chà nhám)
+                Sanding / Bước nhám)
               </h3>
               <p className="text-[11px] text-slate-500">
-                Tiêu đề cột & cột số thứ tự/thao tác được ghim tự động. Khi màn hình hẹp, thanh cuộn ngang luôn nổi ngay mép dưới màn hình.
+                Pinned columns & headers / Cột số thứ tự, thao tác và tiêu đề được ghim tự động khi cuộn.
               </p>
             </div>
           </div>
@@ -975,8 +974,8 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               onClick={() => setIsTableViewportPinned((prev) => !prev)}
               title={
                 isTableViewportPinned
-                  ? 'Đang ghim bảng trong khung màn hình cố định. Bấm để chuyển sang Mở rộng toàn trang'
-                  : 'Bấm để gói gọn bảng trong khung chiều cao màn hình (cố định tiêu đề & thanh cuộn trong 1 khung)'
+                  ? 'Pinned viewport active. Click to switch to Full Page / Đang ghim bảng trong khung cố định. Bấm để mở rộng toàn trang'
+                  : 'Click to pin table in viewport / Bấm để ghim bảng trong khung màn hình cố định'
               }
               className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
                 isTableViewportPinned
@@ -987,12 +986,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               {isTableViewportPinned ? (
                 <>
                   <Maximize2 className="h-3.5 w-3.5 text-blue-600" />
-                  <span>Mở rộng toàn trang</span>
+                  <span>Full Page / Toàn trang</span>
                 </>
               ) : (
                 <>
                   <Minimize2 className="h-3.5 w-3.5 text-slate-600" />
-                  <span>Ghim khung bảng</span>
+                  <span>Pin Viewport / Ghim bảng</span>
                 </>
               )}
             </button>
@@ -1005,7 +1004,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                   className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100 transition"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                  Chèn hàng SANDING
+                  Insert SANDING / Chèn nhám
                 </button>
                 <button
                   type="button"
@@ -1013,7 +1012,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                   className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition shadow-sm"
                 >
                   <Plus className="h-4 w-4" />
-                  Thêm bước (Cuối bảng)
+                  + Add Step / + Thêm bước
                 </button>
               </>
             )}
@@ -1024,7 +1023,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         {hasHorizontalOverflow && (
           <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5">
             <span className="text-[11px] font-bold text-slate-600 shrink-0">
-              Cuộn ngang nhanh:
+              Quick Scroll / Cuộn ngang:
             </span>
             <button
               type="button"
@@ -1042,7 +1041,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               className="inline-flex items-center gap-0.5 rounded border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
-              Trái
+              Left / Trái
             </button>
 
             <div
@@ -1069,7 +1068,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               }
               className="inline-flex items-center gap-0.5 rounded border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40"
             >
-              Phải
+              Right / Phải
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
             <button
@@ -1119,32 +1118,32 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               }
             >
               <tr className="bg-slate-800 text-white uppercase tracking-wider text-[10px]">
-                <th className="sticky left-0 z-20 bg-slate-800 border border-slate-700 px-1.5 py-2.5 text-center w-9">
-                  No.
+                <th className="sticky left-0 z-20 bg-slate-800 border border-slate-700 px-1.5 py-2.5 text-center w-12">
+                  No. / STT
                 </th>
                 <th className="border border-slate-700 px-2 py-2.5 min-w-[140px] w-[16%]">
-                  Application Step
+                  Application Step / Bước thi công
                 </th>
                 <th className="border border-slate-700 px-2 py-2.5 min-w-[195px] w-[25%]">
-                  Product Name
+                  Product Name / Tên sản phẩm
                 </th>
-                <th className="border border-slate-700 px-1.5 py-2.5 text-center w-[64px] min-w-[60px]">
-                  Mixing Ratio
+                <th className="border border-slate-700 px-1.5 py-2.5 text-center w-[74px] min-w-[68px]">
+                  Mixing Ratio / Tỉ lệ
                 </th>
-                <th className="border border-slate-700 px-1.5 py-2.5 text-center w-[52px] min-w-[50px]">
-                  Visco
+                <th className="border border-slate-700 px-1.5 py-2.5 text-center w-[60px] min-w-[56px]">
+                  Visco / Độ nhớt
                 </th>
-                <th className="border border-slate-700 px-1.5 py-2.5 text-center w-[84px] min-w-[80px]">
-                  CA (g/m²)
+                <th className="border border-slate-700 px-1.5 py-2.5 text-center w-[92px] min-w-[86px]">
+                  CA / Lượng sơn (g/m²)
                 </th>
-                <th className="border border-slate-700 px-2 py-2.5 text-center min-w-[115px] w-[13%]">
-                  Application Method
+                <th className="border border-slate-700 px-2 py-2.5 text-center min-w-[125px] w-[13%]">
+                  Application Method / Phương pháp
                 </th>
-                <th className="border border-slate-700 px-2 py-2.5 text-center min-w-[90px] w-[11%]">
-                  Drying Time
+                <th className="border border-slate-700 px-2 py-2.5 text-center min-w-[96px] w-[11%]">
+                  Drying Time / TG khô
                 </th>
-                <th className="sticky right-0 z-20 bg-slate-800 border border-slate-700 px-1.5 py-2.5 text-center w-[108px] min-w-[104px] shadow-[-4px_0_8px_rgba(0,0,0,0.18)]">
-                  Thao tác Bước
+                <th className="sticky right-0 z-20 bg-slate-800 border border-slate-700 px-1.5 py-2.5 text-center w-[116px] min-w-[110px] shadow-[-4px_0_8px_rgba(0,0,0,0.18)]">
+                  Actions / Thao tác
                 </th>
               </tr>
             </thead>
@@ -1161,7 +1160,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                         —
                       </td>
                       <td className="border border-slate-200 px-2 py-2 font-bold text-amber-900">
-                        SANDING
+                        SANDING / CHÀ NHÁM
                       </td>
                       <td
                         colSpan={4}
@@ -1175,7 +1174,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                           type="text"
                           disabled={isLocked}
                           value={step.sandingSpec || ''}
-                          placeholder="Hãy nhập thông số nhám (VD: SANDING PAPER #180-240)..."
+                          placeholder="Enter sanding spec (VD: SANDING PAPER #180-240)..."
                           onChange={(e) =>
                             handleUpdateStepField(
                               step.id,
@@ -1195,16 +1194,16 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                           <div className="flex flex-wrap items-center justify-center gap-0.5">
                             <button
                               type="button"
-                              title="Chèn bước sơn ngay bên dưới hàng nhám này"
+                              title="Chèn bước sơn ngay bên dưới hàng nhám này / Insert chemical step below"
                               onClick={() => handleInsertChemicalStep(stepIdx)}
                               className="inline-flex items-center gap-0.5 rounded border border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 hover:bg-blue-100"
                             >
                               <Plus className="h-3 w-3" />
-                              Bước
+                              + Step / + Bước
                             </button>
                             <button
                               type="button"
-                              title="Di chuyển lên"
+                              title="Di chuyển lên / Move up"
                               onClick={() => handleMoveStep(stepIdx, -1)}
                               className="rounded p-1 text-slate-500 hover:bg-slate-200"
                             >
@@ -1212,7 +1211,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                             </button>
                             <button
                               type="button"
-                              title="Di chuyển xuống"
+                              title="Di chuyển xuống / Move down"
                               onClick={() => handleMoveStep(stepIdx, 1)}
                               className="rounded p-1 text-slate-500 hover:bg-slate-200"
                             >
@@ -1220,7 +1219,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                             </button>
                             <button
                               type="button"
-                              title="Xóa hàng nhám"
+                              title="Xóa hàng nhám / Delete sanding row"
                               onClick={() => handleDeleteStep(step.id)}
                               className="rounded p-1 text-red-600 hover:bg-red-100"
                             >
@@ -1266,7 +1265,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                             compact
                             disabled={isLocked}
                             value={step.stepName || ''}
-                            placeholder="-- Chọn bước --"
+                            placeholder="-- Select Step / Chọn bước --"
                             options={stepOptions}
                             onChange={(val) =>
                               handleUpdateStepField(step.id, 'stepName', val)
@@ -1279,9 +1278,9 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                               handleUpdateStepField(step.id, 'stepName', upper);
                             }}
                             createNewLabel={(val) =>
-                              `+ Tạo tên bước mới "${val.toUpperCase()}"`
+                              `+ New Step / Tạo bước "${val.toUpperCase()}"`
                             }
-                            searchPlaceholder="Gõ tìm hoặc tạo tên bước mới..."
+                            searchPlaceholder="Search or create step / Tìm hoặc tạo bước mới..."
                             popoverWidthClass="w-72"
                           />
                         </td>
@@ -1297,7 +1296,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                               disabled={isLocked}
                               value={item.materialCode || ''}
                               displayValue={item.materialName || item.materialCode || ''}
-                              placeholder="-- Chọn mã vật tư --"
+                              placeholder="-- Select Material / Chọn mã vật tư --"
                               options={productOptions}
                               onChange={(val, opt) =>
                                 handleUpdateItem(step.id, item.id, {
@@ -1305,15 +1304,15 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                                   materialName: opt?.label || val
                                 })
                               }
-                              emptyMessage={`Khách hàng ${revision.customer?.shortName || revision.customer?.customerId || ''} chưa có sản phẩm nào trong báo giá`}
-                              searchPlaceholder="Gõ tìm vật tư trong báo giá của khách hàng..."
+                              emptyMessage={`Customer ${revision.customer?.shortName || revision.customer?.customerId || ''} has no quotation items / KH chưa có vật tư trong báo giá`}
+                              searchPlaceholder="Search material in quotation / Tìm vật tư trong báo giá..."
                               popoverWidthClass="w-96"
                             />
                           </div>
                           {!isLocked && rowSpan > 1 && (
                             <button
                               type="button"
-                              title="Xóa dòng vật tư này"
+                              title="Delete material item / Xóa dòng vật tư này"
                               onClick={() =>
                                 handleDeleteItemFromStep(step.id, item.id)
                               }
@@ -1331,8 +1330,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                               className="inline-flex items-center gap-1 rounded-md border border-dashed border-blue-400 bg-blue-50/80 px-2 py-0.5 text-[11px] font-bold text-blue-700 hover:bg-blue-100 transition"
                             >
                               <Plus className="h-3 w-3" />
-                              Thêm vật tư vào Bước {step.stepNumber} (Hiện có:{' '}
-                              {rowSpan})
+                              + Add Item / + Thêm vật tư (Step {step.stepNumber} — {rowSpan})
                             </button>
                           </div>
                         )}
@@ -1345,7 +1343,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                           step="0.1"
                           min="0"
                           disabled={isLocked}
-                          placeholder="Tỷ lệ"
+                          placeholder="Ratio / Tỷ lệ"
                           value={
                             item.mixingRatio && item.mixingRatio > 0
                               ? item.mixingRatio
@@ -1411,7 +1409,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                             }`}
                           />
                           <div className="mt-1 text-[10px] leading-tight font-medium text-emerald-700">
-                            TB sang CC: <strong>{parsedCa.caAvg} g/m²</strong>
+                            Avg to CC / TB sang CC: <strong>{parsedCa.caAvg} g/m²</strong>
                           </div>
                         </td>
                       )}
@@ -1426,12 +1424,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                             compact
                             disabled={isLocked}
                             value={step.methodName || ''}
-                            placeholder="-- Phương pháp --"
+                            placeholder="-- Method / Phương pháp --"
                             options={methodOptions}
                             onChange={(val) =>
                               handleUpdateStepField(step.id, 'methodName', val)
                             }
-                            searchPlaceholder="Chọn phương pháp..."
+                            searchPlaceholder="Select method / Chọn phương pháp..."
                             popoverWidthClass="w-60"
                             align="right"
                           />
@@ -1447,7 +1445,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                           <input
                             type="text"
                             disabled={isLocked}
-                            placeholder="TG khô..."
+                            placeholder="Drying time / TG khô..."
                             value={step.dryingTime || ''}
                             onChange={(e) =>
                               handleUpdateStepField(
@@ -1476,31 +1474,31 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                               <div className="flex items-center gap-0.5">
                                 <button
                                   type="button"
-                                  title="Chèn thêm 1 bước sơn mới ngay bên dưới bước này"
+                                  title="Chèn thêm 1 bước sơn mới ngay bên dưới bước này / Insert step below"
                                   onClick={() =>
                                     handleInsertChemicalStep(stepIdx)
                                   }
                                   className="inline-flex items-center gap-0.5 rounded border border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 hover:bg-blue-100"
                                 >
                                   <Plus className="h-2.5 w-2.5" />
-                                  Bước
+                                  + Step / + Bước
                                 </button>
                                 <button
                                   type="button"
-                                  title="Chèn hàng chà nhám (SANDING) ngay bên dưới bước này"
+                                  title="Chèn hàng chà nhám (SANDING) ngay bên dưới bước này / Insert sanding below"
                                   onClick={() =>
                                     handleInsertSandingRow(stepIdx)
                                   }
                                   className="inline-flex items-center rounded border border-amber-300 bg-amber-50 px-1 py-0.5 text-[10px] font-bold text-amber-800 hover:bg-amber-100"
                                 >
-                                  +Nhám
+                                  + Nhám
                                 </button>
                               </div>
 
                               <div className="flex items-center justify-center gap-0.5">
                                 <button
                                   type="button"
-                                  title="Nhân bản bước thi công này xuống ngay bên dưới"
+                                  title="Nhân bản bước thi công này xuống ngay bên dưới / Duplicate step"
                                   onClick={() => handleDuplicateStep(stepIdx)}
                                   className="rounded p-1 text-slate-600 hover:bg-slate-200"
                                 >
@@ -1508,7 +1506,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                                 </button>
                                 <button
                                   type="button"
-                                  title="Di chuyển bước lên"
+                                  title="Di chuyển bước lên / Move up"
                                   onClick={() => handleMoveStep(stepIdx, -1)}
                                   className="rounded p-1 text-slate-500 hover:bg-slate-200"
                                 >
@@ -1516,7 +1514,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                                 </button>
                                 <button
                                   type="button"
-                                  title="Di chuyển bước xuống"
+                                  title="Di chuyển bước xuống / Move down"
                                   onClick={() => handleMoveStep(stepIdx, 1)}
                                   className="rounded p-1 text-slate-500 hover:bg-slate-200"
                                 >
@@ -1524,7 +1522,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                                 </button>
                                 <button
                                   type="button"
-                                  title="Xóa toàn bộ bước này"
+                                  title="Xóa toàn bộ bước này / Delete step"
                                   onClick={() => handleDeleteStep(step.id)}
                                   className="rounded p-1 text-red-600 hover:bg-red-100"
                                 >
@@ -1547,7 +1545,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         {hasHorizontalOverflow && !isTableViewportPinned && (
           <div className="sticky bottom-0 z-30 flex items-center gap-2 border-t border-blue-200 bg-slate-900/95 px-3 py-2 text-white shadow-[0_-4px_12px_rgba(0,0,0,0.15)] backdrop-blur">
             <span className="text-[11px] font-bold text-blue-300 shrink-0">
-              Thanh cuộn ngang nổi:
+              Floating Scroll / Cuộn ngang nổi:
             </span>
             <button
               type="button"
@@ -1565,7 +1563,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               className="inline-flex items-center gap-0.5 rounded bg-slate-800 px-2 py-1 text-[11px] font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-40"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
-              Trái
+              Left / Trái
             </button>
 
             <div
@@ -1592,7 +1590,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               }
               className="inline-flex items-center gap-0.5 rounded bg-slate-800 px-2 py-1 text-[11px] font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-40"
             >
-              Phải
+              Right / Phải
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
             <button
@@ -1618,7 +1616,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         {!isLocked && (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-blue-50/40 px-5 py-3">
             <span className="text-xs font-semibold text-slate-600">
-              Thao tác nhanh cuối bảng quy trình:
+              Quick Actions / Thao tác nhanh cuối bảng:
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -1627,7 +1625,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100 transition"
               >
                 <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                Chèn hàng phụ SANDING vào cuối
+                Insert SANDING / Chèn nhám vào cuối
               </button>
               <button
                 type="button"
@@ -1635,7 +1633,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition shadow-sm"
               >
                 <Plus className="h-4 w-4" />
-                Thêm bước thi công tiếp theo (Bước{' '}
+                + Add Next Step / + Thêm bước sơn tiếp theo (Bước{' '}
                 {revision.steps.filter((s) => s.rowType === 'CHEMICAL_STEP')
                   .length + 1}
                 )
@@ -1647,12 +1645,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         {/* 3. FOOTER SIGNATURE NAMES */}
         <div className="border-t border-slate-200 bg-slate-50 p-4 rounded-b-xl">
           <div className="mb-2 text-xs font-bold uppercase text-slate-600">
-            Thông tin Phê duyệt & Chữ ký (Hiển thị trên Bản in A4 & File Excel)
+            Approval & Signature / Thông tin Phê duyệt & Chữ ký (Printed on A4 & Excel / Hiển thị trên A4 & Excel)
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
             <div>
               <label className="block text-[11px] font-semibold text-slate-500">
-                CUSTOMER (Khách hàng xác nhận)
+                CUSTOMER / KHÁCH HÀNG (Xác nhận)
               </label>
               <input
                 type="text"
@@ -1666,7 +1664,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             </div>
             <div>
               <label className="block text-[11px] font-semibold text-slate-500">
-                APPROVED BY (PD/PM)
+                APPROVED BY / PHÊ DUYỆT (PD/PM)
               </label>
               <input
                 type="text"
@@ -1680,7 +1678,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             </div>
             <div>
               <label className="block text-[11px] font-semibold text-slate-500">
-                PREPARED BY (TA — Kỹ thuật viên)
+                PREPARED BY / NGƯỜI LẬP (TA — Kỹ thuật viên)
               </label>
               <input
                 type="text"
@@ -1694,7 +1692,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             </div>
             <div>
               <label className="block text-[11px] font-semibold text-slate-500">
-                CHECKED BY (PROJECT LEADER)
+                CHECKED BY / NGƯỜI KIỂM TRA (PROJECT LEADER)
               </label>
               <input
                 type="text"

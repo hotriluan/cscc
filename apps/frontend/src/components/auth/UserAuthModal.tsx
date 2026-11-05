@@ -23,10 +23,10 @@ interface UserAuthModalProps {
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
-  PROJECT_LEADER: '👔 Quản lý / Project Leader (Full CS + CC)',
-  SALES: '💼 Kinh doanh / Sales (Xem CS + CC)',
-  TECHNICAL: '🛠️ Kỹ thuật viên / Technical TA (Chỉ CS — Ẩn giá)',
-  ADMIN: '🛡️ Quản trị hệ thống / Admin (Toàn quyền)'
+  PROJECT_LEADER: '👔 Project Leader / Quản lý - Dự án (Full CS + CC)',
+  SALES: '💼 Sales / Kinh doanh - Báo giá (Xem CS + CC)',
+  TECHNICAL: '🛠️ Technical TA / Kỹ thuật viên (Chỉ CS — Ẩn giá)',
+  ADMIN: '🛡️ Admin / Quản trị hệ thống (Toàn quyền)'
 };
 
 export const UserAuthModal: React.FC<UserAuthModalProps> = ({

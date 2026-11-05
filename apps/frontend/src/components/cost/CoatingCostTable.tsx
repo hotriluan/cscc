@@ -108,17 +108,17 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
             <Calculator className="h-5 w-5 text-emerald-300" />
             <div>
               <h2 className="text-base font-bold tracking-wide uppercase">
-                COATING COST CALCULATION (CC — CHẾ ĐỘ CHỈ XEM / READ-ONLY)
+                COATING COST CALCULATION (CC) / BẢNG TÍNH TOÁN CHI PHÍ SƠN (CHẾ ĐỘ XEM / READ-ONLY)
               </h2>
               <p className="text-xs text-emerald-200">
-                Tự động đồng bộ Header, Đơn giá, Hiệu suất & Công thức thời gian thực từ Coating Schedule (CS)
+                Auto real-time sync from Coating Schedule (CS) / Tự động đồng bộ thời gian thực từ Coating Schedule (CS)
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-800 border border-emerald-500/40 px-3 py-1 text-xs font-semibold text-emerald-100">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-300" />
-              IEEE-754 Exact Intermediate Precision
+              IEEE-754 Exact Intermediate Precision / Độ chính xác số học IEEE-754
             </span>
           </div>
         </div>
@@ -126,36 +126,36 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
         {/* Synchronized Header Grid matching reference image */}
         <div className="grid grid-cols-2 gap-4 bg-emerald-50/40 p-4 text-xs md:grid-cols-4 border-b border-emerald-100">
           <div>
-            <span className="text-slate-500 font-medium">Customer Name:</span>{' '}
+            <span className="text-slate-500 font-medium">Customer Name / Khách hàng:</span>{' '}
             <strong className="text-slate-900">{revision.customer.shortName}</strong>
             <div className="text-[11px] text-slate-500">
-              Date: {revision.scheduleDate}
+              Date / Ngày: {revision.scheduleDate}
             </div>
           </div>
           <div>
-            <span className="text-slate-500 font-medium">Product Item:</span>{' '}
+            <span className="text-slate-500 font-medium">Product Item / Tên sản phẩm:</span>{' '}
             <strong className="text-slate-900">{revision.productName}</strong>
             <div className="text-[11px] text-slate-500">
-              Color: <strong>{revision.colorName}</strong> | Substrate:{' '}
+              Color / Màu: <strong>{revision.colorName}</strong> | Substrate / Gỗ:{' '}
               <strong>{revision.substrate}</strong>
             </div>
           </div>
           <div>
-            <span className="text-slate-500 font-medium">Finishing System:</span>{' '}
+            <span className="text-slate-500 font-medium">Finishing System / Hệ sơn:</span>{' '}
             <strong className="text-slate-900">{revision.finishingSystem}</strong>
             <div className="text-[11px] text-slate-500">
-              Sheen: <strong>{revision.glossLevel}</strong>
+              Sheen / Độ bóng: <strong>{revision.glossLevel}</strong>
             </div>
           </div>
           <div className="text-right">
             <div className="text-[11px] uppercase font-bold text-emerald-700">
-              TOTAL COATING COST (VND/m²)
+              TOTAL COATING COST / TỔNG CHI PHÍ SƠN (VND/m²)
             </div>
             <div className="text-xl font-extrabold text-emerald-800">
               {formatVnd(costSummary.totalCoatingCostDisplay)} VND/m²
             </div>
             <div className="text-[10px] text-slate-500">
-              No.: {revision.projectCode} | Rev.{revCode}
+              No. / Mã: {revision.projectCode} | Rev. / Phiên bản: {revCode}
             </div>
           </div>
         </div>
@@ -172,37 +172,37 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
             >
               <tr className="bg-emerald-800 text-white uppercase tracking-wider text-[10px]">
                 <th className="sticky left-0 z-20 bg-emerald-800 border border-emerald-700 px-2 py-2.5 text-center min-w-[115px]">
-                  Item
+                  Item / Bước thi công
                 </th>
                 <th className="border border-emerald-700 px-2.5 py-2.5 text-left min-w-[175px]">
-                  Product Name
+                  Product Name / Tên sản phẩm
                 </th>
-                <th className="border border-emerald-700 px-2 py-2.5 text-right min-w-[85px]">
-                  Price (VND/Ltr)
-                </th>
-                <th className="border border-emerald-700 px-1.5 py-2.5 text-center min-w-[58px]">
-                  Mixing Ratio
-                </th>
-                <th className="border border-emerald-700 px-2 py-2.5 text-right min-w-[90px] bg-emerald-900/60">
-                  Mixed Price (VND/Ltr set)
-                </th>
-                <th className="border border-emerald-700 px-2 py-2.5 text-center min-w-[76px]">
-                  Application
-                </th>
-                <th className="border border-emerald-700 px-2 py-2.5 text-center min-w-[74px]">
-                  Coating Amount (g/m²)
+                <th className="border border-emerald-700 px-2 py-2.5 text-right min-w-[95px]">
+                  Price / Đơn giá (VND/Ltr)
                 </th>
                 <th className="border border-emerald-700 px-1.5 py-2.5 text-center min-w-[68px]">
-                  Application Efficiency
+                  Mixing Ratio / Tỉ lệ pha
                 </th>
-                <th className="border border-emerald-700 px-2 py-2.5 text-right min-w-[78px] bg-emerald-900/60">
-                  CA + Loss (g/m²)
+                <th className="border border-emerald-700 px-2 py-2.5 text-right min-w-[105px] bg-emerald-900/60">
+                  Mixed Price / Giá hỗn hợp (VND/Ltr set)
                 </th>
-                <th className="border border-emerald-700 px-2 py-2.5 text-right min-w-[78px] bg-emerald-900/60">
-                  Coverage (m²/Ltr/kg)
+                <th className="border border-emerald-700 px-2 py-2.5 text-center min-w-[85px]">
+                  Application / Phương pháp thi công
                 </th>
-                <th className="sticky right-0 z-20 border border-emerald-700 px-2.5 py-2.5 text-right min-w-[110px] bg-emerald-950 shadow-[-4px_0_8px_rgba(0,0,0,0.15)]">
-                  Coating Cost (vnd/m²)
+                <th className="border border-emerald-700 px-2 py-2.5 text-center min-w-[85px]">
+                  Coating Amount / Lượng sơn (g/m²)
+                </th>
+                <th className="border border-emerald-700 px-1.5 py-2.5 text-center min-w-[80px]">
+                  Application Efficiency / Hiệu suất thi công
+                </th>
+                <th className="border border-emerald-700 px-2 py-2.5 text-right min-w-[88px] bg-emerald-900/60">
+                  CA + Loss / Lượng gồm hao hụt (g/m²)
+                </th>
+                <th className="border border-emerald-700 px-2 py-2.5 text-right min-w-[88px] bg-emerald-900/60">
+                  Coverage / Định mức phủ (m²/Ltr/kg)
+                </th>
+                <th className="sticky right-0 z-20 border border-emerald-700 px-2.5 py-2.5 text-right min-w-[120px] bg-emerald-950 shadow-[-4px_0_8px_rgba(0,0,0,0.15)]">
+                  Coating Cost / Chi phí sơn (VND/m²)
                 </th>
               </tr>
             </thead>
@@ -328,7 +328,7 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
                   colSpan={10}
                   className="border border-emerald-800 px-4 py-3 text-center text-sm uppercase tracking-wider"
                 >
-                  TOTAL COATING COST (VND/m²)
+                  TOTAL COATING COST / TỔNG CHI PHÍ SƠN (VND/m²)
                 </td>
                 <td
                   title={`Exact IEEE-754 Sum: ${costSummary.totalCoatingCostRaw}`}
@@ -345,7 +345,7 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
         {hasHorizontalOverflow && (
           <div className="sticky bottom-0 z-30 flex items-center gap-2 border-t border-emerald-300 bg-emerald-950/95 px-3 py-2 text-white shadow-[0_-4px_12px_rgba(0,0,0,0.15)] backdrop-blur">
             <span className="text-[11px] font-bold text-emerald-300 shrink-0">
-              Thanh cuộn ngang nổi:
+              Floating Scroll / Thanh cuộn ngang nổi:
             </span>
             <button
               type="button"
@@ -354,6 +354,7 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
               }
               disabled={scrollMetrics.scrollLeft <= 2}
               className="inline-flex items-center rounded bg-emerald-900 px-1.5 py-1 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-800 disabled:opacity-40"
+              title="Về cột đầu tiên bên trái"
             >
               <ChevronsLeft className="h-3.5 w-3.5" />
             </button>
@@ -364,7 +365,7 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
               className="inline-flex items-center gap-0.5 rounded bg-emerald-900 px-2 py-1 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-800 disabled:opacity-40"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
-              Trái
+              Left / Trái
             </button>
 
             <div
@@ -389,7 +390,7 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
               }
               className="inline-flex items-center gap-0.5 rounded bg-emerald-900 px-2 py-1 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-800 disabled:opacity-40"
             >
-              Phải
+              Right / Phải
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
             <button
@@ -405,6 +406,7 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
                 scrollMetrics.scrollWidth - 2
               }
               className="inline-flex items-center rounded bg-emerald-900 px-1.5 py-1 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-800 disabled:opacity-40"
+              title="Tới cột cuối cùng bên phải"
             >
               <ChevronsRight className="h-3.5 w-3.5" />
             </button>
@@ -414,17 +416,17 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
         {/* Notes & Remark Footer matching reference image */}
         <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700 space-y-1">
           <div className="italic text-slate-600">
-            Notes: The price above is not including VAT 8% and valid for 30 days
+            Notes: The price above is not including VAT 8% and valid for 30 days / Ghi chú: Đơn giá trên chưa bao gồm thuế VAT 8% và có hiệu lực trong 30 ngày.
           </div>
           {revision.remark && (
             <div>
-              <strong>REMARK:</strong> {revision.remark}
+              <strong>REMARK / GHI CHÚ:</strong> {revision.remark}
             </div>
           )}
           <div className="flex items-center gap-1.5 pt-1 text-[11px] text-slate-500">
             <Info className="h-3.5 w-3.5 text-emerald-700 shrink-0" />
             <span>
-              Giữ nguyên độ chính xác số thực IEEE-754 ở các bước trung gian, chỉ làm tròn ở bước hiển thị cuối cùng.
+              Exact IEEE-754 precision maintained for intermediate steps, rounded only for final display / Giữ nguyên độ chính xác số thực IEEE-754 ở các bước trung gian, chỉ làm tròn ở bước hiển thị cuối cùng.
             </span>
           </div>
         </div>

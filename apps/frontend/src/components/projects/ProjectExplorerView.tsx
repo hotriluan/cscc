@@ -184,7 +184,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-sm transition"
           >
             <FolderPlus className="h-4 w-4" />
-            Tạo Hồ sơ Dự án Mới
+            + New Project / + Tạo mới Hồ sơ
           </button>
         </div>
 
@@ -197,7 +197,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Gõ Mã hồ sơ (NTR 001), Tên SP (Bàn), Màu (Hickory), Gỗ (Tần bì)..."
+              placeholder="Search code (NTR 001), product, color, wood... / Tìm mã HS, sản phẩm, màu, gỗ..."
               className="w-full rounded-lg border border-slate-300 pl-9 pr-8 py-1.5 text-xs font-medium focus:border-blue-600 focus:outline-none"
             />
             {searchQuery && (
@@ -218,7 +218,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
               value={customerFilter}
               options={customerFilterOptions}
               onChange={(val) => setCustomerFilter(val)}
-              searchPlaceholder="Gõ tên KH hoặc mã SAP để lọc..."
+              searchPlaceholder="Search customer or SAP code / Tìm tên KH hoặc mã SAP..."
               popoverWidthClass="w-96"
             />
           </div>
@@ -237,10 +237,10 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                 }`}
               >
                 {st === 'ALL'
-                  ? `Tất cả (${projects.length})`
+                  ? `All / Tất cả (${projects.length})`
                   : st === 'DRAFT'
-                    ? 'Draft (Bản nháp)'
-                    : 'Approved (Đã duyệt)'}
+                    ? 'Draft / Bản nháp'
+                    : 'Approved / Đã duyệt'}
               </button>
             ))}
           </div>
@@ -254,24 +254,24 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
             <thead>
               <tr className="bg-slate-800 text-white uppercase tracking-wider text-[11px]">
                 <th className="border border-slate-700 px-3.5 py-2.5 w-32">
-                  Mã Hồ Sơ
+                  No. / Mã Hồ Sơ
                 </th>
                 <th className="border border-slate-700 px-3.5 py-2.5 w-64">
-                  Khách hàng (Customer)
+                  Customer / Khách hàng
                 </th>
                 <th className="border border-slate-700 px-3.5 py-2.5">
-                  Sản phẩm / Màu sắc / Loại gỗ
+                  Product • Color • Substrate / Sản phẩm • Màu • Gỗ
                 </th>
                 <th className="border border-slate-700 px-3.5 py-2.5">
-                  Các Phiên bản (Bấm vào Rev để mở)
+                  Revisions / Phiên bản (Click to open / Bấm để mở)
                 </th>
                 {canViewCost && (
-                  <th className="border border-slate-700 px-3.5 py-2.5 text-right w-40">
-                    Tổng Giá (Rev Mới Nhất)
+                  <th className="border border-slate-700 px-3.5 py-2.5 text-right w-44">
+                    Cost / Chi phí (Latest Rev)
                   </th>
                 )}
                 <th className="border border-slate-700 px-3.5 py-2.5 text-center w-36">
-                  Thao tác
+                  Actions / Thao tác
                 </th>
               </tr>
             </thead>
@@ -453,7 +453,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <h3 className="text-base font-bold uppercase text-slate-900">
-                Tạo Hồ sơ Coating Schedule Mới (Rev 00)
+                Create New Project / Tạo Hồ sơ Mới (Rev 00)
               </h3>
               <button
                 type="button"
@@ -468,7 +468,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
               {createErrors.length > 0 && (
                 <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-900">
                   <div className="font-bold text-red-800 mb-1">
-                    ⚠️ Không thể tạo hồ sơ vì các mục sau còn đang để trống:
+                    ⚠️ Cannot create project / Không thể tạo hồ sơ vì các mục sau còn trống:
                   </div>
                   <ul className="list-disc pl-5 space-y-0.5 font-medium">
                     {createErrors.map((err, i) => (
@@ -480,14 +480,14 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-600 mb-1">
-                  Chọn Khách hàng (Customer) <span className="text-red-500">*</span>
+                  Customer / Chọn Khách hàng <span className="text-red-500">*</span>
                 </label>
                 <SearchableCombobox
                   value={newCustomerId}
-                  placeholder="-- Hãy chọn Khách hàng --"
+                  placeholder="-- Select Customer / Chọn Khách hàng --"
                   options={customerCreateOptions}
                   onChange={(val) => setNewCustomerId(val)}
-                  searchPlaceholder="Gõ tên KH (NITORI) hoặc mã SAP..."
+                  searchPlaceholder="Search customer or SAP code / Gõ tên KH hoặc mã SAP..."
                   popoverWidthClass="w-full"
                 />
               </div>
@@ -495,11 +495,11 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-600">
-                    Mã Hồ sơ (No.) <span className="text-red-500">*</span>
+                    No. / Mã Hồ sơ <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Hãy nhập mã hồ sơ (VD: NTR 002)..."
+                    placeholder="e.g. NTR 002 / Nhập mã hồ sơ..."
                     value={newCode}
                     onChange={(e) => setNewCode(e.target.value)}
                     className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm font-bold focus:outline-none ${
@@ -511,11 +511,11 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-600">
-                    Tên Sản phẩm (Product Item) <span className="text-red-500">*</span>
+                    Product Item / Tên Sản phẩm <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Hãy nhập sản phẩm (VD: TABLE)..."
+                    placeholder="e.g. TABLE / Nhập sản phẩm..."
                     value={newProduct}
                     onChange={(e) => setNewProduct(e.target.value)}
                     className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
@@ -530,11 +530,11 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-600">
-                    Màu sắc (Color) <span className="text-red-500">*</span>
+                    Color / Màu sắc <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Hãy nhập màu sắc..."
+                    placeholder="Enter color / Nhập màu..."
                     value={newColor}
                     onChange={(e) => setNewColor(e.target.value)}
                     className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
@@ -546,11 +546,11 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-600">
-                    Loại gỗ (Substrate) <span className="text-red-500">*</span>
+                    Substrate / Loại gỗ <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Hãy nhập loại gỗ..."
+                    placeholder="Enter substrate / Nhập loại gỗ..."
                     value={newSubstrate}
                     onChange={(e) => setNewSubstrate(e.target.value)}
                     className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
@@ -562,11 +562,11 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-600">
-                    Hệ sơn (System) <span className="text-red-500">*</span>
+                    Finishing System / Hệ sơn <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Hãy nhập hệ sơn..."
+                    placeholder="Enter system / Nhập hệ sơn..."
                     value={newSystem}
                     onChange={(e) => setNewSystem(e.target.value)}
                     className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
@@ -584,13 +584,13 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                   onClick={() => setShowNewModal(false)}
                   className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                 >
-                  Hủy
+                  Cancel / Hủy
                 </button>
                 <button
                   type="submit"
                   className="rounded-lg bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-sm"
                 >
-                  Khởi tạo Hồ sơ (Rev 00)
+                  Create Project / Tạo Hồ sơ (Rev 00)
                 </button>
               </div>
             </form>

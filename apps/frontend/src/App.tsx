@@ -640,7 +640,7 @@ export function App() {
               >
                 <span className="flex items-center gap-1.5">
                   <Shield className="h-3.5 w-3.5 text-emerald-400" />
-                  Tài khoản & Phân quyền (RBAC)
+                  Account & RBAC / Tài khoản & Phân quyền
                 </span>
                 {showRbacSection ? (
                   <ChevronUp className="h-3.5 w-3.5 text-slate-500" />
@@ -657,13 +657,13 @@ export function App() {
                       <div className="truncate text-[11px] font-bold text-white flex items-center gap-1">
                         <UserCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
                         <span className="truncate">
-                          {currentUser ? currentUser.fullName : 'Chế độ Demo / RBAC Nhanh'}
+                          {currentUser ? currentUser.fullName : 'Demo Mode / Chế độ Demo (RBAC Nhanh)'}
                         </span>
                       </div>
                       <div className="truncate text-[10px] text-slate-400">
                         {currentUser
                           ? `${currentUser.email} (${currentUser.role})`
-                          : 'Chưa đăng nhập JWT (Dùng Role Switcher)'}
+                          : 'Not logged in / Chưa đăng nhập JWT (Role Switcher)'}
                       </div>
                     </div>
                     <button
@@ -672,14 +672,14 @@ export function App() {
                       className="shrink-0 inline-flex items-center gap-1 rounded bg-blue-600/90 px-2 py-1 text-[10px] font-bold text-white hover:bg-blue-500"
                     >
                       <LogIn className="h-3 w-3" />
-                      {currentUser ? 'Tài khoản' : 'Đăng nhập'}
+                      {currentUser ? 'Account / Tài khoản' : 'Login / Đăng nhập'}
                     </button>
                   </div>
 
                   {/* Quick RBAC Role Switcher Dropdown */}
                   <div>
                     <div className="mb-1 text-[10px] font-semibold text-slate-400">
-                      Chuyển nhanh vai trò (Role Switcher):
+                      Role Switcher / Chuyển nhanh vai trò:
                     </div>
                     <select
                       value={role}
@@ -687,20 +687,20 @@ export function App() {
                       className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-xs font-bold text-white focus:border-blue-500 focus:outline-none"
                     >
                       <option value="PROJECT_LEADER">
-                        👔 Quản lý / Kinh doanh (Full CS + CC)
+                        👔 Project Leader / Quản lý - Dự án (Full CS + CC)
                       </option>
-                      <option value="SALES">💼 Sales / Báo giá (Xem CS + CC)</option>
+                      <option value="SALES">💼 Sales / Kinh doanh - Báo giá (Xem CS + CC)</option>
                       <option value="TECHNICAL">
-                        🛠️ Kỹ thuật viên (Chỉ CS — Ẩn giá CC)
+                        🛠️ Technical TA / Kỹ thuật viên (Chỉ CS — Ẩn giá)
                       </option>
                       <option value="ADMIN">
-                        🛡️ Quản trị hệ thống (Admin — Toàn quyền)
+                        🛡️ Admin / Quản trị hệ thống (Toàn quyền)
                       </option>
                     </select>
                     <p className="mt-1 text-[10px] leading-snug text-slate-400">
                       {role === 'TECHNICAL'
-                        ? '🔒 Đang ẩn toàn bộ đơn giá (VND) và khóa Tab Coating Cost.'
-                        : '✅ Đang mở quyền truy cập Tab Coating Cost (VND/m²) & Đơn giá.'}
+                        ? '🔒 Prices hidden & Coating Cost locked / Đang ẩn toàn bộ đơn giá (VND) và khóa Tab Coating Cost.'
+                        : '✅ Coating Cost & Prices enabled / Đang mở quyền truy cập Tab Coating Cost (VND/m²) & Đơn giá.'}
                     </p>
                   </div>
                 </div>
@@ -710,7 +710,7 @@ export function App() {
             {/* Primary Navigation */}
             <nav className="space-y-1">
               <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Menu Chính
+                Main Menu / Menu Chính
               </div>
               <button
                 type="button"
@@ -722,7 +722,7 @@ export function App() {
                 }`}
               >
                 <ClipboardList className="h-4 w-4 shrink-0" />
-                <span>Workspace (Lập lịch & Giá)</span>
+                <span>Workspace / Lập lịch & Chi phí</span>
               </button>
 
               <button
@@ -736,7 +736,7 @@ export function App() {
               >
                 <span className="flex items-center gap-2.5">
                   <FolderKanban className="h-4 w-4 shrink-0" />
-                  <span>Quản lý Hồ sơ Dự án</span>
+                  <span>Projects / Quản lý Hồ sơ Dự án</span>
                 </span>
                 <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">
                   {projects.length}
@@ -753,7 +753,7 @@ export function App() {
                 }`}
               >
                 <Database className="h-4 w-4 shrink-0" />
-                <span>Quản trị Master Data (CRUD)</span>
+                <span>Master Data / Quản trị Dữ liệu Gốc</span>
               </button>
             </nav>
 
@@ -1053,7 +1053,7 @@ export function App() {
                   }`}
                 >
                   <ClipboardList className="h-4 w-4" />
-                  1. Coating Schedule (CS — Nhập liệu)
+                  1. Coating Schedule (CS) / Lập lịch quy trình
                 </button>
 
                 {canViewCost && (
@@ -1067,11 +1067,10 @@ export function App() {
                     }`}
                   >
                     <Calculator className="h-4 w-4" />
-                    2. Coating Cost (CC — Read-Only:{' '}
+                    2. Coating Cost (CC) / Chi phí sơn{' '}
                     {liveCostSummary
-                      ? `${formatVnd(liveCostSummary.totalCoatingCostDisplay)} đ/m²`
+                      ? `(${formatVnd(liveCostSummary.totalCoatingCostDisplay)} đ/m²)`
                       : ''}
-                    )
                   </button>
                 )}
 
@@ -1085,7 +1084,7 @@ export function App() {
                   }`}
                 >
                   <Boxes className="h-4 w-4" />
-                  3. BOM Summary (Dự toán Vật tư)
+                  3. BOM Summary / Dự toán định mức vật tư
                 </button>
               </div>
 
@@ -1109,7 +1108,7 @@ export function App() {
                   className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 shadow-sm"
                 >
                   <Save className="h-3.5 w-3.5" />
-                  {saving ? 'Đang lưu...' : 'Lưu Hồ Sơ'}
+                  {saving ? 'Saving... / Đang lưu...' : 'Save / Lưu hồ sơ'}
                 </button>
 
                 <button
@@ -1118,7 +1117,7 @@ export function App() {
                   className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                 >
                   <Copy className="h-3.5 w-3.5 text-blue-600" />
-                  Nhân bản sang Rev mới
+                  Clone Rev / Nhân bản Rev
                 </button>
 
                 <button
@@ -1135,12 +1134,12 @@ export function App() {
                   activeRevision.status === 'LOCKED' ? (
                     <>
                       <FileEdit className="h-3.5 w-3.5 text-emerald-600" />
-                      Đã duyệt (Approved) - Về Draft
+                      Approved / Đã duyệt (Click: Reopen / Mở lại Draft)
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="h-3.5 w-3.5 text-slate-600" />
-                      Phê duyệt (Approve)
+                      Approve / Phê duyệt
                     </>
                   )}
                 </button>
@@ -1154,7 +1153,7 @@ export function App() {
                   className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-800 shadow-sm"
                 >
                   <Download className="h-3.5 w-3.5" />
-                  Xuất Excel (.xlsx)
+                  Export Excel / Xuất Excel (.xlsx)
                 </a>
 
                 <button
@@ -1163,7 +1162,7 @@ export function App() {
                   className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800"
                 >
                   <Printer className="h-3.5 w-3.5" />
-                  In A4 / PDF
+                  Print A4 - PDF / In A4 - Xuất PDF
                 </button>
               </div>
             </>
@@ -1175,8 +1174,8 @@ export function App() {
                   onClick={() => setIsSidebarOpen((prev) => !prev)}
                   title={
                     isSidebarOpen
-                      ? 'Ẩn thanh menu bên trái'
-                      : 'Hiện thanh menu bên trái'
+                      ? 'Hide Sidebar / Ẩn thanh menu bên trái'
+                      : 'Show Sidebar / Hiện thanh menu bên trái'
                   }
                   className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-bold transition ${
                     isSidebarOpen
@@ -1189,14 +1188,14 @@ export function App() {
                   ) : (
                     <>
                       <PanelLeftOpen className="h-4 w-4" />
-                      <span>Hiện Menu</span>
+                      <span>Show Menu / Hiện Menu</span>
                     </>
                   )}
                 </button>
                 <div className="text-sm font-bold text-slate-800">
                   {mainSection === 'PROJECTS'
-                    ? 'Danh mục Quản lý & Tra cứu Hồ sơ Dự án (Project Explorer)'
-                    : 'Quản trị Cơ sở Dữ liệu Gốc (Master Data Management)'}
+                    ? 'Projects Explorer / Quản lý & Tra cứu Hồ sơ Dự án'
+                    : 'Master Data / Quản trị Cơ sở Dữ liệu Gốc'}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -1211,7 +1210,7 @@ export function App() {
                   onClick={() => setMainSection('WORKSPACE')}
                   className="rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
                 >
-                  Quay lại Màn hình Lập lịch (CS / CC)
+                  Back to Workspace / Quay lại Lập lịch (CS/CC)
                 </button>
               </div>
             </div>
@@ -1222,7 +1221,7 @@ export function App() {
         <div className="p-4 xl:p-6 flex-1 min-w-0">
           {loading ? (
             <div className="flex h-64 items-center justify-center text-sm font-semibold text-slate-500">
-              Đang tải dữ liệu hệ thống từ Form CS Industry.xlsx...
+              Loading system data / Đang tải dữ liệu hệ thống từ Form CS Industry.xlsx...
             </div>
           ) : mainSection === 'PROJECTS' ? (
             <ProjectExplorerView
@@ -1258,12 +1257,11 @@ export function App() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h4 className="text-sm font-extrabold uppercase text-red-800">
-                        ⚠️ Không thể Lưu Hồ Sơ vì còn {validationErrors.length}{' '}
+                        ⚠️ Cannot Save Revision / Không thể Lưu Hồ Sơ vì còn {validationErrors.length}{' '}
                         mục bắt buộc đang để trống:
                       </h4>
                       <p className="mt-0.5 text-xs text-red-700">
-                        Vui lòng chọn hoặc điền đầy đủ các mục được đánh dấu màu
-                        vàng/đỏ bên dưới trước khi Lưu:
+                        Please fill all highlighted fields before saving / Vui lòng điền đầy đủ các mục được đánh dấu trước khi Lưu:
                       </p>
                       <ul className="mt-2 list-disc pl-5 space-y-1 text-xs font-semibold text-red-900">
                         {validationErrors.map((err, idx) => (
