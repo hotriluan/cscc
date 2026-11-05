@@ -89,12 +89,36 @@ export const apiClient = {
 
   getUsers: (role: UserRole) => request<UserAccount[]>('/auth/users', role),
 
+  getSalesmen: (role: UserRole) => request<string[]>('/auth/salesmen', role),
+
   saveUser: (
     role: UserRole,
-    data: { email: string; fullName: string; password?: string; role: UserRole }
+    data: {
+      email: string;
+      fullName: string;
+      password?: string;
+      role: UserRole;
+      salesmanName?: string | null;
+    }
   ) =>
     request<UserAccount>('/auth/users', role, {
       method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
+  updateUser: (
+    role: UserRole,
+    id: string,
+    data: {
+      email?: string;
+      fullName?: string;
+      password?: string;
+      role?: UserRole;
+      salesmanName?: string | null;
+    }
+  ) =>
+    request<UserAccount>(`/auth/users/${id}`, role, {
+      method: 'PUT',
       body: JSON.stringify(data)
     }),
 

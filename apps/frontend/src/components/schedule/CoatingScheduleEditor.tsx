@@ -7,6 +7,8 @@ import {
   QuotationItem,
   ApplicationStepMaster,
   ApplicationMethod,
+  UserAccount,
+  UserRole,
   parseCaInput
 } from '@cscc/shared';
 import {
@@ -39,6 +41,8 @@ interface CoatingScheduleEditorProps {
   quotations: QuotationItem[];
   stepsMaster: ApplicationStepMaster[];
   methodsMaster: ApplicationMethod[];
+  role?: UserRole;
+  currentUser?: UserAccount | null;
   onChangeRevision: (updated: ProjectRevision) => void;
   onQuickCreateStepMaster?: (stepName: string) => Promise<void>;
 }
@@ -49,11 +53,27 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
   quotations,
   stepsMaster,
   methodsMaster,
+  role,
+  currentUser,
   onChangeRevision,
   onQuickCreateStepMaster
 }) => {
+  const isRestrictedBySalesman =
+    (role === 'SALES' || role === 'TECHNICAL') &&
+    currentUser?.salesmanName &&
+    currentUser.salesmanName.trim() !== '';
+
+  const assignedSalesman = isRestrictedBySalesman ? currentUser!.salesmanName!.trim() : null;
+
+  // Check if current revision's customer belongs to another salesman
+  const isCustomerOutOfScope = Boolean(
+    assignedSalesman &&
+      revision.customer?.salesmanName &&
+      revision.customer.salesmanName.trim().toLowerCase() !== assignedSalesman.toLowerCase()
+  );
+
   const isLocked =
-    revision.status === 'LOCKED' || revision.status === 'APPROVED';
+    revision.status === 'LOCKED' || revision.status === 'APPROVED' || isCustomerOutOfScope;
   const revCode = String(revision.revisionNo).padStart(2, '0');
 
   // UX/UI Scroll & Layout states
@@ -147,9 +167,17 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     tableScrollRef.current.scrollTo({ left: targetLeft, behavior: 'smooth' });
   };
 
-  // 1. Build Searchable Options for Customers (All 540 rows, prioritizing named customers & current customer)
+  // 1. Build Searchable Options for Customers (Filtered by Salesman if restricted)
   const customerOptions = React.useMemo<ComboboxOption[]>(() => {
-    const list = customers.map((c) => ({
+    const scopedList = assignedSalesman
+      ? customers.filter(
+          (c) =>
+            c.salesmanName &&
+            c.salesmanName.trim().toLowerCase() === assignedSalesman.toLowerCase()
+        )
+      : customers;
+
+    const list = scopedList.map((c) => ({
       value: c.customerId,
       label: c.shortName,
       sublabel: c.salesmanName
@@ -178,7 +206,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
       });
     }
     return list;
-  }, [customers, revision.customer]);
+  }, [customers, revision.customer, assignedSalesman]);
 
   // 2. Build Searchable Options for Application Steps
   const stepOptions = React.useMemo<ComboboxOption[]>(() => {
@@ -716,6 +744,21 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                     </span>
                   )}
                 </p>
+                {assignedSalesman && (
+                  <p className="mt-1 text-[11px] font-semibold text-amber-700">
+                    Showing customers for Salesman: {assignedSalesman} / Đang hiển thị KH của Sales: {assignedSalesman}
+                  </p>
+                )}
+                {assignedSalesman && customerOptions.length === 0 && (
+                  <p className="mt-1 text-[11px] font-semibold text-red-600">
+                    No customers assigned to this Salesman / Không có khách hàng nào thuộc Sales man này.
+                  </p>
+                )}
+                {isCustomerOutOfScope && (
+                  <div className="mt-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-bold text-amber-900">
+                    ⚠️ Read-only view: Customer belongs to another Salesman / Chế độ chỉ xem: Khách hàng thuộc Sales man khác ({revision.customer?.salesmanName || 'N/A'}).
+                  </div>
+                )}
               </div>
 
               <div>

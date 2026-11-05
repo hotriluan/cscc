@@ -87,7 +87,8 @@ function parseNavState(): NavState {
       pSubTab === 'QUOTATIONS' ||
       pSubTab === 'STEPS' ||
       pSubTab === 'METHODS' ||
-      pSubTab === 'PACKINGS'
+      pSubTab === 'PACKINGS' ||
+      pSubTab === 'USERS'
     ) {
       subTab = pSubTab;
     }
@@ -363,11 +364,25 @@ export function App() {
     );
   }, [activeRevision, areaM2, role]);
 
-  // Filter projects in Sidebar by sidebarProjectSearch
+  // Filter projects in Sidebar by sidebarProjectSearch & Salesman isolation
   const filteredSidebarProjects = React.useMemo(() => {
+    const isRestricted =
+      (role === 'SALES' || role === 'TECHNICAL') &&
+      currentUser?.salesmanName &&
+      currentUser.salesmanName.trim() !== '';
+    const assignedSalesman = isRestricted ? currentUser!.salesmanName!.trim().toLowerCase() : null;
+
+    const base = assignedSalesman
+      ? projects.filter(
+          (p) =>
+            p.customer.salesmanName &&
+            p.customer.salesmanName.trim().toLowerCase() === assignedSalesman
+        )
+      : projects;
+
     const q = sidebarProjectSearch.toLowerCase().trim();
-    if (!q) return projects;
-    return projects.filter((p) => {
+    if (!q) return base;
+    return base.filter((p) => {
       const revText = p.revisions
         .map((r) => `${r.productName} ${r.colorName} ${r.substrate || ''}`)
         .join(' ');
@@ -375,7 +390,7 @@ export function App() {
         `${p.projectCode} ${p.customer.shortName} ${p.customer.customerId} ${p.customer.salesmanName || ''} ${revText}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [projects, sidebarProjectSearch]);
+  }, [projects, sidebarProjectSearch, role, currentUser]);
 
   // Validate all required fields on a Revision before allowing Save or Lock
   const validateRevisionBeforeSave = (rev: ProjectRevision): string[] => {
@@ -1090,6 +1105,11 @@ export function App() {
 
               {/* Action Buttons: Save, Clone Rev, Lock, Export Excel, Print A4 */}
               <div className="flex flex-wrap items-center gap-2">
+                {currentUser?.salesmanName && (role === 'SALES' || role === 'TECHNICAL') && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 border border-amber-300">
+                    💼 Sales: {currentUser.salesmanName}
+                  </span>
+                )}
                 {saveToast && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -1199,6 +1219,11 @@ export function App() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {currentUser?.salesmanName && (role === 'SALES' || role === 'TECHNICAL') && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-900 border border-amber-300">
+                    💼 Sales: {currentUser.salesmanName}
+                  </span>
+                )}
                 {saveToast && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -1229,6 +1254,7 @@ export function App() {
               customers={customers}
               activeRevisionId={activeRevision?.id}
               role={role}
+              currentUser={currentUser}
               onSelectRevision={async (revId) => {
                 const loaded = await apiClient.getRevision(role, revId);
                 setActiveRevision(enrichRevisionItemNames(loaded, quotations));
@@ -1287,6 +1313,8 @@ export function App() {
                   quotations={quotations}
                   stepsMaster={stepsMaster}
                   methodsMaster={methodsMaster}
+                  role={role}
+                  currentUser={currentUser}
                   onChangeRevision={(updated) => {
                     setActiveRevision(updated);
                     if (validationErrors.length > 0) {

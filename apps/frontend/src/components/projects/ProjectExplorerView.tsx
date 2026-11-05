@@ -3,6 +3,7 @@ import {
   Project,
   Customer,
   UserRole,
+  UserAccount,
   formatVnd
 } from '@cscc/shared';
 import {
@@ -26,6 +27,7 @@ interface ProjectExplorerViewProps {
   customers: Customer[];
   activeRevisionId?: string;
   role: UserRole;
+  currentUser?: UserAccount | null;
   onSelectRevision: (revisionId: string) => Promise<void>;
   onCreateProject: (payload: {
     projectCode: string;
@@ -44,6 +46,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
   customers,
   activeRevisionId,
   role,
+  currentUser,
   onSelectRevision,
   onCreateProject,
   onDeleteProject,
@@ -67,16 +70,34 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
 
   const canViewCost = role !== 'TECHNICAL';
 
+  const isRestrictedBySalesman =
+    (role === 'SALES' || role === 'TECHNICAL') &&
+    currentUser?.salesmanName &&
+    currentUser.salesmanName.trim() !== '';
+
+  const assignedSalesman = isRestrictedBySalesman ? currentUser!.salesmanName!.trim() : null;
+
+  const scopedCustomers = React.useMemo(() => {
+    if (!assignedSalesman) return customers;
+    return customers.filter(
+      (c) =>
+        c.salesmanName &&
+        c.salesmanName.trim().toLowerCase() === assignedSalesman.toLowerCase()
+    );
+  }, [customers, assignedSalesman]);
+
   const customerFilterOptions = React.useMemo<ComboboxOption[]>(() => {
     const base: ComboboxOption[] = [
       {
         value: 'ALL',
-        label: 'Tất cả Khách hàng (All Customers)',
-        badge: `${customers.length} KH`,
+        label: assignedSalesman
+          ? `Tất cả Khách hàng của ${assignedSalesman} (All Customers of ${assignedSalesman})`
+          : 'Tất cả Khách hàng (All Customers)',
+        badge: `${scopedCustomers.length} KH`,
         badgeColor: 'blue'
       }
     ];
-    for (const c of customers) {
+    for (const c of scopedCustomers) {
       base.push({
         value: c.customerId,
         label: c.shortName,
@@ -89,7 +110,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
       });
     }
     return base;
-  }, [customers]);
+  }, [scopedCustomers, assignedSalesman]);
 
   const customerCreateOptions = React.useMemo<ComboboxOption[]>(
     () => customerFilterOptions.filter((o) => o.value !== 'ALL'),
@@ -99,6 +120,12 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
   const filteredProjects = React.useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     return projects.filter((proj) => {
+      if (assignedSalesman) {
+        const projSalesman = proj.customer.salesmanName;
+        if (!projSalesman || projSalesman.trim().toLowerCase() !== assignedSalesman.toLowerCase()) {
+          return false;
+        }
+      }
       if (customerFilter !== 'ALL' && proj.customer.customerId !== customerFilter) {
         return false;
       }
@@ -121,7 +148,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
         `${proj.projectCode} ${proj.customer.shortName} ${proj.customer.customerName} ${proj.customer.customerId} ${proj.customer.salesmanName || ''} ${revText}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [projects, searchQuery, customerFilter, statusFilter]);
+  }, [projects, searchQuery, customerFilter, statusFilter, assignedSalesman]);
 
   const handleSubmitCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,6 +193,11 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
               <p className="text-xs text-slate-500">
                 Tìm kiếm nhanh trong hàng nghìn hồ sơ theo Mã dự án, Khách hàng, Sản phẩm, Màu sắc, Loại gỗ hoặc Trạng thái chốt giá
               </p>
+              {assignedSalesman && (
+                <div className="mt-1.5 inline-flex items-center gap-1 rounded-md bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-900 border border-amber-300">
+                  💼 Scope: Salesman "{assignedSalesman}" / Phạm vi: Khách hàng & Dự án của Sales "{assignedSalesman}"
+                </div>
+              )}
             </div>
           </div>
 

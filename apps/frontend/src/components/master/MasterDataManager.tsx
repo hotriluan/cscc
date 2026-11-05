@@ -6,6 +6,7 @@ import {
   ApplicationMethod,
   PackingMapping,
   UserRole,
+  UserAccount,
   formatVnd
 } from '@cscc/shared';
 import { apiClient } from '../../api/client';
@@ -26,7 +27,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
-  X
+  X,
+  ShieldCheck,
+  UserPlus,
+  CheckCircle2
 } from 'lucide-react';
 
 export type MasterSubTab =
@@ -34,7 +38,8 @@ export type MasterSubTab =
   | 'QUOTATIONS'
   | 'STEPS'
   | 'METHODS'
-  | 'PACKINGS';
+  | 'PACKINGS'
+  | 'USERS';
 
 interface MasterDataManagerProps {
   role: UserRole;
@@ -63,7 +68,8 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
     activeSubTab || 'CUSTOMERS'
   );
 
-  const subTab = activeSubTab ?? internalSubTab;
+  const rawSubTab = activeSubTab ?? internalSubTab;
+  const subTab: MasterSubTab = rawSubTab === 'USERS' && role !== 'ADMIN' ? 'CUSTOMERS' : rawSubTab;
 
   const handleSelectSubTab = React.useCallback(
     (tab: MasterSubTab) => {
@@ -605,6 +611,175 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
     await onReloadMasterData();
   };
 
+  // =========================================================================
+  // 6. USERS MANAGEMENT (Admin Only)
+  // =========================================================================
+  const [usersList, setUsersList] = React.useState<UserAccount[]>([]);
+  const [salesmenList, setSalesmenList] = React.useState<string[]>([]);
+  const [loadingUsers, setLoadingUsers] = React.useState(false);
+
+  // User form state
+  const [editingUserId, setEditingUserId] = React.useState<string | null>(null);
+  const [userEmail, setUserEmail] = React.useState('');
+  const [userFullName, setUserFullName] = React.useState('');
+  const [userPassword, setUserPassword] = React.useState('');
+  const [userRole, setUserRole] = React.useState<UserRole>('TECHNICAL');
+  const [userSalesman, setUserSalesman] = React.useState('');
+  const [userFormError, setUserFormError] = React.useState<string | null>(null);
+  const [userFormSuccess, setUserFormSuccess] = React.useState<string | null>(null);
+  const [savingUser, setSavingUser] = React.useState(false);
+
+  const loadUsersAndSalesmen = React.useCallback(async () => {
+    if (role !== 'ADMIN') return;
+    setLoadingUsers(true);
+    try {
+      const [users, salesmen] = await Promise.all([
+        apiClient.getUsers(role),
+        apiClient.getSalesmen(role)
+      ]);
+      setUsersList(users);
+      setSalesmenList(salesmen);
+    } catch (err) {
+      console.error('Failed to load users or salesmen:', err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, [role]);
+
+  React.useEffect(() => {
+    if (role === 'ADMIN') {
+      loadUsersAndSalesmen();
+    }
+  }, [role, loadUsersAndSalesmen]);
+
+  const resetUserForm = () => {
+    setEditingUserId(null);
+    setUserEmail('');
+    setUserFullName('');
+    setUserPassword('');
+    setUserRole('TECHNICAL');
+    setUserSalesman(salesmenList[0] || '');
+    setUserFormError(null);
+    setUserFormSuccess(null);
+  };
+
+  const startEditUser = (u: UserAccount) => {
+    setEditingUserId(u.id);
+    setUserEmail(u.email);
+    setUserFullName(u.fullName);
+    setUserPassword('');
+    setUserRole(u.role);
+    setUserSalesman(u.salesmanName || salesmenList[0] || '');
+    setUserFormError(null);
+    setUserFormSuccess(null);
+  };
+
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUserFormError(null);
+    setUserFormSuccess(null);
+
+    const emailTrim = userEmail.trim().toLowerCase();
+    const nameTrim = userFullName.trim();
+    if (!emailTrim || !nameTrim) {
+      setUserFormError('Email and Full Name are required / Email và Họ tên là bắt buộc.');
+      return;
+    }
+
+    if ((userRole === 'SALES' || userRole === 'TECHNICAL') && !userSalesman.trim()) {
+      setUserFormError('Please select an assigned Salesman / Vui lòng chọn Sales man phụ trách.');
+      return;
+    }
+
+    setSavingUser(true);
+    try {
+      const payload = {
+        email: emailTrim,
+        fullName: nameTrim,
+        role: userRole,
+        salesmanName:
+          userRole === 'SALES' || userRole === 'TECHNICAL' ? userSalesman.trim() : null,
+        ...(userPassword.trim() ? { password: userPassword.trim() } : {})
+      };
+
+      if (editingUserId) {
+        await apiClient.updateUser(role, editingUserId, payload);
+        setUserFormSuccess('User updated successfully / Cập nhật tài khoản thành công.');
+      } else {
+        await apiClient.saveUser(role, {
+          ...payload,
+          password: userPassword.trim() || '123456'
+        });
+        setUserFormSuccess('User created successfully / Tạo tài khoản mới thành công.');
+      }
+
+      resetUserForm();
+      await loadUsersAndSalesmen();
+    } catch (err) {
+      setUserFormError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSavingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (u: UserAccount) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete user "${u.fullName}" (${u.email})? / Bạn có chắc muốn xóa tài khoản này?`
+      )
+    ) {
+      return;
+    }
+    try {
+      await apiClient.deleteUser(role, u.id);
+      if (editingUserId === u.id) resetUserForm();
+      await loadUsersAndSalesmen();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const formatUserCreatedDate = (isoStr: string): string => {
+    try {
+      const d = new Date(isoStr);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    } catch {
+      return isoStr;
+    }
+  };
+
+  const renderRoleBadge = (roleName: UserRole) => {
+    switch (roleName) {
+      case 'ADMIN':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-bold text-purple-800">
+            🛡️ Admin
+          </span>
+        );
+      case 'PROJECT_LEADER':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-800">
+            👔 Project Leader
+          </span>
+        );
+      case 'SALES':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+            💼 Sales
+          </span>
+        );
+      case 'TECHNICAL':
+        return (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+            🛠️ Technical TA
+          </span>
+        );
+    }
+  };
+
   const custStartIdx = custTotal === 0 ? 0 : (custPage - 1) * custPageSize + 1;
   const custEndIdx = Math.min(custPage * custPageSize, custTotal);
 
@@ -728,6 +903,21 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
               <Package className="h-3.5 w-3.5" />
               Packing Mapping / Quy cách ({packingsMaster.length})
             </button>
+
+            {role === 'ADMIN' && (
+              <button
+                type="button"
+                onClick={() => handleSelectSubTab('USERS')}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${
+                  subTab === 'USERS'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                }`}
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                User Accounts / Quản lý Tài khoản ({usersList.length})
+              </button>
+            )}
           </div>
 
           <div className="relative w-72">
@@ -1614,6 +1804,311 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* 6. USERS MANAGEMENT TAB (Admin Only, 100% Bilingual EN/VI)           */}
+      {/* ===================================================================== */}
+      {subTab === 'USERS' && role === 'ADMIN' && (
+        <div className="space-y-4">
+          {/* Header & Description */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-purple-200 bg-purple-50/70 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600 text-white shadow-sm">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-extrabold text-purple-950 uppercase tracking-wide">
+                  User Accounts Management / Quản lý Tài khoản Người Dùng
+                </h3>
+                <p className="text-xs text-purple-700">
+                  Admin-only access: Create/edit user accounts, assign RBAC roles, and bind Sales man for data isolation. / Quyền Quản trị viên: Quản lý tài khoản, phân vai trò và gán Sales man để phân vùng dữ liệu.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={loadUsersAndSalesmen}
+              disabled={loadingUsers}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-purple-300 bg-white px-3 py-1.5 text-xs font-bold text-purple-800 shadow-sm hover:bg-purple-50 transition"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loadingUsers ? 'animate-spin' : ''}`} />
+              Refresh / Làm mới
+            </button>
+          </div>
+
+          {/* Form Messages */}
+          {userFormError && (
+            <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-2.5 text-xs font-bold text-red-800 flex items-center justify-between">
+              <span>⚠️ {userFormError}</span>
+              <button
+                type="button"
+                onClick={() => setUserFormError(null)}
+                className="text-red-500 hover:text-red-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {userFormSuccess && (
+            <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-xs font-bold text-emerald-900 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <span>{userFormSuccess}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUserFormSuccess(null)}
+                className="text-emerald-600 hover:text-emerald-900"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Add / Edit Form */}
+          <form
+            onSubmit={handleSaveUser}
+            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
+            <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+                {editingUserId ? (
+                  <>
+                    <Pencil className="h-4 w-4 text-blue-600" />
+                    <span>Edit User Account / Chỉnh sửa Tài khoản</span>
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4 text-purple-600" />
+                    <span>Add New User Account / Thêm Tài khoản Mới</span>
+                  </>
+                )}
+              </div>
+              {editingUserId && (
+                <button
+                  type="button"
+                  onClick={resetUserForm}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-800"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Cancel Edit / Hủy chỉnh sửa
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Email / Email đăng nhập <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  placeholder="vd: sales02@alkana.vn"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Full Name / Họ và tên <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={userFullName}
+                  onChange={(e) => setUserFullName(e.target.value)}
+                  placeholder="vd: Trần Văn C"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Password / Mật khẩu
+                </label>
+                <input
+                  type="text"
+                  value={userPassword}
+                  onChange={(e) => setUserPassword(e.target.value)}
+                  placeholder={
+                    editingUserId
+                      ? 'Leave blank to keep unchanged / Để trống nếu không đổi'
+                      : 'Default / Mặc định: 123456'
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  System Role / Vai trò hệ thống <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={userRole}
+                  onChange={(e) => setUserRole(e.target.value as UserRole)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold focus:border-purple-600 focus:outline-none"
+                >
+                  <option value="ADMIN">🛡️ System Admin / Quản trị hệ thống (Toàn quyền)</option>
+                  <option value="PROJECT_LEADER">👔 Project Leader / Quản lý Dự án (Full CS + CC)</option>
+                  <option value="SALES">💼 Sales / Kinh doanh (CS + CC theo Sales)</option>
+                  <option value="TECHNICAL">🛠️ Technical TA / Kỹ thuật viên (Chỉ CS theo Sales — Ẩn giá)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Assigned Salesman / Sales man phụ trách
+                  {(userRole === 'SALES' || userRole === 'TECHNICAL') && (
+                    <span className="text-red-500"> *</span>
+                  )}
+                </label>
+                {userRole === 'SALES' || userRole === 'TECHNICAL' ? (
+                  <div>
+                    <select
+                      value={userSalesman}
+                      onChange={(e) => setUserSalesman(e.target.value)}
+                      className="w-full rounded-lg border border-amber-300 bg-amber-50/50 px-3 py-1.5 font-semibold text-amber-900 focus:border-amber-600 focus:outline-none"
+                    >
+                      <option value="">-- Select Salesman / Chọn Sales man phụ trách --</option>
+                      {salesmenList.map((sm) => (
+                        <option key={sm} value={sm}>
+                          {sm}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-[11px] text-amber-700">
+                      Restricted to customers & quotations of this Salesman / Chỉ xem & làm báo giá cho khách hàng của Sales man này.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      disabled
+                      value="All Access (No restriction) / Toàn quyền - Xem tất cả khách hàng"
+                      className="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-slate-500 italic cursor-not-allowed"
+                    />
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      ADMIN & PROJECT_LEADER have company-wide access / Quyền quản lý toàn diện toàn công ty.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-end gap-2">
+                <button
+                  type="submit"
+                  disabled={savingUser}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-purple-600 px-4 py-2 font-bold text-white shadow-sm hover:bg-purple-700 transition disabled:opacity-50"
+                >
+                  <Plus className="h-4 w-4" />
+                  {editingUserId ? 'Save Changes / Lưu thay đổi' : 'Add User / Thêm tài khoản'}
+                </button>
+                {editingUserId && (
+                  <button
+                    type="button"
+                    onClick={resetUserForm}
+                    className="rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 font-bold text-slate-700 hover:bg-slate-200 transition"
+                  >
+                    Cancel / Hủy
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
+
+          {/* Table of User Accounts */}
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full border-collapse text-xs">
+              <thead className="bg-slate-800 text-white">
+                <tr>
+                  <th className="border border-slate-700 px-3 py-2.5 text-left font-bold">
+                    Email / Hộp thư đăng nhập
+                  </th>
+                  <th className="border border-slate-700 px-3 py-2.5 text-left font-bold">
+                    Full Name / Họ và Tên
+                  </th>
+                  <th className="border border-slate-700 px-3 py-2.5 text-center font-bold">
+                    System Role / Vai trò
+                  </th>
+                  <th className="border border-slate-700 px-3 py-2.5 text-left font-bold">
+                    Assigned Salesman / Sales man phụ trách
+                  </th>
+                  <th className="border border-slate-700 px-3 py-2.5 text-center font-bold">
+                    Created Date / Ngày tạo
+                  </th>
+                  <th className="border border-slate-700 px-3 py-2.5 text-center font-bold w-24">
+                    Actions / Thao tác
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {usersList.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-center text-slate-500 italic">
+                      {loadingUsers
+                        ? 'Loading user accounts / Đang tải danh sách tài khoản...'
+                        : 'No user accounts found / Chưa có tài khoản nào.'}
+                    </td>
+                  </tr>
+                ) : (
+                  usersList.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50 transition">
+                      <td className="border-r border-slate-200 px-3 py-2 font-mono font-bold text-blue-900">
+                        {u.email}
+                      </td>
+                      <td className="border-r border-slate-200 px-3 py-2 font-semibold text-slate-900">
+                        {u.fullName}
+                      </td>
+                      <td className="border-r border-slate-200 px-3 py-2 text-center">
+                        {renderRoleBadge(u.role)}
+                      </td>
+                      <td className="border-r border-slate-200 px-3 py-2">
+                        {u.salesmanName ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 font-bold text-amber-900 border border-amber-200">
+                            💼 {u.salesmanName}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-600 font-medium">
+                            🌐 All Access / Tất cả
+                          </span>
+                        )}
+                      </td>
+                      <td className="border-r border-slate-200 px-3 py-2 text-center text-slate-600 font-mono">
+                        {formatUserCreatedDate(u.createdAt)}
+                      </td>
+                      <td className="px-3 py-2 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            title="Edit / Sửa"
+                            onClick={() => startEditUser(u)}
+                            className="rounded p-1 text-blue-700 hover:bg-blue-50 transition"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            title="Delete / Xóa"
+                            onClick={() => handleDeleteUser(u)}
+                            className="rounded p-1 text-red-600 hover:bg-red-50 transition"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
