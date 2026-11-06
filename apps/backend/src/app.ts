@@ -28,10 +28,7 @@ import {
 import { generateRevisionWorkbook } from './services/excel-exporter.service';
 import { generateReportsOverview } from './services/report.service';
 import { generateAnalyticsReportWorkbook } from './services/report-excel.service';
-import {
-  importMasterDataFromExcel,
-  resolveDefaultExcelPath
-} from './services/excel-importer.service';
+import { importMasterDataFromExcel } from './services/excel-importer.service';
 
 export function createApp() {
   const app = express();
@@ -97,6 +94,59 @@ export function createApp() {
         return;
       }
       res.json({ user });
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.post('/api/auth/change-password', async (req, res) => {
+    try {
+      if (!req.authUser) {
+        res.status(401).json({
+          error: 'UNAUTHORIZED',
+          message: 'Chưa đăng nhập hoặc phiên làm việc đã hết hạn.'
+        });
+        return;
+      }
+
+      const currentPassword = String(req.body?.currentPassword || '');
+      const newPassword = String(req.body?.newPassword || '').trim();
+
+      if (!currentPassword || !newPassword) {
+        res.status(400).json({
+          error: 'MISSING_FIELDS',
+          message: 'Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới.'
+        });
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        res.status(400).json({
+          error: 'WEAK_PASSWORD',
+          message: 'Mật khẩu mới phải có tối thiểu 6 ký tự.'
+        });
+        return;
+      }
+
+      const result = await dataStore.changeUserPassword(
+        req.authUser.sub,
+        currentPassword,
+        newPassword
+      );
+
+      if (!result.ok) {
+        const status = result.error === 'USER_NOT_FOUND' ? 404 : 400;
+        res.status(status).json({
+          error: result.error,
+          message: result.message
+        });
+        return;
+      }
+
+      res.json({
+        updated: true,
+        message: result.message || 'Đổi mật khẩu thành công!'
+      });
     } catch (err) {
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
@@ -368,7 +418,7 @@ export function createApp() {
     }
   });
 
-  app.delete('/api/master/customers', async (_req, res) => {
+  app.delete('/api/master/customers', requireAdminMiddleware, async (_req, res) => {
     try {
       const count = await dataStore.clearAllCustomers();
       res.json({ deleted: true, count });
@@ -447,6 +497,31 @@ export function createApp() {
         res.status(400).json({ error: 'sapCustomerCode and materialCode are required' });
         return;
       }
+
+      if (req.userRole === 'SALES') {
+        const salesmanName = (req.salesmanName || '').trim();
+        if (!salesmanName) {
+          res.status(403).json({
+            error: 'FORBIDDEN_SALESMAN_QUOTATION',
+            message:
+              'Tài khoản SALES chưa được gán Sales man phụ trách nên không được phép thêm hoặc cập nhật báo giá.'
+          });
+          return;
+        }
+        const invalidCustomerCodes = await dataStore.findUnauthorizedCustomerCodesForSalesman(
+          [String(sapCustomerCode)],
+          salesmanName
+        );
+        if (invalidCustomerCodes.length > 0) {
+          res.status(403).json({
+            error: 'FORBIDDEN_SALESMAN_QUOTATION',
+            invalidCustomerCodes,
+            message: `Tài khoản SALES (${salesmanName}) chỉ được phép thêm/cập nhật quotation của khách hàng có Sales man tương ứng. Mã khách hàng vi phạm: ${invalidCustomerCodes.join(', ')}.`
+          });
+          return;
+        }
+      }
+
       const { quotation, created } = await dataStore.upsertQuotation({
         sapCustomerCode,
         customerName,
@@ -471,6 +546,32 @@ export function createApp() {
         return;
       }
       const imported = await importMasterDataFromExcel(Buffer.from(fileBase64, 'base64'));
+
+      if (req.userRole === 'SALES') {
+        const salesmanName = (req.salesmanName || '').trim();
+        if (!salesmanName) {
+          res.status(403).json({
+            error: 'FORBIDDEN_SALESMAN_QUOTATION',
+            message:
+              'Tài khoản SALES chưa được gán Sales man phụ trách nên không được phép upload quotation.'
+          });
+          return;
+        }
+        const customerCodes = imported.quotations.map((q) => q.sapCustomerCode);
+        const invalidCustomerCodes = await dataStore.findUnauthorizedCustomerCodesForSalesman(
+          customerCodes,
+          salesmanName
+        );
+        if (invalidCustomerCodes.length > 0) {
+          res.status(403).json({
+            error: 'FORBIDDEN_SALESMAN_QUOTATION',
+            invalidCustomerCodes,
+            message: `Tài khoản SALES (${salesmanName}) chỉ được phép upload quotation của khách hàng có Sales man tương ứng. Phát hiện mã khách hàng không thuộc quyền phụ trách hoặc chưa tồn tại: ${invalidCustomerCodes.join(', ')}.`
+          });
+          return;
+        }
+      }
+
       const result = await dataStore.bulkUpsertQuotations(imported.quotations);
       res.json({ ...result, total: imported.quotations.length });
     } catch (err) {
@@ -480,7 +581,41 @@ export function createApp() {
 
   app.put('/api/master/quotations/:id', requireCostAccessMiddleware, async (req, res) => {
     try {
-      const updated = await dataStore.updateQuotation(String(req.params.id), req.body);
+      const quotationId = String(req.params.id);
+      if (req.userRole === 'SALES') {
+        const salesmanName = (req.salesmanName || '').trim();
+        if (!salesmanName) {
+          res.status(403).json({
+            error: 'FORBIDDEN_SALESMAN_QUOTATION',
+            message:
+              'Tài khoản SALES chưa được gán Sales man phụ trách nên không được phép cập nhật quotation.'
+          });
+          return;
+        }
+        const existing = await dataStore.getQuotationById(quotationId);
+        if (!existing) {
+          res.status(404).json({ error: 'Quotation not found' });
+          return;
+        }
+        const codesToVerify = [
+          existing.sapCustomerCode,
+          ...(req.body?.sapCustomerCode !== undefined ? [String(req.body.sapCustomerCode)] : [])
+        ];
+        const invalidCustomerCodes = await dataStore.findUnauthorizedCustomerCodesForSalesman(
+          codesToVerify,
+          salesmanName
+        );
+        if (invalidCustomerCodes.length > 0) {
+          res.status(403).json({
+            error: 'FORBIDDEN_SALESMAN_QUOTATION',
+            invalidCustomerCodes,
+            message: `Tài khoản SALES (${salesmanName}) chỉ được phép cập nhật quotation của khách hàng có Sales man tương ứng. Mã khách hàng vi phạm: ${invalidCustomerCodes.join(', ')}.`
+          });
+          return;
+        }
+      }
+
+      const updated = await dataStore.updateQuotation(quotationId, req.body);
       if (!updated) {
         res.status(404).json({ error: 'Quotation not found' });
         return;
@@ -491,7 +626,7 @@ export function createApp() {
     }
   });
 
-  app.delete('/api/master/quotations', requireCostAccessMiddleware, async (_req, res) => {
+  app.delete('/api/master/quotations', requireAdminMiddleware, async (_req, res) => {
     try {
       const count = await dataStore.clearAllQuotations();
       res.json({ deleted: true, count });
@@ -502,7 +637,35 @@ export function createApp() {
 
   app.delete('/api/master/quotations/:id', requireCostAccessMiddleware, async (req, res) => {
     try {
-      await dataStore.deleteQuotation(String(req.params.id));
+      const quotationId = String(req.params.id);
+      if (req.userRole === 'SALES') {
+        const salesmanName = (req.salesmanName || '').trim();
+        if (!salesmanName) {
+          res.status(403).json({
+            error: 'FORBIDDEN_SALESMAN_QUOTATION',
+            message:
+              'Tài khoản SALES chưa được gán Sales man phụ trách nên không được phép xóa quotation.'
+          });
+          return;
+        }
+        const existing = await dataStore.getQuotationById(quotationId);
+        if (existing) {
+          const invalidCustomerCodes = await dataStore.findUnauthorizedCustomerCodesForSalesman(
+            [existing.sapCustomerCode],
+            salesmanName
+          );
+          if (invalidCustomerCodes.length > 0) {
+            res.status(403).json({
+              error: 'FORBIDDEN_SALESMAN_QUOTATION',
+              invalidCustomerCodes,
+              message: `Tài khoản SALES (${salesmanName}) chỉ được phép xóa quotation của khách hàng có Sales man tương ứng. Mã khách hàng vi phạm: ${invalidCustomerCodes.join(', ')}.`
+            });
+            return;
+          }
+        }
+      }
+
+      await dataStore.deleteQuotation(quotationId);
       res.json({ deleted: true });
     } catch (err) {
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
@@ -668,28 +831,19 @@ export function createApp() {
     }
   });
 
-  // 6. Import Master Data from Excel (`docs/Form CS Industry.xlsx` or uploaded base64)
+  // 6. Import Master Data from uploaded Excel (base64)
   app.post('/api/master/import-excel', async (req, res) => {
     try {
-      const { fileBase64, resetGoldenProject } = req.body || {};
-      if (resetGoldenProject) {
-        const counts = await dataStore.init(true);
-        res.json({
-          imported: true,
-          counts: {
-            customers: counts.customers,
-            quotations: counts.quotations,
-            packingMappings: counts.packingMappings,
-            applicationSteps: counts.applicationSteps,
-            applicationMethods: counts.applicationMethods
-          }
+      const { fileBase64 } = req.body || {};
+      if (!fileBase64) {
+        res.status(400).json({
+          error: 'MISSING_EXCEL_FILE',
+          message: 'fileBase64 is required to import Excel master data'
         });
         return;
       }
 
-      const source = fileBase64
-        ? Buffer.from(fileBase64, 'base64')
-        : resolveDefaultExcelPath();
+      const source = Buffer.from(fileBase64, 'base64');
       const imported = await importMasterDataFromExcel(source);
       const counts = await dataStore.replaceMasterData(imported);
 

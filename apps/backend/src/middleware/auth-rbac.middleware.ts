@@ -15,10 +15,9 @@ declare global {
 const VALID_ROLES: UserRole[] = ['TECHNICAL', 'SALES', 'PROJECT_LEADER', 'ADMIN'];
 
 /**
- * Extracts UserRole from `x-user-role` header, `role` query parameter, or `Authorization: Bearer <jwt>`.
- * Supports dual-mode operation:
- * 1. Verified JWT session (`Authorization: Bearer <token>`) from PostgreSQL `User` table.
- * 2. Quick RBAC Role Switcher override (`x-user-role` header / `role` query param) for fast demo/testing.
+ * Extracts UserRole from `Authorization: Bearer <jwt>` (highest priority) or fallback `x-user-role` / `role` query parameter.
+ * 1. Verified JWT session (`Authorization: Bearer <token>`) from PostgreSQL `User` table takes strict precedence and locks `userRole` and `salesmanName`.
+ * 2. Fallback header/query override (`x-user-role` / `role`) is used only when no valid Bearer token is present (for automated tests).
  * Defaults to `PROJECT_LEADER` when omitted so standard testing works seamlessly,
  * while strictly enforcing `TECHNICAL` restrictions whenever `TECHNICAL` is active.
  */
@@ -43,15 +42,16 @@ export function extractRoleMiddleware(req: Request, _res: Response, next: NextFu
   const querySalesman = (req.query.salesmanName as string | undefined)?.trim();
 
   const explicitRole = (headerRole || queryRole) as UserRole | undefined;
-  if (explicitRole && VALID_ROLES.includes(explicitRole)) {
-    req.userRole = explicitRole;
-  } else if (tokenRole) {
+  if (tokenRole) {
     req.userRole = tokenRole;
+    req.salesmanName = tokenSalesman ?? null;
+  } else if (explicitRole && VALID_ROLES.includes(explicitRole)) {
+    req.userRole = explicitRole;
+    req.salesmanName = headerSalesman || querySalesman || null;
   } else {
     req.userRole = 'PROJECT_LEADER';
+    req.salesmanName = headerSalesman || querySalesman || null;
   }
-
-  req.salesmanName = headerSalesman || querySalesman || tokenSalesman || null;
 
   next();
 }

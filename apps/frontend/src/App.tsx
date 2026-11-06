@@ -29,6 +29,7 @@ import { ProjectExplorerView } from './components/projects/ProjectExplorerView';
 import { ReportsAnalyticsView } from './components/reports/ReportsAnalyticsView';
 import { PrintableSheetA4 } from './components/print/PrintableSheetA4';
 import { UserAuthModal } from './components/auth/UserAuthModal';
+import { LoginPage } from './components/auth/LoginPage';
 import logoWeb from './assets/logo_web.png';
 import {
   ClipboardList,
@@ -56,7 +57,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   UserCheck,
-  LogIn,
+  LogOut,
+  KeyRound,
   History,
   PauseCircle,
   RotateCcw,
@@ -237,8 +239,11 @@ function parseNavState(): NavState {
 export function App() {
   const initialNav = React.useMemo(() => parseNavState(), []);
 
-  const [role, setRole] = React.useState<UserRole>('PROJECT_LEADER');
   const [currentUser, setCurrentUser] = React.useState<UserAccount | null>(null);
+  const [authChecking, setAuthChecking] = React.useState<boolean>(() =>
+    Boolean(getStoredAuthToken())
+  );
+  const role: UserRole = currentUser?.role ?? 'TECHNICAL';
   const [showAuthModal, setShowAuthModal] = React.useState<boolean>(false);
   const [mainSection, setMainSection] = React.useState<MainSection>(initialNav.section);
   const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>(initialNav.tab);
@@ -302,18 +307,22 @@ export function App() {
   // Restore JWT session from PostgreSQL User table if token is present in localStorage
   React.useEffect(() => {
     const token = getStoredAuthToken();
-    if (!token) return;
+    if (!token) {
+      setAuthChecking(false);
+      return;
+    }
     apiClient
-      .getMe(role)
+      .getMe()
       .then((res) => {
         setCurrentUser(res.user);
-        setRole(res.user.role);
       })
       .catch(() => {
         setStoredAuthToken(null);
         setCurrentUser(null);
+      })
+      .finally(() => {
+        setAuthChecking(false);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Enforce RBAC: if user switches to TECHNICAL while viewing CC tab, redirect immediately to CS
@@ -501,9 +510,10 @@ export function App() {
   }, [role]);
 
   React.useEffect(() => {
+    if (!currentUser) return;
     loadAllData(undefined, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role]);
+  }, [currentUser?.id, role]);
 
   // Real-time client-side calculation for Coating Cost (CC) & BOM Summary
   const liveCostSummary = React.useMemo(() => {
@@ -991,6 +1001,39 @@ export function App() {
 
   const canViewCost = role !== 'TECHNICAL';
 
+  const handleLogoutSession = React.useCallback(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    queuedSaveRef.current = null;
+    setStoredAuthToken(null);
+    setCurrentUser(null);
+    setActiveRevision(null);
+    setProjects([]);
+    setShowAuthModal(false);
+  }, []);
+
+  if (authChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-300 text-xs font-bold tracking-wider uppercase">
+        Đang kiểm tra phiên đăng nhập... / Verifying session...
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <LoginPage
+        onAuthenticated={(user) => {
+          setCurrentUser(user);
+          setSaveToast(`Xin chào ${user.fullName} (${user.role})!`);
+          setTimeout(() => setSaveToast(null), 2500);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex bg-slate-100 text-slate-900 print:min-h-0 print:block print:bg-white">
       {/* ===================================================================
@@ -1029,7 +1072,7 @@ export function App() {
               </button>
             </div>
 
-            {/* Role-Based Access Switcher (RBAC) & PostgreSQL User Auth — Collapsible */}
+            {/* Authenticated User Session Card — Collapsible */}
             <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-2.5">
               <button
                 type="button"
@@ -1038,7 +1081,7 @@ export function App() {
               >
                 <span className="flex items-center gap-1.5">
                   <Shield className="h-3.5 w-3.5 text-emerald-400" />
-                  Account & RBAC / Tài khoản & Phân quyền
+                  Tài khoản đang đăng nhập
                 </span>
                 {showRbacSection ? (
                   <ChevronUp className="h-3.5 w-3.5 text-slate-500" />
@@ -1048,58 +1091,45 @@ export function App() {
               </button>
 
               {showRbacSection && (
-                <div className="mt-2 space-y-2">
-                  {/* PostgreSQL User Account Session Card */}
-                  <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-950/90 px-2.5 py-1.5">
-                    <div className="min-w-0">
-                      <div className="truncate text-[11px] font-bold text-white flex items-center gap-1">
-                        <UserCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                        <span className="truncate">
-                          {currentUser ? currentUser.fullName : 'Demo Mode / Chế độ Demo (RBAC Nhanh)'}
-                        </span>
+                <div className="mt-2 rounded-lg border border-slate-800 bg-slate-950/90 p-2.5 space-y-2">
+                  <div className="space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-1.5 text-xs font-extrabold text-white leading-snug break-words">
+                        <UserCheck className="h-3.5 w-3.5 shrink-0 text-emerald-400 mt-0.5" />
+                        <span>{currentUser.fullName}</span>
                       </div>
-                      <div className="truncate text-[10px] text-slate-400">
-                        {currentUser
-                          ? `${currentUser.email} (${currentUser.role})`
-                          : 'Not logged in / Chưa đăng nhập JWT (Role Switcher)'}
-                      </div>
+                      <span className="shrink-0 rounded bg-emerald-950/90 border border-emerald-700/60 px-2 py-0.5 font-mono text-[10px] font-extrabold text-emerald-300">
+                        {currentUser.role}
+                      </span>
                     </div>
+                    <div className="text-[11px] font-mono text-slate-400 break-all pl-5">
+                      {currentUser.email}
+                    </div>
+                  </div>
+
+                  {currentUser.salesmanName && (
+                    <div className="rounded bg-slate-900 px-2 py-1.5 text-[10px] font-semibold text-amber-300 border border-slate-800 leading-snug break-words">
+                      💼 Sales phụ trách: <strong className="text-amber-200">{currentUser.salesmanName}</strong>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-1.5 pt-0.5">
                     <button
                       type="button"
                       onClick={() => setShowAuthModal(true)}
-                      className="shrink-0 inline-flex items-center gap-1 rounded bg-blue-600/90 px-2 py-1 text-[10px] font-bold text-white hover:bg-blue-500"
+                      className="inline-flex items-center justify-center gap-1 rounded-md bg-slate-800 px-2 py-1.5 text-[10px] font-bold text-slate-200 hover:bg-blue-600 hover:text-white transition"
                     >
-                      <LogIn className="h-3 w-3" />
-                      {currentUser ? 'Account / Tài khoản' : 'Login / Đăng nhập'}
+                      <KeyRound className="h-3 w-3" />
+                      <span>Đổi mật khẩu</span>
                     </button>
-                  </div>
-
-                  {/* Quick RBAC Role Switcher Dropdown */}
-                  <div>
-                    <div className="mb-1 text-[10px] font-semibold text-slate-400">
-                      Role Switcher / Chuyển nhanh vai trò:
-                    </div>
-                    <select
-                      value={role}
-                      onChange={(e) => setRole(e.target.value as UserRole)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-xs font-bold text-white focus:border-blue-500 focus:outline-none"
+                    <button
+                      type="button"
+                      onClick={handleLogoutSession}
+                      className="inline-flex items-center justify-center gap-1 rounded-md border border-red-900/60 bg-red-950/40 px-2 py-1.5 text-[10px] font-bold text-red-300 hover:bg-red-900/70 hover:text-white transition"
                     >
-                      <option value="PROJECT_LEADER">
-                        👔 Project Leader / Quản lý - Dự án (Full CS + CC)
-                      </option>
-                      <option value="SALES">💼 Sales / Kinh doanh - Báo giá (Xem CS + CC)</option>
-                      <option value="TECHNICAL">
-                        🛠️ Technical TA / Kỹ thuật viên (Chỉ CS — Ẩn giá)
-                      </option>
-                      <option value="ADMIN">
-                        🛡️ Admin / Quản trị hệ thống (Toàn quyền)
-                      </option>
-                    </select>
-                    <p className="mt-1 text-[10px] leading-snug text-slate-400">
-                      {role === 'TECHNICAL'
-                        ? '🔒 Prices hidden & Coating Cost locked / Đang ẩn toàn bộ đơn giá (VND) và khóa Tab Coating Cost.'
-                        : '✅ Coating Cost & Prices enabled / Đang mở quyền truy cập Tab Coating Cost (VND/m²) & Đơn giá.'}
-                    </p>
+                      <LogOut className="h-3 w-3" />
+                      <span>Đăng xuất</span>
+                    </button>
                   </div>
                 </div>
               )}
@@ -1814,6 +1844,7 @@ export function App() {
           ) : mainSection === 'MASTER_DATA' ? (
             <MasterDataManager
               role={role}
+              currentUser={currentUser}
               customers={customers}
               quotations={quotations}
               stepsMaster={stepsMaster}
@@ -2196,23 +2227,13 @@ export function App() {
         </div>
       )}
 
-      {/* PostgreSQL User Authentication & Account Management Modal */}
+      {/* User Account Profile & Change Password Modal */}
       <UserAuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         currentUser={currentUser}
         currentRole={role}
-        onAuthenticated={(user) => {
-          setCurrentUser(user);
-          setRole(user.role);
-          setSaveToast(`Đã đăng nhập: ${user.fullName} (${user.role})`);
-          setTimeout(() => setSaveToast(null), 2500);
-        }}
-        onLogout={() => {
-          setCurrentUser(null);
-          setSaveToast('Đã đăng xuất phiên JWT — Chuyển về chế độ RBAC Switcher!');
-          setTimeout(() => setSaveToast(null), 2500);
-        }}
+        onLogout={handleLogoutSession}
       />
     </div>
   );

@@ -614,6 +614,47 @@ class PostgresDataStore {
     return mapUserDto(u);
   }
 
+  public async changeUserPassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ ok: boolean; error?: string; message?: string }> {
+    const u = await prisma.user.findUnique({ where: { id: userId } });
+    if (!u) {
+      return {
+        ok: false,
+        error: 'USER_NOT_FOUND',
+        message: 'Tài khoản không tồn tại.'
+      };
+    }
+
+    if (!verifyPassword(currentPassword, u.passwordHash)) {
+      return {
+        ok: false,
+        error: 'INVALID_CURRENT_PASSWORD',
+        message: 'Mật khẩu hiện tại không chính xác.'
+      };
+    }
+
+    const cleanNew = newPassword.trim();
+    if (cleanNew.length < 6) {
+      return {
+        ok: false,
+        error: 'WEAK_PASSWORD',
+        message: 'Mật khẩu mới phải có ít nhất 6 ký tự.'
+      };
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: hashPassword(cleanNew)
+      }
+    });
+
+    return { ok: true, message: 'Đổi mật khẩu thành công!' };
+  }
+
   public async upsertUser(input: {
     email: string;
     fullName: string;
@@ -1123,6 +1164,44 @@ class PostgresDataStore {
       pageSize,
       totalPages: Math.max(1, Math.ceil(total / pageSize))
     };
+  }
+
+  public async getQuotationById(id: string): Promise<QuotationItem | null> {
+    const row = await prisma.quotationItem.findUnique({ where: { id } });
+    if (!row) return null;
+    return mapQuotationDto(row);
+  }
+
+  /**
+   * Given a list of customer codes (Sold-to / sapCustomerCode) and a salesmanName,
+   * returns the list of unique customer codes that either do not exist in Customer master
+   * or belong to a different salesman (case-insensitive comparison).
+   */
+  public async findUnauthorizedCustomerCodesForSalesman(
+    customerCodes: string[],
+    salesmanName: string
+  ): Promise<string[]> {
+    const cleanSalesman = (salesmanName || '').trim();
+    const uniqueCodes = Array.from(
+      new Set(customerCodes.map((c) => String(c || '').trim()).filter(Boolean))
+    );
+    if (uniqueCodes.length === 0) {
+      return [];
+    }
+    if (!cleanSalesman) {
+      return uniqueCodes;
+    }
+
+    const allowedCustomers = await prisma.customer.findMany({
+      where: {
+        customerId: { in: uniqueCodes },
+        salesmanName: { equals: cleanSalesman, mode: 'insensitive' }
+      },
+      select: { customerId: true }
+    });
+
+    const allowedSet = new Set(allowedCustomers.map((c) => c.customerId.trim()));
+    return uniqueCodes.filter((code) => !allowedSet.has(code));
   }
 
   public async upsertQuotation(input: {

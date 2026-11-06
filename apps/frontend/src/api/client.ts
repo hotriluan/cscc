@@ -91,7 +91,18 @@ export const apiClient = {
       body: JSON.stringify({ email, password })
     }),
 
-  getMe: (role: UserRole) => request<{ user: UserAccount }>('/auth/me', role),
+  getMe: (role: UserRole = 'PROJECT_LEADER') =>
+    request<{ user: UserAccount }>('/auth/me', role),
+
+  changePassword: (
+    role: UserRole,
+    currentPassword: string,
+    newPassword: string
+  ) =>
+    request<{ updated: boolean; message: string }>('/auth/change-password', role, {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword })
+    }),
 
   getUsers: (role: UserRole) => request<UserAccount[]>('/auth/users', role),
 
@@ -264,7 +275,7 @@ export const apiClient = {
 
   importExcelMaster: (
     role: UserRole,
-    payload: { fileBase64?: string; resetGoldenProject?: boolean }
+    payload: { fileBase64: string }
   ) =>
     request<{ imported: boolean; counts: Record<string, number> }>(
       '/master/import-excel',

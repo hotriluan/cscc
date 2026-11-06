@@ -43,6 +43,7 @@ export type MasterSubTab =
 
 interface MasterDataManagerProps {
   role: UserRole;
+  currentUser?: UserAccount | null;
   customers: Customer[];
   quotations: QuotationItem[];
   stepsMaster: ApplicationStepMaster[];
@@ -55,6 +56,7 @@ interface MasterDataManagerProps {
 
 export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
   role,
+  currentUser,
   customers,
   quotations,
   stepsMaster,
@@ -215,53 +217,6 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
     fetchQuotationsPage();
   }, [fetchQuotationsPage, quotations.length]);
 
-  const handleReimportDefaultExcel = async () => {
-    setImporting(true);
-    setStatusMessage(null);
-    try {
-      const res = await apiClient.importExcelMaster(role, { resetGoldenProject: false });
-      await onReloadMasterData();
-      await Promise.all([fetchCustomersPage(), fetchQuotationsPage()]);
-      setStatusMessage(
-        `Đã đồng bộ từ docs/Form CS Industry.xlsx: ${res.counts.customers} Khách hàng, ${res.counts.quotations} Báo giá vật tư, ${res.counts.applicationSteps} Bước, ${res.counts.applicationMethods} Phương pháp.`
-      );
-    } catch (err) {
-      setStatusMessage(
-        `Lỗi đồng bộ Excel: ${err instanceof Error ? err.message : String(err)}`
-      );
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  const handleUploadExcelFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImporting(true);
-    setStatusMessage(null);
-    try {
-      const arrayBuf = await file.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuf);
-      let binary = '';
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      const base64 = btoa(binary);
-      const res = await apiClient.importExcelMaster(role, { fileBase64: base64 });
-      await onReloadMasterData();
-      await Promise.all([fetchCustomersPage(), fetchQuotationsPage()]);
-      setStatusMessage(
-        `Đã import thành công file ${file.name}: ${res.counts.customers} Khách hàng, ${res.counts.quotations} Báo giá.`
-      );
-    } catch (err) {
-      setStatusMessage(
-        `Lỗi import file: ${err instanceof Error ? err.message : String(err)}`
-      );
-    } finally {
-      setImporting(false);
-    }
-  };
-
   const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     const missing: string[] = [];
@@ -338,6 +293,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
   };
 
   const handleClearAllCustomers = async () => {
+    if (role !== 'ADMIN') return;
     if (custTotal === 0 && customers.length === 0) {
       setStatusMessage('Hiện tại không có dữ liệu khách hàng nào để xóa.');
       return;
@@ -452,6 +408,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
   };
 
   const handleClearAllQuotations = async () => {
+    if (role !== 'ADMIN') return;
     if (quotTotal === 0 && quotations.length === 0) {
       setStatusMessage('Hiện tại không có dữ liệu báo giá nào để xóa.');
       return;
@@ -788,61 +745,10 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Header & Excel Sync Bar */}
+      {/* Sub-navigation Tabs & Search Bar */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
-              <Database className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold uppercase text-slate-900">
-                5.1 MODULE QUẢN TRỊ DỮ LIỆU GỐC (MASTER DATA CRUD & EXCEL SYNC)
-              </h2>
-              <p className="text-xs text-slate-500">
-                Quản lý tập trung 5 bảng Master Data trên PostgreSQL: Customer, Quotation, Application Step, App-method & Packing Mapping
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={importing}
-              onClick={handleReimportDefaultExcel}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-3.5 py-2 text-xs font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-50"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${importing ? 'animate-spin' : ''}`} />
-              Sync from Excel / Đồng bộ từ Form CS Industry.xlsx
-            </button>
-
-            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800">
-              <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-400" />
-              Import .xlsx / Nhập File Excel
-              <input
-                type="file"
-                accept=".xlsx"
-                onChange={handleUploadExcelFile}
-                className="hidden"
-              />
-            </label>
-          </div>
-        </div>
-
-        {statusMessage && (
-          <div className="mt-3 rounded-lg border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-medium text-emerald-900">
-            {statusMessage}
-          </div>
-        )}
-
-        {formError && (
-          <div className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-800">
-            ⚠️ {formError}
-          </div>
-        )}
-
         {/* Sub-navigation Tabs */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -940,6 +846,24 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
             )}
           </div>
         </div>
+
+        {statusMessage && (
+          <div
+            className={`mt-3 rounded-lg border px-3.5 py-2 text-xs ${
+              statusMessage.startsWith('Lỗi')
+                ? 'border-red-300 bg-red-50 font-bold text-red-800'
+                : 'border-emerald-300 bg-emerald-50 font-medium text-emerald-900'
+            }`}
+          >
+            {statusMessage.startsWith('Lỗi') ? `⚠️ ${statusMessage}` : statusMessage}
+          </div>
+        )}
+
+        {formError && (
+          <div className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-800">
+            ⚠️ {formError}
+          </div>
+        )}
       </div>
 
       {/* TAB 1: CUSTOMERS (Server-Side Paginated) */}
@@ -951,16 +875,18 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
               nếu có thay đổi, giữ nguyên nếu không đổi; chưa có → thêm mới.
             </span>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={importing || (custTotal === 0 && customers.length === 0)}
-                onClick={handleClearAllCustomers}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3.5 py-1.5 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40 transition"
-                title="Xóa toàn bộ khách hàng để nạp danh sách mới"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Làm sạch Database ({custTotal || customers.length})
-              </button>
+              {role === 'ADMIN' && (
+                <button
+                  type="button"
+                  disabled={importing || (custTotal === 0 && customers.length === 0)}
+                  onClick={handleClearAllCustomers}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3.5 py-1.5 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40 transition"
+                  title="Xóa toàn bộ khách hàng để nạp danh sách mới"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Làm sạch Database ({custTotal || customers.length})
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() =>
@@ -1170,21 +1096,30 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
           {canEditPrice && (
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-dashed border-emerald-300 bg-emerald-50/50 px-3.5 py-2 text-xs text-slate-700">
-              <span>
-                Upload file .xlsx (sheet <strong>quotation</strong>): trùng khóa Khách hàng + Material
-                Code → cập nhật nếu có thay đổi, giữ nguyên nếu không đổi; chưa có → thêm mới.
-              </span>
+              <div className="space-y-0.5">
+                <div>
+                  Upload file .xlsx (sheet <strong>quotation</strong>): trùng khóa Khách hàng + Material
+                  Code → cập nhật nếu có thay đổi, giữ nguyên nếu không đổi; chưa có → thêm mới.
+                </div>
+                {role === 'SALES' && (
+                  <div className="font-semibold text-amber-800">
+                    🔒 Phân quyền SALES ({currentUser?.salesmanName || 'Chưa gán Sales man'}): Chỉ được upload quotation của khách hàng có Sales man tương ứng với tài khoản.
+                  </div>
+                )}
+              </div>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={importing || (quotTotal === 0 && quotations.length === 0)}
-                  onClick={handleClearAllQuotations}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3.5 py-1.5 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40 transition"
-                  title="Xóa toàn bộ báo giá để nạp danh sách mới"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Làm sạch Database ({quotTotal || quotations.length})
-                </button>
+                {role === 'ADMIN' && (
+                  <button
+                    type="button"
+                    disabled={importing || (quotTotal === 0 && quotations.length === 0)}
+                    onClick={handleClearAllQuotations}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3.5 py-1.5 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40 transition"
+                    title="Xóa toàn bộ báo giá để nạp danh sách mới"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Làm sạch Database ({quotTotal || quotations.length})
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() =>
