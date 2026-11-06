@@ -1,7 +1,7 @@
 ---
 title: "Phase 04: Automated Testing & End-to-End Verification"
 phase: 4
-status: pending
+status: completed
 effort: "1h"
 tags: [testing, vitest, rbac, status-history, e2e]
 ---
@@ -37,6 +37,6 @@ Viết bộ kiểm thử tự động kiểm tra toàn diện các quy tắc ngh
 - Chạy `npm test` tại `packages/shared` và `apps/backend` để đảm bảo toàn bộ test cũ và mới đều PASS 100%.
 
 ## Tiêu chí hoàn thành (Verification)
-- [ ] `apps/backend/test/revision-status-history-rbac.test.ts` PASS 100%.
-- [ ] Không có lỗi biên dịch TypeScript hoặc regression ở các bài test hiện có (`e2e-ntr001.test.ts`, `user-salesman-rbac.test.ts`, `reports-analytics-rbac.test.ts`).
+- [x] `apps/backend/test/revision-status-history-rbac.test.ts` PASS 100%.
+- [x] Không có lỗi biên dịch TypeScript hoặc regression ở các bài test hiện có (`e2e-ntr001.test.ts`, `user-salesman-rbac.test.ts`, `reports-analytics-rbac.test.ts`).
 

@@ -1,7 +1,7 @@
 ---
 title: "Phase 02: Backend Status Service, RBAC & Auto-Supersede"
 phase: 2
-status: pending
+status: completed
 effort: "2h"
 tags: [backend, rbac, status-workflow, transaction, auto-supersede]
 ---
@@ -61,8 +61,8 @@ Triển khai kiểm soát phân quyền RBAC (chặn `TECHNICAL` và `SALES` tha
 - Tại `report.service.ts`: đảm bảo bộ lọc `scope === 'APPROVED'` chỉ giữ lại các bản đang `APPROVED` (có hiệu lực), không tính các bản `INACTIVE` vào số lượng `approvedRevisions` đang hiệu lực.
 
 ## Tiêu chí hoàn thành (Verification)
-- [ ] `PATCH /api/revisions/:id/status` trả về `403` khi gọi bằng `TECHNICAL` hoặc `SALES`.
-- [ ] `PATCH /api/revisions/:id/status` trả về `400` khi thiếu `note` hoặc khi chuyển từ `DRAFT` sang `INACTIVE`.
-- [ ] Khi duyệt `Rev 01` sang `APPROVED`, `Rev 00` (đang `APPROVED` cùng Project) tự động đổi thành `INACTIVE` và cả 2 đều có lịch sử trong `RevisionStatusHistory`.
-- [ ] Hồ sơ `INACTIVE` bị chặn sửa, xóa và làm mới giá tại Backend.
+- [x] `PATCH /api/revisions/:id/status` trả về `403` khi gọi bằng `TECHNICAL` hoặc `SALES`.
+- [x] `PATCH /api/revisions/:id/status` trả về `400` khi thiếu `note` hoặc khi chuyển từ `DRAFT` sang `INACTIVE`.
+- [x] Khi duyệt `Rev 01` sang `APPROVED`, `Rev 00` (đang `APPROVED` cùng Project) tự động đổi thành `INACTIVE` và cả 2 đều có lịch sử trong `RevisionStatusHistory`.
+- [x] Hồ sơ `INACTIVE` bị chặn sửa, xóa và làm mới giá tại Backend.
 

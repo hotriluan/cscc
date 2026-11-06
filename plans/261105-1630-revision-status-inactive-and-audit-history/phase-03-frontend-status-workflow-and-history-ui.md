@@ -1,7 +1,7 @@
 ---
 title: "Phase 03: Frontend Status Workflow, Reason Modal & History Timeline UI"
 phase: 3
-status: pending
+status: completed
 effort: "2h"
 tags: [frontend, ui, status-modal, audit-history, rbac]
 ---
@@ -68,8 +68,8 @@ Cập nhật giao diện quản lý trạng thái và lịch sử phê duyệt t
   - Hiển thị rõ `INACTIVE / HẾT HIỆU LỰC` trên bản in A4 khi in hồ sơ ở trạng thái `INACTIVE`.
 
 ## Tiêu chí hoàn thành (Verification)
-- [ ] Khi chuyển sang role `TECHNICAL` hoặc `SALES`, nút đổi trạng thái bị khóa/ẩn, chỉ xem được trạng thái và mở xem được Lịch sử.
-- [ ] Khi ở role `PROJECT_LEADER` hoặc `ADMIN`, bấm đổi trạng thái sẽ hiện Modal yêu cầu nhập lý do bắt buộc; ở trạng thái `DRAFT` không có tùy chọn chuyển sang `INACTIVE`.
-- [ ] Màn hình Lịch sử hiển thị đầy đủ các lần chuyển trạng thái, bao gồm cả bản ghi tự động chuyển `INACTIVE` khi duyệt Revision mới.
-- [ ] Màn hình Editor, Sidebar, Project Explorer và Print A4 hiển thị đúng trạng thái `INACTIVE` và khóa toàn bộ ô chỉnh sửa.
+- [x] Khi chuyển sang role `TECHNICAL` hoặc `SALES`, nút đổi trạng thái bị khóa/ẩn, chỉ xem được trạng thái và mở xem được Lịch sử.
+- [x] Khi ở role `PROJECT_LEADER` hoặc `ADMIN`, bấm đổi trạng thái sẽ hiện Modal yêu cầu nhập lý do bắt buộc; ở trạng thái `DRAFT` không có tùy chọn chuyển sang `INACTIVE`.
+- [x] Màn hình Lịch sử hiển thị đầy đủ các lần chuyển trạng thái, bao gồm cả bản ghi tự động chuyển `INACTIVE` khi duyệt Revision mới.
+- [x] Màn hình Editor, Sidebar, Project Explorer và Print A4 hiển thị đúng trạng thái `INACTIVE` và khóa toàn bộ ô chỉnh sửa.
 

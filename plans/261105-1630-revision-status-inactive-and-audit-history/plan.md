@@ -1,7 +1,7 @@
 ---
 title: "Revision INACTIVE Status, Auto-Supersede & Audit History System"
 description: "Bổ sung trạng thái INACTIVE (Đã duyệt và không còn hiệu lực) cho Coating Schedule & Coating Cost, tự động chuyển INACTIVE các bản APPROVED cũ khi duyệt Revision mới trong cùng Project, bắt buộc nhập lý do, lưu bảng lịch sử RevisionStatusHistory và phân quyền chỉ cho phép PROJECT_LEADER & ADMIN thay đổi trạng thái."
-status: pending
+status: completed
 priority: P1
 effort: "6h"
 tags: [feature, status-workflow, audit-history, rbac, prisma, backend, frontend, shared]
@@ -65,10 +65,10 @@ stateDiagram-v2
 
 | # | Phase | Effort | Status | Description |
 |---|-------|--------|--------|-------------|
-| 1 | [Database Schema & Shared Types](./phase-01-database-schema-and-shared-types.md) | 1h | Pending | Bổ sung `INACTIVE` vào `RevisionStatus`, tạo bảng `RevisionStatusHistory` trong Prisma & PostgreSQL DDL, cập nhật kiểu dữ liệu `@cscc/shared`. |
-| 2 | [Backend Status Service, RBAC & Auto-Supersede](./phase-02-backend-status-service-rbac-and-auto-supersede.md) | 2h | Pending | Xây dựng middleware chặn `TECHNICAL`/`SALES`, kiểm tra state machine (`DRAFT -x-> INACTIVE`) & lý do bắt buộc, xử lý auto-supersede trong transaction và khóa sửa/xóa với `INACTIVE`. |
-| 3 | [Frontend Status Workflow, Reason Modal & History Timeline UI](./phase-03-frontend-status-workflow-and-history-ui.md) | 2h | Pending | Cập nhật giao diện đổi trạng thái (chỉ mở cho `PROJECT_LEADER`/`ADMIN`), Modal nhập lý do bắt buộc, Timeline lịch sử thay đổi và đồng bộ nhãn `INACTIVE` trên toàn bộ UI/Print/Filter. |
-| 4 | [Automated Testing & End-to-End Verification](./phase-04-automated-testing-and-verification.md) | 1h | Pending | Viết bộ kiểm thử tự động kiểm tra phân quyền RBAC (`403`), bắt buộc lý do (`400`), chặn `DRAFT -> INACTIVE`, auto-supersede kèm lịch sử và bảo vệ bất biến cho `INACTIVE`. |
+| 1 | [Database Schema & Shared Types](./phase-01-database-schema-and-shared-types.md) | 1h | Completed | Bổ sung `INACTIVE` vào `RevisionStatus`, tạo bảng `RevisionStatusHistory` trong Prisma & PostgreSQL DDL, cập nhật kiểu dữ liệu `@cscc/shared`. |
+| 2 | [Backend Status Service, RBAC & Auto-Supersede](./phase-02-backend-status-service-rbac-and-auto-supersede.md) | 2h | Completed | Xây dựng middleware chặn `TECHNICAL`/`SALES`, kiểm tra state machine (`DRAFT -x-> INACTIVE`) & lý do bắt buộc, xử lý auto-supersede trong transaction và khóa sửa/xóa với `INACTIVE`. |
+| 3 | [Frontend Status Workflow, Reason Modal & History Timeline UI](./phase-03-frontend-status-workflow-and-history-ui.md) | 2h | Completed | Cập nhật giao diện đổi trạng thái (chỉ mở cho `PROJECT_LEADER`/`ADMIN`), Modal nhập lý do bắt buộc, Timeline lịch sử thay đổi và đồng bộ nhãn `INACTIVE` trên toàn bộ UI/Print/Filter. |
+| 4 | [Automated Testing & End-to-End Verification](./phase-04-automated-testing-and-verification.md) | 1h | Completed | Viết bộ kiểm thử tự động kiểm tra phân quyền RBAC (`403`), bắt buộc lý do (`400`), chặn `DRAFT -> INACTIVE`, auto-supersede kèm lịch sử và bảo vệ bất biến cho `INACTIVE`. |
 
 ## Dependencies
 
@@ -79,12 +79,12 @@ stateDiagram-v2
 
 ## Acceptance Criteria
 
-- [ ] `RevisionStatus` hỗ trợ đầy đủ `DRAFT`, `APPROVED`, `INACTIVE` trên cả Shared, Backend, Database và Frontend.
-- [ ] Tài khoản `TECHNICAL` và `SALES` bị chặn `403 Forbidden` khi gọi `PATCH /api/revisions/:id/status` và không thấy nút đổi trạng thái trên giao diện.
-- [ ] Tài khoản `PROJECT_LEADER` và `ADMIN` khi đổi trạng thái bắt buộc phải nhập `note` (lý do); nếu để trống hệ thống báo lỗi `400`.
-- [ ] Chỉ cho phép chuyển sang `INACTIVE` từ hồ sơ đang `APPROVED`; chặn chuyển trực tiếp từ `DRAFT` sang `INACTIVE` (`400`).
-- [ ] Khi duyệt (`APPROVED`) một Revision mới trong Project, tất cả các Revision đang `APPROVED` khác của cùng Project tự động chuyển sang `INACTIVE` và được ghi lịch sử tự động trong bảng `RevisionStatusHistory`.
-- [ ] Hồ sơ `INACTIVE` bị khóa chỉnh sửa, khóa xóa, khóa làm mới đơn giá, nhưng vẫn cho phép `Clone Rev`, xuất Excel, in A4 và xem Timeline lịch sử trạng thái.
+- [x] `RevisionStatus` hỗ trợ đầy đủ `DRAFT`, `APPROVED`, `INACTIVE` trên cả Shared, Backend, Database và Frontend.
+- [x] Tài khoản `TECHNICAL` và `SALES` bị chặn `403 Forbidden` khi gọi `PATCH /api/revisions/:id/status` và không thấy nút đổi trạng thái trên giao diện.
+- [x] Tài khoản `PROJECT_LEADER` và `ADMIN` khi đổi trạng thái bắt buộc phải nhập `note` (lý do); nếu để trống hệ thống báo lỗi `400`.
+- [x] Chỉ cho phép chuyển sang `INACTIVE` từ hồ sơ đang `APPROVED`; chặn chuyển trực tiếp từ `DRAFT` sang `INACTIVE` (`400`).
+- [x] Khi duyệt (`APPROVED`) một Revision mới trong Project, tất cả các Revision đang `APPROVED` khác của cùng Project tự động chuyển sang `INACTIVE` và được ghi lịch sử tự động trong bảng `RevisionStatusHistory`.
+- [x] Hồ sơ `INACTIVE` bị khóa chỉnh sửa, khóa xóa, khóa làm mới đơn giá, nhưng vẫn cho phép `Clone Rev`, xuất Excel, in A4 và xem Timeline lịch sử trạng thái.
 
 <!-- slug: revision-status-inactive-and-audit-history -->
 

@@ -1,7 +1,7 @@
 ---
 title: "Phase 01: Database Schema & Shared Types"
 phase: 1
-status: pending
+status: completed
 effort: "1h"
 tags: [database, prisma, schema, shared-types, postgresql]
 ---
@@ -73,6 +73,6 @@ Bổ sung giá trị `INACTIVE` vào enum `RevisionStatus`, thiết kế bảng 
 - Build lại package shared: `npm run build -w @cscc/shared`.
 
 ## Tiêu chí hoàn thành (Verification)
-- [ ] `npx prisma generate` và `npm run build -w @cscc/shared` chạy thành công không có lỗi biên dịch.
-- [ ] Khi khởi động backend, PostgreSQL tự động có giá trị `INACTIVE` trong enum `"RevisionStatus"` và bảng `"RevisionStatusHistory"`.
+- [x] `npx prisma generate` và `npm run build -w @cscc/shared` chạy thành công không có lỗi biên dịch.
+- [x] Khi khởi động backend, PostgreSQL tự động có giá trị `INACTIVE` trong enum `"RevisionStatus"` và bảng `"RevisionStatusHistory"`.
 
