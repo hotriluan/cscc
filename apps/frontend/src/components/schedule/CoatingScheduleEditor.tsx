@@ -21,6 +21,7 @@ import {
   Copy,
   Lock,
   CheckCircle2,
+  PauseCircle,
   ChevronUp,
   ChevronDown,
   ChevronLeft,
@@ -35,6 +36,8 @@ import {
   ComboboxOption
 } from '../common/SearchableCombobox';
 
+export type RevisionChangeMode = 'discrete' | 'typing';
+
 interface CoatingScheduleEditorProps {
   revision: ProjectRevision;
   customers: Customer[];
@@ -43,7 +46,8 @@ interface CoatingScheduleEditorProps {
   methodsMaster: ApplicationMethod[];
   role?: UserRole;
   currentUser?: UserAccount | null;
-  onChangeRevision: (updated: ProjectRevision) => void;
+  onChangeRevision: (updated: ProjectRevision, mode?: RevisionChangeMode) => void;
+  onFlushAutoSave?: () => void;
   onQuickCreateStepMaster?: (stepName: string) => Promise<void>;
 }
 
@@ -56,6 +60,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
   role,
   currentUser,
   onChangeRevision,
+  onFlushAutoSave,
   onQuickCreateStepMaster
 }) => {
   const isRestrictedBySalesman =
@@ -73,7 +78,10 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
   );
 
   const isLocked =
-    revision.status === 'LOCKED' || revision.status === 'APPROVED' || isCustomerOutOfScope;
+    revision.status === 'LOCKED' ||
+    revision.status === 'APPROVED' ||
+    revision.status === 'INACTIVE' ||
+    isCustomerOutOfScope;
   const revCode = String(revision.revisionNo).padStart(2, '0');
 
   // UX/UI Scroll & Layout states
@@ -314,13 +322,17 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
 
   const handleHeaderChange = (
     field: keyof ProjectRevision,
-    value: string | number
+    value: string | number,
+    mode: RevisionChangeMode = 'typing'
   ) => {
     if (isLocked) return;
-    onChangeRevision({
-      ...revision,
-      [field]: value
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        [field]: value
+      },
+      mode
+    );
   };
 
   const handleCustomerSelect = (customerId: string) => {
@@ -348,15 +360,18 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
       })
     }));
 
-    onChangeRevision({
-      ...revision,
-      customer: found,
-      steps: reindexSteps(updatedSteps)
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        customer: found,
+        steps: reindexSteps(updatedSteps)
+      },
+      'discrete'
+    );
   };
 
   const createNewChemicalStepObject = (): ScheduleStep => {
-    const stepId = `step-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+    const stepId = `${revision.id}-step-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
 
     return {
       id: stepId,
@@ -392,7 +407,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
   };
 
   const createNewSandingStepObject = (): ScheduleStep => ({
-    id: `sanding-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
+    id: `${revision.id}-sanding-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
     stepOrder: revision.steps.length + 1,
     stepNumber: null,
     rowType: 'SANDING',
@@ -419,10 +434,13 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     } else {
       nextSteps.push(newStep);
     }
-    onChangeRevision({
-      ...revision,
-      steps: reindexSteps(nextSteps)
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(nextSteps)
+      },
+      'discrete'
+    );
   };
 
   const handleInsertSandingRow = (afterIndex?: number) => {
@@ -434,17 +452,20 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     } else {
       nextSteps.push(sandingStep);
     }
-    onChangeRevision({
-      ...revision,
-      steps: reindexSteps(nextSteps)
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(nextSteps)
+      },
+      'discrete'
+    );
   };
 
   const handleDuplicateStep = (index: number) => {
     if (isLocked) return;
     const source = revision.steps[index];
     if (!source) return;
-    const newStepId = `step-dup-${Date.now().toString(36)}`;
+    const newStepId = `${revision.id}-step-dup-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
     const duplicated: ScheduleStep = {
       ...source,
       id: newStepId,
@@ -456,10 +477,13 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     };
     const nextSteps = [...revision.steps];
     nextSteps.splice(index + 1, 0, duplicated);
-    onChangeRevision({
-      ...revision,
-      steps: reindexSteps(nextSteps)
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(nextSteps)
+      },
+      'discrete'
+    );
   };
 
   const handleMoveStep = (index: number, direction: -1 | 1) => {
@@ -469,24 +493,31 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     const cloned = [...revision.steps];
     const [removed] = cloned.splice(index, 1);
     cloned.splice(target, 0, removed);
-    onChangeRevision({
-      ...revision,
-      steps: reindexSteps(cloned)
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(cloned)
+      },
+      'discrete'
+    );
   };
 
   const handleDeleteStep = (stepId: string) => {
     if (isLocked) return;
-    onChangeRevision({
-      ...revision,
-      steps: reindexSteps(revision.steps.filter((s) => s.id !== stepId))
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(revision.steps.filter((s) => s.id !== stepId))
+      },
+      'discrete'
+    );
   };
 
   const handleUpdateStepField = (
     stepId: string,
     field: keyof ScheduleStep,
-    value: string | null
+    value: string | null,
+    mode: RevisionChangeMode = 'typing'
   ) => {
     if (isLocked) return;
     const updated = revision.steps.map((step) => {
@@ -496,10 +527,13 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         [field]: value
       };
     });
-    onChangeRevision({
-      ...revision,
-      steps: reindexSteps(updated)
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(updated)
+      },
+      mode
+    );
   };
 
   const handleUpdateStepVisco = (stepId: string, val: string | null) => {
@@ -516,10 +550,13 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         }))
       };
     });
-    onChangeRevision({
-      ...revision,
-      steps: reindexSteps(updated)
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(updated)
+      },
+      'typing'
+    );
   };
 
   const handleAddItemToStep = (stepId: string) => {
@@ -527,7 +564,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     const updated = revision.steps.map((step) => {
       if (step.id !== stepId) return step;
       const newItem: ScheduleStepItem = {
-        id: `${step.id}-item-${Date.now().toString(36)}`,
+        id: `${step.id}-item-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
         stepId: step.id,
         itemOrder: step.items.length + 1,
         materialCode: '',
@@ -543,10 +580,13 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         items: [...step.items, newItem]
       };
     });
-    onChangeRevision({
-      ...revision,
-      steps: reindexSteps(updated)
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(updated)
+      },
+      'discrete'
+    );
   };
 
   const handleDeleteItemFromStep = (stepId: string, itemId: string) => {
@@ -559,16 +599,20 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         items: step.items.filter((i) => i.id !== itemId)
       };
     });
-    onChangeRevision({
-      ...revision,
-      steps: reindexSteps(updated)
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(updated)
+      },
+      'discrete'
+    );
   };
 
   const handleUpdateItem = (
     stepId: string,
     itemId: string,
-    patch: Partial<ScheduleStepItem>
+    patch: Partial<ScheduleStepItem>,
+    mode: RevisionChangeMode = 'typing'
   ) => {
     if (isLocked) return;
     const updated = revision.steps.map((step) => {
@@ -597,22 +641,58 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         })
       };
     });
-    onChangeRevision({
-      ...revision,
-      steps: reindexSteps(updated)
-    });
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(updated)
+      },
+      mode
+    );
   };
 
   return (
-    <div className="space-y-5">
+    <div
+      className="space-y-5"
+      onBlurCapture={(e) => {
+        if (isLocked) return;
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+        const tag = target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+          onFlushAutoSave?.();
+        }
+      }}
+    >
       {isLocked && (
-        <div className="flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-900">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+        <div
+          className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm ${
+            revision.status === 'INACTIVE'
+              ? 'border-amber-300 bg-amber-50 text-amber-900'
+              : 'border-emerald-300 bg-emerald-50 text-emerald-900'
+          }`}
+        >
+          {revision.status === 'INACTIVE' ? (
+            <PauseCircle className="h-4 w-4 shrink-0 text-amber-600" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+          )}
           <span>
-            Phiên bản <strong>Rev {revCode}</strong> đã được phê duyệt (
-            <strong>APPROVED</strong>). Để chỉnh sửa quy trình hoặc cập nhật đơn
-            giá mới, hãy nhấn <strong>"Nhân bản sang Rev mới"</strong> trên
-            thanh công cụ hoặc chuyển trạng thái về Draft.
+            {revision.status === 'INACTIVE' ? (
+              <>
+                Revision <strong>Rev {revCode}</strong> is{' '}
+                <strong>INACTIVE (Approved &amp; Superseded / Đã duyệt &amp; Không còn hiệu lực)</strong>.
+                Editing, deleting, and price refreshing are locked. Click{' '}
+                <strong>&quot;Clone Rev / Nhân bản Rev&quot;</strong> to create a new revision or view{' '}
+                <strong>Status History / Lịch sử trạng thái</strong>.
+              </>
+            ) : (
+              <>
+                Revision <strong>Rev {revCode}</strong> is{' '}
+                <strong>APPROVED (Active / Đã duyệt &amp; Đang hiệu lực)</strong>. To edit the schedule or
+                update prices, click <strong>&quot;Clone Rev / Nhân bản sang Rev mới&quot;</strong> on the
+                toolbar or reopen as Draft.
+              </>
+            )}
           </span>
         </div>
       )}
@@ -634,12 +714,20 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             </span>
             <span
               className={`rounded border px-2.5 py-1 font-semibold ${
-                isLocked
-                  ? 'border-emerald-400/40 bg-emerald-600/30 text-emerald-200'
-                  : 'border-amber-400/40 bg-amber-600/30 text-amber-200'
+                revision.status === 'INACTIVE'
+                  ? 'border-amber-400/50 bg-amber-600/30 text-amber-200'
+                  : isLocked
+                    ? 'border-emerald-400/40 bg-emerald-600/30 text-emerald-200'
+                    : 'border-amber-400/40 bg-amber-600/30 text-amber-200'
               }`}
             >
-              Rev. / Phiên bản: {revCode} ({revision.status === 'LOCKED' || revision.status === 'APPROVED' ? 'APPROVED / ĐÃ PHÊ DUYỆT' : revision.status})
+              Rev. / Phiên bản: {revCode} (
+              {revision.status === 'LOCKED' || revision.status === 'APPROVED'
+                ? 'APPROVED / ĐÃ DUYỆT - ĐANG HIỆU LỰC'
+                : revision.status === 'INACTIVE'
+                  ? 'INACTIVE / ĐÃ DUYỆT - HẾT HIỆU LỰC'
+                  : 'DRAFT / BẢN NHÁP'}
+              )
             </span>
             <button
               type="button"
@@ -926,7 +1014,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                     disabled={isLocked}
                     value={revision.scheduleDate}
                     onChange={(e) =>
-                      handleHeaderChange('scheduleDate', e.target.value)
+                      handleHeaderChange('scheduleDate', e.target.value, 'discrete')
                     }
                     className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
                   />
@@ -1311,14 +1399,14 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                             placeholder="-- Select Step / Chọn bước --"
                             options={stepOptions}
                             onChange={(val) =>
-                              handleUpdateStepField(step.id, 'stepName', val)
+                              handleUpdateStepField(step.id, 'stepName', val, 'discrete')
                             }
                             onCreateNew={async (customStepName) => {
                               const upper = customStepName.toUpperCase();
                               if (onQuickCreateStepMaster) {
                                 await onQuickCreateStepMaster(upper);
                               }
-                              handleUpdateStepField(step.id, 'stepName', upper);
+                              handleUpdateStepField(step.id, 'stepName', upper, 'discrete');
                             }}
                             createNewLabel={(val) =>
                               `+ New Step / Tạo bước "${val.toUpperCase()}"`
@@ -1342,10 +1430,15 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                               placeholder="-- Select Material / Chọn mã vật tư --"
                               options={productOptions}
                               onChange={(val, opt) =>
-                                handleUpdateItem(step.id, item.id, {
-                                  materialCode: val,
-                                  materialName: opt?.label || val
-                                })
+                                handleUpdateItem(
+                                  step.id,
+                                  item.id,
+                                  {
+                                    materialCode: val,
+                                    materialName: opt?.label || val
+                                  },
+                                  'discrete'
+                                )
                               }
                               emptyMessage={`Customer ${revision.customer?.shortName || revision.customer?.customerId || ''} has no quotation items / KH chưa có vật tư trong báo giá`}
                               searchPlaceholder="Search material in quotation / Tìm vật tư trong báo giá..."
@@ -1470,7 +1563,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                             placeholder="-- Method / Phương pháp --"
                             options={methodOptions}
                             onChange={(val) =>
-                              handleUpdateStepField(step.id, 'methodName', val)
+                              handleUpdateStepField(step.id, 'methodName', val, 'discrete')
                             }
                             searchPlaceholder="Select method / Chọn phương pháp..."
                             popoverWidthClass="w-60"

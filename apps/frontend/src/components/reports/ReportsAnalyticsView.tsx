@@ -902,7 +902,9 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                                     u.status === 'APPROVED' ||
                                     u.status === 'LOCKED'
                                       ? 'bg-emerald-100 text-emerald-800'
-                                      : 'bg-amber-100 text-amber-800'
+                                      : u.status === 'INACTIVE'
+                                        ? 'bg-amber-100 text-amber-800'
+                                        : 'bg-slate-200 text-slate-700'
                                   }`}
                                 >
                                   {u.status}
@@ -1260,7 +1262,9 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                                                     r.status === 'APPROVED' ||
                                                     r.status === 'LOCKED'
                                                       ? 'bg-emerald-100 text-emerald-800'
-                                                      : 'bg-amber-100 text-amber-800'
+                                                      : r.status === 'INACTIVE'
+                                                        ? 'bg-amber-100 text-amber-800'
+                                                        : 'bg-slate-200 text-slate-700'
                                                   }`}
                                                 >
                                                   {r.status}

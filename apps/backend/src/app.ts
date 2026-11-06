@@ -15,10 +15,16 @@ import { dataStore } from './store/data-store';
 import {
   extractRoleMiddleware,
   requireCostAccessMiddleware,
-  requireAdminMiddleware
+  requireAdminMiddleware,
+  requireStatusChangeAccessMiddleware
 } from './middleware/auth-rbac.middleware';
 import { signJwtToken } from './services/auth.service';
-import { cloneRevision, updateRevisionStatus } from './services/revision.service';
+import {
+  cloneRevision,
+  updateRevisionStatus,
+  getRevisionStatusHistory,
+  RevisionStatusDomainError
+} from './services/revision.service';
 import { generateRevisionWorkbook } from './services/excel-exporter.service';
 import { generateReportsOverview } from './services/report.service';
 import { generateAnalyticsReportWorkbook } from './services/report-excel.service';
@@ -861,15 +867,73 @@ export function createApp() {
     }
   });
 
-  // Update Revision Status (`DRAFT` | `APPROVED` | `LOCKED`)
-  app.patch('/api/revisions/:id/status', async (req, res) => {
+  // Update Revision Status (`DRAFT` | `APPROVED` | `INACTIVE`) — Restricted to PROJECT_LEADER & ADMIN
+  app.patch(
+    '/api/revisions/:id/status',
+    requireStatusChangeAccessMiddleware,
+    async (req, res) => {
+      try {
+        const revisionId = Array.isArray(req.params.id)
+          ? req.params.id[0]
+          : String(req.params.id);
+        const status = String(req.body?.status || 'APPROVED').toUpperCase() as RevisionStatus;
+        const note = typeof req.body?.note === 'string' ? req.body.note : '';
+
+        const defaultNameByRole: Record<UserRole, string> = {
+          PROJECT_LEADER: 'Nguyễn Văn Quản Lý (Project Leader)',
+          ADMIN: 'Quản Trị Hệ Thống (System Admin)',
+          SALES: 'Trần Thị Kinh Doanh (Sales)',
+          TECHNICAL: 'Lê Văn Kỹ Thuật (Technical TA)'
+        };
+
+        const actor = {
+          userId: req.authUser?.sub ?? null,
+          fullName:
+            req.authUser && req.authUser.role === req.userRole
+              ? req.authUser.fullName
+              : defaultNameByRole[req.userRole] || req.userRole,
+          role: req.userRole
+        };
+
+        const updated = await updateRevisionStatus({
+          revisionId,
+          targetStatus: status,
+          note,
+          actor
+        });
+        res.json(redactRevisionForRole(updated, req.userRole));
+      } catch (err) {
+        if (err instanceof RevisionStatusDomainError) {
+          res.status(err.httpStatus).json({
+            error: err.code,
+            message: err.message
+          });
+          return;
+        }
+        res.status(404).json({
+          error: 'STATUS_UPDATE_FAILED',
+          message: err instanceof Error ? err.message : String(err)
+        });
+      }
+    }
+  );
+
+  // Get Revision Status History Timeline
+  app.get('/api/revisions/:id/status-history', async (req, res) => {
     try {
-      const status = String(req.body.status || 'APPROVED').toUpperCase() as RevisionStatus;
-      const updated = await updateRevisionStatus(req.params.id, status);
-      res.json(redactRevisionForRole(updated, req.userRole));
+      const revisionId = Array.isArray(req.params.id)
+        ? req.params.id[0]
+        : String(req.params.id);
+      const rev = await dataStore.getRevisionById(revisionId);
+      if (!rev) {
+        res.status(404).json({ error: 'Revision not found' });
+        return;
+      }
+      const history = await getRevisionStatusHistory(revisionId);
+      res.json(history);
     } catch (err) {
-      res.status(404).json({
-        error: 'STATUS_UPDATE_FAILED',
+      res.status(500).json({
+        error: 'STATUS_HISTORY_FAILED',
         message: err instanceof Error ? err.message : String(err)
       });
     }

@@ -22,7 +22,20 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-export type RevisionStatus = 'DRAFT' | 'APPROVED' | 'LOCKED';
+export type RevisionStatus = 'DRAFT' | 'APPROVED' | 'INACTIVE' | 'LOCKED';
+
+export interface RevisionStatusHistoryEntry {
+  id: string;
+  revisionId: string;
+  fromStatus: RevisionStatus | null;
+  toStatus: RevisionStatus;
+  changedByUserId?: string | null;
+  changedByName: string;
+  changedByRole: UserRole;
+  note: string;
+  isAutoSupersede?: boolean;
+  changedAt: string;
+}
 
 export type StepRowType = 'CHEMICAL_STEP' | 'SANDING';
 
@@ -152,6 +165,7 @@ export interface ProjectRevision {
   approvedByPdPm?: string | null;
   customerConfirmName?: string | null;
   steps: ScheduleStep[];
+  statusHistory?: RevisionStatusHistoryEntry[];
   createdAt: string;
   updatedAt: string;
 }

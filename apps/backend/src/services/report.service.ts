@@ -764,7 +764,7 @@ export async function generateReportsOverview(params: {
         revCosts.push(ctx.costSummary.totalCoatingCostDisplay);
         if (ctx.revision.status === 'APPROVED' || ctx.revision.status === 'LOCKED') {
           approvedCount += 1;
-        } else {
+        } else if (ctx.revision.status === 'DRAFT') {
           draftCount += 1;
         }
 
@@ -1374,7 +1374,7 @@ export async function generateReportsOverview(params: {
     entry.totalRevisions += 1;
     if (ctx.revision.status === 'APPROVED' || ctx.revision.status === 'LOCKED') {
       entry.approvedRevisions += 1;
-    } else {
+    } else if (ctx.revision.status === 'DRAFT') {
       entry.draftRevisions += 1;
     }
     entry.costs.push(ctx.costSummary.totalCoatingCostDisplay);
@@ -1446,7 +1446,7 @@ export async function generateReportsOverview(params: {
     entry.totalRevisions += 1;
     if (ctx.revision.status === 'APPROVED' || ctx.revision.status === 'LOCKED') {
       entry.approvedRevisions += 1;
-    } else {
+    } else if (ctx.revision.status === 'DRAFT') {
       entry.draftRevisions += 1;
     }
     if (ctx.revision.finishingSystem.trim()) {

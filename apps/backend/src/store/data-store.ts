@@ -8,6 +8,7 @@ import {
   ProjectRevision,
   ScheduleStep,
   RevisionStatus,
+  RevisionStatusHistoryEntry,
   StepRowType,
   UserAccount,
   UserRole,
@@ -199,6 +200,39 @@ class PostgresDataStore {
       `)
       .catch(() => undefined);
 
+    // Ensure RevisionStatus enum includes INACTIVE and RevisionStatusHistory table exists
+    await prisma
+      .$executeRawUnsafe(`
+        ALTER TYPE "RevisionStatus" ADD VALUE IF NOT EXISTS 'INACTIVE';
+      `)
+      .catch(() => undefined);
+
+    await prisma
+      .$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "RevisionStatusHistory" (
+          "id" TEXT NOT NULL,
+          "revisionId" TEXT NOT NULL,
+          "fromStatus" "RevisionStatus",
+          "toStatus" "RevisionStatus" NOT NULL,
+          "changedByUserId" TEXT,
+          "changedByName" TEXT NOT NULL,
+          "changedByRole" "UserRole" NOT NULL,
+          "note" TEXT NOT NULL,
+          "isAutoSupersede" BOOLEAN NOT NULL DEFAULT false,
+          "changedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT "RevisionStatusHistory_pkey" PRIMARY KEY ("id"),
+          CONSTRAINT "RevisionStatusHistory_revisionId_fkey" FOREIGN KEY ("revisionId") REFERENCES "ProjectRevision"("id") ON DELETE CASCADE ON UPDATE CASCADE
+        );
+      `)
+      .catch(() => undefined);
+
+    await prisma
+      .$executeRawUnsafe(`
+        CREATE INDEX IF NOT EXISTS "RevisionStatusHistory_revisionId_changedAt_idx"
+        ON "RevisionStatusHistory"("revisionId", "changedAt" DESC);
+      `)
+      .catch(() => undefined);
+
     const [customerCount, ntrRev, packingCount, stepsCount] = await Promise.all([
       prisma.customer.count(),
       prisma.projectRevision.findUnique({
@@ -304,6 +338,7 @@ class PostgresDataStore {
     );
 
     await prisma.$transaction(async (tx) => {
+      await tx.revisionStatusHistory.deleteMany();
       await tx.scheduleStepItem.deleteMany();
       await tx.scheduleStep.deleteMany();
       await tx.projectRevision.deleteMany();
@@ -1769,6 +1804,9 @@ class PostgresDataStore {
             }
           },
           orderBy: { stepOrder: 'asc' }
+        },
+        statusHistory: {
+          orderBy: { changedAt: 'desc' }
         }
       }
     });
@@ -1841,6 +1879,20 @@ class PostgresDataStore {
       approvedByPdPm: r.approvedByPdPm,
       customerConfirmName: r.customerConfirmName,
       steps: mappedSteps,
+      statusHistory: (r.statusHistory || []).map(
+        (h): RevisionStatusHistoryEntry => ({
+          id: h.id,
+          revisionId: h.revisionId,
+          fromStatus: (h.fromStatus as RevisionStatus | null) ?? null,
+          toStatus: h.toStatus as RevisionStatus,
+          changedByUserId: h.changedByUserId ?? null,
+          changedByName: h.changedByName,
+          changedByRole: h.changedByRole as UserRole,
+          note: h.note,
+          isAutoSupersede: h.isAutoSupersede,
+          changedAt: h.changedAt.toISOString()
+        })
+      ),
       createdAt: r.createdAt.toISOString(),
       updatedAt: r.updatedAt.toISOString()
     };
@@ -1853,11 +1905,16 @@ class PostgresDataStore {
     if (!rev) {
       return { ok: false, status: 404, error: 'Revision not found' };
     }
-    if (rev.status === 'LOCKED' || rev.status === 'APPROVED') {
+    if (
+      rev.status === 'LOCKED' ||
+      rev.status === 'APPROVED' ||
+      rev.status === 'INACTIVE'
+    ) {
       return {
         ok: false,
         status: 400,
-        error: 'Không thể xóa phiên bản đã phê duyệt (APPROVED).'
+        error:
+          'Cannot delete an APPROVED or INACTIVE revision / Không thể xóa phiên bản đã phê duyệt (APPROVED) hoặc đã ngưng hiệu lực (INACTIVE).'
       };
     }
     const siblingCount = await prisma.projectRevision.count({
@@ -1888,13 +1945,17 @@ class PostgresDataStore {
     if (!existing) {
       return { ok: false, status: 404, error: 'Revision not found' };
     }
-    if (existing.status === 'LOCKED' || existing.status === 'APPROVED') {
+    if (
+      existing.status === 'LOCKED' ||
+      existing.status === 'APPROVED' ||
+      existing.status === 'INACTIVE'
+    ) {
       return {
         ok: false,
         status: 400,
         error: 'REVISION_LOCKED',
         message:
-          'Phiên bản này đã được phê duyệt (APPROVED). Vui lòng nhân bản (Clone) sang Rev mới để chỉnh sửa.'
+          'This revision is locked (APPROVED or INACTIVE). Please clone to a new revision to edit / Phiên bản này đã chốt dữ liệu (APPROVED hoặc INACTIVE). Vui lòng nhân bản (Clone) sang Rev mới để chỉnh sửa.'
       };
     }
 
@@ -2028,56 +2089,88 @@ class PostgresDataStore {
           where: { revisionId: id }
         });
 
-        const stepRows = enrichedSteps.map((s, sIdx) => ({
-          id: `${id}-step-${sIdx + 1}-${Date.now().toString(36)}`,
-          revisionId: id,
-          stepOrder: s.stepOrder,
-          stepNumber: s.stepNumber,
-          rowType: s.rowType,
-          stepName: s.stepName,
-          sandingSpec: s.sandingSpec ?? null,
-          visco:
-            s.visco !== null && s.visco !== undefined && String(s.visco).trim() !== ''
-              ? String(s.visco).trim()
-              : s.items?.[0]?.visco !== null &&
-                  s.items?.[0]?.visco !== undefined &&
-                  String(s.items[0].visco).trim() !== ''
-                ? String(s.items[0].visco).trim()
-                : null,
-          caInputRaw: s.caInputRaw ?? null,
-          caMin: s.caMin ?? null,
-          caMax: s.caMax ?? null,
-          caAvg: s.caAvg ?? null,
-          methodName: s.methodName ?? null,
-          efficiencySnapshot: s.efficiencySnapshot ?? null,
-          dryingTime: s.dryingTime ?? null,
-          stepRemark: s.stepRemark ?? null,
-          _items: s.items
-        }));
+        const usedStepIds = new Set<string>();
+        const stepRows = enrichedSteps.map((s, sIdx) => {
+          const rawStepId = typeof s.id === 'string' ? s.id.trim() : '';
+          let stepId =
+            rawStepId && rawStepId.startsWith(`${id}-`)
+              ? rawStepId
+              : rawStepId
+                ? `${id}-${rawStepId}`
+                : `${id}-step-${sIdx + 1}-${Date.now().toString(36)}`;
+          if (usedStepIds.has(stepId)) {
+            stepId = `${stepId}-${sIdx + 1}`;
+          }
+          usedStepIds.add(stepId);
+
+          return {
+            id: stepId,
+            revisionId: id,
+            stepOrder: s.stepOrder,
+            stepNumber: s.stepNumber,
+            rowType: s.rowType,
+            stepName: s.stepName,
+            sandingSpec: s.sandingSpec ?? null,
+            visco:
+              s.visco !== null && s.visco !== undefined && String(s.visco).trim() !== ''
+                ? String(s.visco).trim()
+                : s.items?.[0]?.visco !== null &&
+                    s.items?.[0]?.visco !== undefined &&
+                    String(s.items[0].visco).trim() !== ''
+                  ? String(s.items[0].visco).trim()
+                  : null,
+            caInputRaw: s.caInputRaw ?? null,
+            caMin: s.caMin ?? null,
+            caMax: s.caMax ?? null,
+            caAvg: s.caAvg ?? null,
+            methodName: s.methodName ?? null,
+            efficiencySnapshot: s.efficiencySnapshot ?? null,
+            dryingTime: s.dryingTime ?? null,
+            stepRemark: s.stepRemark ?? null,
+            _items: s.items
+          };
+        });
 
         if (stepRows.length > 0) {
           await tx.scheduleStep.createMany({
             data: stepRows.map(({ _items: _, ...rest }) => rest)
           });
 
+          const usedItemIds = new Set<string>();
           const itemRows = stepRows.flatMap((sr) =>
-            sr._items.map((it, iIdx) => ({
-              id: `${sr.id}-item-${iIdx + 1}`,
-              stepId: sr.id,
-              itemOrder: it.itemOrder,
-              materialCode: it.materialCode,
-              materialName: it.materialName,
-              packingDesc: it.packingDesc ?? null,
-              nettWeight: it.nettWeight ?? null,
-              mixingRatio: it.mixingRatio,
-              visco:
-                it.visco !== null && it.visco !== undefined && String(it.visco).trim() !== ''
-                  ? String(it.visco).trim()
-                  : iIdx === 0 && sr.visco
-                    ? String(sr.visco).trim()
-                    : null,
-              priceSnapshotVnd: it.priceSnapshotVnd ?? 0
-            }))
+            sr._items.map((it, iIdx) => {
+              const rawItemId = typeof it.id === 'string' ? it.id.trim() : '';
+              let itemId =
+                rawItemId && rawItemId.startsWith(`${sr.id}-`)
+                  ? rawItemId
+                  : rawItemId && rawItemId.startsWith(`${id}-`)
+                    ? rawItemId
+                    : rawItemId
+                      ? `${sr.id}-${rawItemId}`
+                      : `${sr.id}-item-${iIdx + 1}`;
+              if (usedItemIds.has(itemId)) {
+                itemId = `${sr.id}-item-${iIdx + 1}-${Date.now().toString(36)}`;
+              }
+              usedItemIds.add(itemId);
+
+              return {
+                id: itemId,
+                stepId: sr.id,
+                itemOrder: it.itemOrder,
+                materialCode: it.materialCode,
+                materialName: it.materialName,
+                packingDesc: it.packingDesc ?? null,
+                nettWeight: it.nettWeight ?? null,
+                mixingRatio: it.mixingRatio,
+                visco:
+                  it.visco !== null && it.visco !== undefined && String(it.visco).trim() !== ''
+                    ? String(it.visco).trim()
+                    : iIdx === 0 && sr.visco
+                      ? String(sr.visco).trim()
+                      : null,
+                priceSnapshotVnd: it.priceSnapshotVnd ?? 0
+              };
+            })
           );
 
           if (itemRows.length > 0) {
@@ -2098,11 +2191,16 @@ class PostgresDataStore {
     if (!existing) {
       return { ok: false, status: 404, error: 'Revision not found' };
     }
-    if (existing.status === 'LOCKED' || existing.status === 'APPROVED') {
+    if (
+      existing.status === 'LOCKED' ||
+      existing.status === 'APPROVED' ||
+      existing.status === 'INACTIVE'
+    ) {
       return {
         ok: false,
         status: 400,
-        error: 'Cannot refresh prices on an APPROVED revision'
+        error:
+          'Cannot refresh prices on an APPROVED or INACTIVE revision / Không thể làm mới giá trên phiên bản đã phê duyệt (APPROVED) hoặc ngưng hiệu lực (INACTIVE).'
       };
     }
 
@@ -2157,18 +2255,20 @@ class PostgresDataStore {
       const parsedCa = isSanding
         ? { caMin: null, caMax: null, caAvg: 0 }
         : parseCaInput(step.caInputRaw);
-      const methodObj = step.methodName
-        ? methods.find((m) => m.methodName.toUpperCase() === step.methodName!.toUpperCase())
+      const cleanMethodName = step.methodName ? step.methodName.trim() : '';
+      const methodObj = cleanMethodName
+        ? methods.find((m) => m.methodName.toUpperCase() === cleanMethodName.toUpperCase())
         : undefined;
 
-      const efficiencySnapshot = isSanding
-        ? null
-        : preserveExistingSnapshots &&
-            typeof step.efficiencySnapshot === 'number' &&
-            step.efficiencySnapshot > 0 &&
-            (!methodObj || methodObj.efficiency === step.efficiencySnapshot)
-          ? step.efficiencySnapshot
-          : (methodObj?.efficiency ?? step.efficiencySnapshot ?? 0.6);
+      const efficiencySnapshot =
+        isSanding || !cleanMethodName
+          ? null
+          : preserveExistingSnapshots &&
+              typeof step.efficiencySnapshot === 'number' &&
+              step.efficiencySnapshot > 0 &&
+              (!methodObj || methodObj.efficiency === step.efficiencySnapshot)
+            ? step.efficiencySnapshot
+            : (methodObj?.efficiency ?? step.efficiencySnapshot ?? 0.6);
 
       const stepId = step.id || `step-${idx + 1}`;
       const stepVisco = isSanding

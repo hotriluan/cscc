@@ -10,6 +10,7 @@ import {
   BomSummary,
   UserRole,
   RevisionStatus,
+  RevisionStatusHistoryEntry,
   UserAccount,
   AuthSessionResponse,
   PaginatedResponse,
@@ -307,11 +308,19 @@ export const apiClient = {
       body: JSON.stringify({ refreshPrices })
     }),
 
-  updateRevisionStatus: (role: UserRole, id: string, status: RevisionStatus) =>
+  updateRevisionStatus: (
+    role: UserRole,
+    id: string,
+    status: RevisionStatus,
+    note: string
+  ) =>
     request<ProjectRevision>(`/revisions/${id}/status`, role, {
       method: 'PATCH',
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status, note })
     }),
+
+  getRevisionStatusHistory: (role: UserRole, id: string) =>
+    request<RevisionStatusHistoryEntry[]>(`/revisions/${id}/status-history`, role),
 
   refreshRevisionPrices: (role: UserRole, id: string) =>
     request<ProjectRevision>(`/revisions/${id}/refresh-prices`, role, {

@@ -18,6 +18,7 @@ enum UserRole {
 enum RevisionStatus {
   DRAFT
   APPROVED
+  INACTIVE
   LOCKED
 }
 
@@ -142,10 +143,27 @@ model ProjectRevision {
   customerConfirmName String?
 
   steps               ScheduleStep[]
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  statusHistory       RevisionStatusHistory[]
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
 
   @@unique([projectId, revisionNo])
+}
+
+model RevisionStatusHistory {
+  id              String          @id @default(uuid())
+  revisionId      String
+  revision        ProjectRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  fromStatus      RevisionStatus?
+  toStatus        RevisionStatus
+  changedByUserId String?
+  changedByName   String
+  changedByRole   UserRole
+  note            String
+  isAutoSupersede Boolean         @default(false)
+  changedAt       DateTime        @default(now())
+
+  @@index([revisionId, changedAt(sort: Desc)])
 }
 
 // 7. Schedule Step (Parent step row on CS / Merged row on CC)

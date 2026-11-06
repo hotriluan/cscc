@@ -91,3 +91,24 @@ export function requireCostAccessMiddleware(
   }
   next();
 }
+
+/**
+ * Restricts revision status transitions (`DRAFT` <-> `APPROVED` <-> `INACTIVE`)
+ * strictly to `PROJECT_LEADER` and `ADMIN` roles.
+ * Blocks `TECHNICAL` (TA) and `SALES` roles with `403 Forbidden`.
+ */
+export function requireStatusChangeAccessMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  if (req.userRole !== 'PROJECT_LEADER' && req.userRole !== 'ADMIN') {
+    res.status(403).json({
+      error: 'FORBIDDEN_STATUS_CHANGE',
+      message:
+        'Technical (TA) and Sales accounts are not permitted to change revision status. Only Project Leader and Admin can perform this action. / Tài khoản Kỹ thuật viên (TECHNICAL) và Kinh doanh (SALES) không có quyền thay đổi trạng thái phê duyệt của hồ sơ. Chỉ Project Leader và Admin mới được phép thực hiện.'
+    });
+    return;
+  }
+  next();
+}

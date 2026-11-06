@@ -15,6 +15,7 @@ import {
   Lock,
   FileEdit,
   CheckCircle2,
+  PauseCircle,
   X
 } from 'lucide-react';
 import {
@@ -55,7 +56,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
   const [searchQuery, setSearchQuery] = React.useState('');
   const [customerFilter, setCustomerFilter] = React.useState('ALL');
   const [statusFilter, setStatusFilter] = React.useState<
-    'ALL' | 'DRAFT' | 'APPROVED'
+    'ALL' | 'DRAFT' | 'APPROVED' | 'INACTIVE'
   >('ALL');
   const [showNewModal, setShowNewModal] = React.useState(false);
 
@@ -133,7 +134,9 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
         const hasStatus = proj.revisions.some((r) =>
           statusFilter === 'APPROVED'
             ? r.status === 'APPROVED' || r.status === 'LOCKED'
-            : r.status === 'DRAFT'
+            : statusFilter === 'INACTIVE'
+              ? r.status === 'INACTIVE'
+              : r.status === 'DRAFT'
         );
         if (!hasStatus) return false;
       }
@@ -223,7 +226,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
         {/* Filter Controls */}
         <div className="grid grid-cols-1 gap-3 border-t border-slate-200 pt-4 md:grid-cols-12">
           {/* Keyword Search */}
-          <div className="relative md:col-span-5">
+          <div className="relative md:col-span-4">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="text"
@@ -256,13 +259,13 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
           </div>
 
           {/* Status Filter */}
-          <div className="flex items-center gap-1.5 md:col-span-3">
-            {(['ALL', 'DRAFT', 'APPROVED'] as const).map((st) => (
+          <div className="flex flex-wrap items-center gap-1 md:col-span-4">
+            {(['ALL', 'DRAFT', 'APPROVED', 'INACTIVE'] as const).map((st) => (
               <button
                 key={st}
                 type="button"
                 onClick={() => setStatusFilter(st)}
-                className={`flex-1 rounded-lg px-2.5 py-1.5 text-xs font-bold transition ${
+                className={`flex-1 rounded-lg px-2 py-1.5 text-[11px] font-bold transition ${
                   statusFilter === st
                     ? 'bg-slate-900 text-white'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -272,7 +275,9 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                   ? `All / Tất cả (${projects.length})`
                   : st === 'DRAFT'
                     ? 'Draft / Bản nháp'
-                    : 'Approved / Đã duyệt'}
+                    : st === 'APPROVED'
+                      ? 'Approved / Đang hiệu lực'
+                      : 'Inactive / Hết hiệu lực'}
               </button>
             ))}
           </div>
@@ -372,8 +377,11 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                             const isCurrent = r.id === activeRevisionId;
                             const isApprovedOrLocked =
                               r.status === 'APPROVED' || r.status === 'LOCKED';
+                            const isInactive = r.status === 'INACTIVE';
                             const canDeleteRev =
-                              proj.revisions.length > 1 && !isApprovedOrLocked;
+                              proj.revisions.length > 1 &&
+                              !isApprovedOrLocked &&
+                              !isInactive;
                             return (
                               <div
                                 key={r.id}
@@ -382,21 +390,37 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                                     ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
                                     : isApprovedOrLocked
                                       ? 'border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
-                                      : 'border-slate-300 bg-slate-100 text-slate-800 hover:bg-blue-50 hover:border-blue-300'
+                                      : isInactive
+                                        ? 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
+                                        : 'border-slate-300 bg-slate-100 text-slate-800 hover:bg-blue-50 hover:border-blue-300'
                                 }`}
                               >
                                 <button
                                   type="button"
                                   onClick={() => onSelectRevision(r.id)}
+                                  title={
+                                    isApprovedOrLocked
+                                      ? 'APPROVED / Đã duyệt - Đang hiệu lực'
+                                      : isInactive
+                                        ? 'INACTIVE / Đã duyệt - Hết hiệu lực'
+                                        : 'DRAFT / Bản nháp'
+                                  }
                                   className="inline-flex items-center gap-1 px-2.5 py-1"
                                 >
                                   {isApprovedOrLocked ? (
                                     <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                  ) : isInactive ? (
+                                    <PauseCircle className="h-3 w-3 text-amber-600" />
                                   ) : (
                                     <FileEdit className="h-3 w-3 opacity-70" />
                                   )}
                                   <span>
                                     Rev {String(r.revisionNo).padStart(2, '0')}
+                                    {isApprovedOrLocked
+                                      ? ' (APPROVED)'
+                                      : isInactive
+                                        ? ' (INACTIVE)'
+                                        : ''}
                                   </span>
                                 </button>
                                 {canDeleteRev && (

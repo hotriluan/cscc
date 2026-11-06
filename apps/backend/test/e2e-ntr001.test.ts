@@ -239,7 +239,7 @@ describe('CSCC Backend E2E Verification — Golden Dataset NTR 001, RBAC & Dynam
     const lockRes = await fetch(`${baseUrl}/api/revisions/rev-ntr001-00/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
-      body: JSON.stringify({ status: 'LOCKED' })
+      body: JSON.stringify({ status: 'LOCKED', note: 'Approve Rev 00 for production' })
     });
     assert.equal(lockRes.status, 200);
 
@@ -255,7 +255,7 @@ describe('CSCC Backend E2E Verification — Golden Dataset NTR 001, RBAC & Dynam
     await fetch(`${baseUrl}/api/revisions/rev-ntr001-00/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
-      body: JSON.stringify({ status: 'DRAFT' })
+      body: JSON.stringify({ status: 'DRAFT', note: 'Reopen Rev 00 for test cleanup' })
     });
     await fetch(`${baseUrl}/api/revisions/${cloned.id}`, {
       method: 'DELETE',

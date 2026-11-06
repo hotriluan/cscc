@@ -1,6 +1,23 @@
-import { ProjectRevision, RevisionStatus } from '@cscc/shared';
+import {
+  ProjectRevision,
+  RevisionStatus,
+  RevisionStatusHistoryEntry,
+  UserRole
+} from '@cscc/shared';
 import { prisma } from '../store/prisma';
 import { dataStore } from '../store/data-store';
+
+export class RevisionStatusDomainError extends Error {
+  public readonly code: string;
+  public readonly httpStatus: number;
+
+  constructor(code: string, message: string, httpStatus = 400) {
+    super(message);
+    this.name = 'RevisionStatusDomainError';
+    this.code = code;
+    this.httpStatus = httpStatus;
+  }
+}
 
 /**
  * Clones an existing revision into a new `Rev XX` (e.g., `Rev 00` -> `Rev 01`) in PostgreSQL,
@@ -127,22 +144,144 @@ export async function cloneRevision(
 }
 
 /**
- * Updates revision status (`DRAFT` -> `APPROVED` -> `LOCKED`) in PostgreSQL.
+ * Updates revision status (`DRAFT` | `APPROVED` | `INACTIVE`) in PostgreSQL
+ * with mandatory reason validation, state transition rules, atomic auto-supersede
+ * of older `APPROVED` revisions in the same Project, and `RevisionStatusHistory` logging.
  */
-export async function updateRevisionStatus(
-  revisionId: string,
-  status: RevisionStatus
-): Promise<ProjectRevision> {
+export async function updateRevisionStatus(params: {
+  revisionId: string;
+  targetStatus: RevisionStatus;
+  note?: string | null;
+  actor: {
+    userId?: string | null;
+    fullName: string;
+    role: UserRole;
+  };
+}): Promise<ProjectRevision> {
+  const { revisionId, actor } = params;
+  const rawStatus = String(params.targetStatus || '').toUpperCase() as RevisionStatus;
+  const normalizedTargetStatus: RevisionStatus =
+    rawStatus === 'LOCKED' ? 'APPROVED' : rawStatus;
+
+  if (
+    normalizedTargetStatus !== 'DRAFT' &&
+    normalizedTargetStatus !== 'APPROVED' &&
+    normalizedTargetStatus !== 'INACTIVE'
+  ) {
+    throw new RevisionStatusDomainError(
+      'INVALID_STATUS',
+      `Invalid revision status: ${params.targetStatus} / Trạng thái không hợp lệ: ${params.targetStatus}`,
+      400
+    );
+  }
+
+  const cleanNote = (params.note ?? '').trim();
+  if (!cleanNote) {
+    throw new RevisionStatusDomainError(
+      'REASON_REQUIRED',
+      'Reason is required to change revision status / Vui lòng nhập lý do thay đổi trạng thái hồ sơ.',
+      400
+    );
+  }
+
   const existing = await prisma.projectRevision.findUnique({
     where: { id: revisionId }
   });
   if (!existing) {
-    throw new Error(`Revision not found: ${revisionId}`);
+    throw new RevisionStatusDomainError(
+      'REVISION_NOT_FOUND',
+      `Revision not found: ${revisionId} / Không tìm thấy phiên bản hồ sơ.`,
+      404
+    );
   }
 
-  await prisma.projectRevision.update({
-    where: { id: revisionId },
-    data: { status }
+  const currentEffectiveStatus: RevisionStatus =
+    existing.status === 'LOCKED' ? 'APPROVED' : (existing.status as RevisionStatus);
+
+  if (currentEffectiveStatus === normalizedTargetStatus) {
+    throw new RevisionStatusDomainError(
+      'SAME_STATUS',
+      `Revision is already in ${normalizedTargetStatus} status / Phiên bản hiện đã ở trạng thái ${normalizedTargetStatus}.`,
+      400
+    );
+  }
+
+  // Rule: Only an APPROVED (or legacy LOCKED) revision can transition to INACTIVE
+  if (normalizedTargetStatus === 'INACTIVE' && currentEffectiveStatus !== 'APPROVED') {
+    throw new RevisionStatusDomainError(
+      'INVALID_STATUS_TRANSITION',
+      'Only an APPROVED revision can be set to INACTIVE / Chỉ có thể chuyển sang trạng thái Ngưng hiệu lực (INACTIVE) từ hồ sơ đang Đã duyệt (APPROVED).',
+      400
+    );
+  }
+
+  const now = new Date();
+  const targetRevCode = `Rev ${String(existing.revisionNo).padStart(2, '0')}`;
+
+  await prisma.$transaction(async (tx) => {
+    // 1. Update target revision status
+    await tx.projectRevision.update({
+      where: { id: revisionId },
+      data: {
+        status: normalizedTargetStatus,
+        updatedAt: now
+      }
+    });
+
+    // 2. Record status change history for target revision
+    await tx.revisionStatusHistory.create({
+      data: {
+        id: `hist-${revisionId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+        revisionId,
+        fromStatus: currentEffectiveStatus,
+        toStatus: normalizedTargetStatus,
+        changedByUserId: actor.userId ?? null,
+        changedByName: actor.fullName,
+        changedByRole: actor.role,
+        note: cleanNote,
+        isAutoSupersede: false,
+        changedAt: now
+      }
+    });
+
+    // 3. Auto-supersede: When approving this revision, automatically set all other APPROVED revisions in the same Project to INACTIVE
+    if (normalizedTargetStatus === 'APPROVED') {
+      const siblingApprovedRevs = await tx.projectRevision.findMany({
+        where: {
+          projectId: existing.projectId,
+          id: { not: revisionId },
+          status: { in: ['APPROVED', 'LOCKED'] }
+        },
+        orderBy: { revisionNo: 'asc' }
+      });
+
+      if (siblingApprovedRevs.length > 0) {
+        await tx.projectRevision.updateMany({
+          where: {
+            id: { in: siblingApprovedRevs.map((r) => r.id) }
+          },
+          data: {
+            status: 'INACTIVE',
+            updatedAt: now
+          }
+        });
+
+        await tx.revisionStatusHistory.createMany({
+          data: siblingApprovedRevs.map((oldRev, idx) => ({
+            id: `hist-auto-${oldRev.id}-${Date.now().toString(36)}-${idx}`,
+            revisionId: oldRev.id,
+            fromStatus: 'APPROVED',
+            toStatus: 'INACTIVE',
+            changedByUserId: actor.userId ?? null,
+            changedByName: actor.fullName,
+            changedByRole: actor.role,
+            note: `Auto-superseded to INACTIVE because ${targetRevCode} was approved. Reason for ${targetRevCode}: ${cleanNote} / Tự động chuyển sang INACTIVE do phiên bản ${targetRevCode} được phê duyệt thay thế. Lý do duyệt ${targetRevCode}: ${cleanNote}`,
+            isAutoSupersede: true,
+            changedAt: now
+          }))
+        });
+      }
+    }
   });
 
   const updated = await dataStore.getRevisionById(revisionId);
@@ -150,4 +289,29 @@ export async function updateRevisionStatus(
     throw new Error(`Revision not found after update: ${revisionId}`);
   }
   return updated;
+}
+
+/**
+ * Retrieves ordered status history entries (newest first) for a given revision.
+ */
+export async function getRevisionStatusHistory(
+  revisionId: string
+): Promise<RevisionStatusHistoryEntry[]> {
+  const rows = await prisma.revisionStatusHistory.findMany({
+    where: { revisionId },
+    orderBy: { changedAt: 'desc' }
+  });
+
+  return rows.map((h) => ({
+    id: h.id,
+    revisionId: h.revisionId,
+    fromStatus: (h.fromStatus as RevisionStatus | null) ?? null,
+    toStatus: h.toStatus as RevisionStatus,
+    changedByUserId: h.changedByUserId ?? null,
+    changedByName: h.changedByName,
+    changedByRole: h.changedByRole as UserRole,
+    note: h.note,
+    isAutoSupersede: h.isAutoSupersede,
+    changedAt: h.changedAt.toISOString()
+  }));
 }

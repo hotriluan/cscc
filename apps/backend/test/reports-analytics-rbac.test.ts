@@ -77,7 +77,7 @@ describe('CSCC Reports & Analytics System — 7 Reports, Revision Scope, Salesma
     await fetch(`${baseUrl}/api/revisions/rev-ntr001-00/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
-      body: JSON.stringify({ status: 'APPROVED' })
+      body: JSON.stringify({ status: 'APPROVED', note: 'Approve Rev 00 for scope filter test' })
     });
 
     const cloneRes = await fetch(`${baseUrl}/api/revisions/rev-ntr001-00/clone`, {
@@ -131,7 +131,7 @@ describe('CSCC Reports & Analytics System — 7 Reports, Revision Scope, Salesma
       await fetch(`${baseUrl}/api/revisions/rev-ntr001-00/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
-        body: JSON.stringify({ status: 'DRAFT' })
+        body: JSON.stringify({ status: 'DRAFT', note: 'Revert Rev 00 to DRAFT after scope test' })
       });
       await fetch(`${baseUrl}/api/revisions/${cloned.id}`, {
         method: 'DELETE',

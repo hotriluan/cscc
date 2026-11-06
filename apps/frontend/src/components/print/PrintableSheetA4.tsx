@@ -97,7 +97,9 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
             <strong className="text-slate-900">
               {revision.status === 'LOCKED' || revision.status === 'APPROVED'
                 ? 'APPROVED / ĐÃ PHÊ DUYỆT'
-                : 'DRAFT / BẢN NHÁP'}
+                : revision.status === 'INACTIVE'
+                  ? 'INACTIVE / ĐÃ DUYỆT - HẾT HIỆU LỰC'
+                  : 'DRAFT / BẢN NHÁP'}
             </strong>
           </span>
           <span>|</span>
