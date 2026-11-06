@@ -56,3 +56,20 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
+---
+
+## 3. Triển khai & Cập nhật Production (`alkanacscc.com`)
+
+Hệ thống Production được triển khai trên máy chủ Ubuntu 24.04 (`192.168.18.33`) theo kiến trúc **Co-Tenancy (Native Systemd + Nginx Virtual Host + PostgreSQL 16)**:
+
+- **Thư mục mã nguồn:** `/var/www/html/alkana_cscc` (đồng bộ từ GitHub `https://github.com/hotriluan/cscc.git`).
+- **Cơ sở dữ liệu:** PostgreSQL 16 (`127.0.0.1:5432/cscc_db`, user `cscc`).
+- **Systemd Service (Backend API):** `/etc/systemd/system/alkana_cscc.service` lắng nghe nội bộ tại `127.0.0.1:4000`.
+- **Nginx Virtual Host:** `/etc/nginx/sites-available/alkana_cscc` phục vụ `alkanacscc.com` (port `80`), đọc static build từ `/var/www/html/alkana_cscc/apps/frontend/dist` và reverse-proxy `/api/` về `127.0.0.1:4000`.
+- **Cập nhật phiên bản mới từ GitHub:**
+  ```bash
+  # Trên máy chủ Ubuntu (user it):
+  /var/www/html/alkana_cscc/deploy.sh
+  ```
+
+
