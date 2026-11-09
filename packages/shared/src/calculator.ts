@@ -375,19 +375,34 @@ export interface CcPageSlice {
   showTotalAndNotes: boolean;
 }
 
+/*
+ * Pagination budget. One unit = one data row of a single-line chemical at the
+ * current print size (CS 9pt, CC 8pt, leading 1.2, 1pt vertical padding).
+ * A4 printable height is ~808pt; CS rows are ~14pt, CC rows ~12.4pt.
+ * Page 1 additionally holds the header (~40pt), metadata grid (~90pt) and
+ * table header (~26-28pt); later pages hold only header + table header.
+ * Values include a ~5% safety margin for font metric differences.
+ */
 const CS_FIRST_PAGE_MAX_UNITS = 44;
-const CS_NEXT_PAGE_MAX_UNITS = 46;
+const CS_NEXT_PAGE_MAX_UNITS = 49;
 const CS_REMARK_UNITS = 3.5;
-const CS_SIGNATURES_UNITS = 4.5;
+const CS_SIGNATURES_UNITS = 5.5;
 
-const CC_FIRST_PAGE_MAX_UNITS = 40;
-const CC_NEXT_PAGE_MAX_UNITS = 42;
-const CC_FOOTER_BASE_UNITS = 4.5;
+const CC_FIRST_PAGE_MAX_UNITS = 48;
+const CC_NEXT_PAGE_MAX_UNITS = 54;
+const CC_FOOTER_BASE_UNITS = 4;
+
+/** Extra height of a wrapped line relative to a full row (10.8pt / 14pt). */
+const WRAP_LINE_UNITS = 0.75;
+/** Length of the band label `SANDING / CHÀ NHÁM — ` and the characters that fit on one band line. */
+const SANDING_LABEL_CHARS = 21;
+const SANDING_BAND_LINE_CHARS = 95;
 
 function estimateCsStepUnits(step: ScheduleStep): number {
   if (step.rowType === 'SANDING') {
-    const specLen = (step.sandingSpec || '').trim().length;
-    return specLen > 24 ? 1.4 : 1;
+    const totalLen = SANDING_LABEL_CHARS + (step.sandingSpec || '').trim().length;
+    const lines = Math.max(1, Math.ceil(totalLen / SANDING_BAND_LINE_CHARS));
+    return 1 + (lines - 1) * 0.8;
   }
 
   const items = step.items || [];
@@ -398,12 +413,12 @@ function estimateCsStepUnits(step: ScheduleStep): number {
   let itemUnits = 0;
   for (const item of items) {
     const nameLen = (item.materialName || item.materialCode || '').trim().length;
-    const lines = Math.max(1, Math.ceil(nameLen / 38));
-    itemUnits += 1 + (lines - 1) * 0.7;
+    const lines = Math.max(1, Math.ceil(nameLen / 27));
+    itemUnits += 1 + (lines - 1) * WRAP_LINE_UNITS;
   }
 
   const stepNameLines = Math.max(1, Math.ceil((step.stepName || '').trim().length / 14));
-  const dryingLines = Math.max(1, Math.ceil((step.dryingTime || '').trim().length / 16));
+  const dryingLines = Math.max(1, Math.ceil((step.dryingTime || '').trim().length / 20));
   const minMergedUnits = Math.max(stepNameLines, dryingLines) * 0.65;
 
   return Math.max(itemUnits, minMergedUnits);
@@ -477,7 +492,8 @@ export function paginateCsSteps(steps: ScheduleStep[]): CsPageSlice[] {
 
   const lastPage = pages[pages.length - 1];
   const fullFooterUnits = CS_REMARK_UNITS + CS_SIGNATURES_UNITS;
-  // Pages without the 3x3 metadata grid have ~2 extra row units of safe vertical room
+  // Pages without the metadata grid have ~6 extra row units of vertical room (~90pt / 14pt),
+  // of which only 2 are claimed to keep the safety margin.
   const effectiveFooterBudget = lastPage.showMetadata
     ? lastPage.maxUnits
     : lastPage.maxUnits + 2;
@@ -514,11 +530,11 @@ function estimateCcStepUnits(stepCalc: StepCostCalculation): number {
   let itemUnits = 0;
   for (const item of items) {
     const nameLen = (item.materialName || item.materialCode || '').trim().length;
-    const lines = Math.max(1, Math.ceil(nameLen / 32));
-    itemUnits += 1 + (lines - 1) * 0.7;
+    const lines = Math.max(1, Math.ceil(nameLen / 25));
+    itemUnits += 1 + (lines - 1) * WRAP_LINE_UNITS;
   }
 
-  const stepNameLines = Math.max(1, Math.ceil((stepCalc.stepName || '').trim().length / 11));
+  const stepNameLines = Math.max(1, Math.ceil((stepCalc.stepName || '').trim().length / 12));
   const minMergedUnits = stepNameLines * 0.65;
 
   return Math.max(itemUnits, minMergedUnits);

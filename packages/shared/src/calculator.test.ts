@@ -288,24 +288,63 @@ describe('Shared Calculation Engine (@cscc/shared)', () => {
     assert.equal(ccPages6[0].steps.length, 6);
     assert.equal(ccPages6[0].showTotalAndNotes, true);
 
-    // 8 steps (40 rows) -> Page 1/2 (Steps 1-7) and Page 2/2 (Step 8 + Total + Notes carried together)
+    // 8 steps (40 rows) -> still fits on 1 page together with Total + Notes
     const ccSummary8 = calculateCoatingCostTable('rev-ntr001-00', ntr10Steps.slice(0, 8));
     const ccPages8 = paginateCcSteps(ccSummary8.steps, false);
-    assert.equal(ccPages8.length, 2);
+    assert.equal(ccPages8.length, 1);
     assert.equal(ccPages8[0].showMetadata, true);
-    assert.equal(ccPages8[0].steps.length, 7);
-    assert.equal(ccPages8[0].showTotalAndNotes, false);
-    assert.equal(ccPages8[1].showMetadata, false);
-    assert.equal(ccPages8[1].steps.length, 1);
-    assert.equal(ccPages8[1].showTotalAndNotes, true);
+    assert.equal(ccPages8[0].steps.length, 8);
+    assert.equal(ccPages8[0].showTotalAndNotes, true);
 
-    // 10 steps (50 rows) -> Page 1/2 (Steps 1-8), Page 2/2 (Steps 9-10 + Total + Notes)
+    // 10 steps (50 rows) -> Page 1/2 (Steps 1-9), Page 2/2 (Step 10 + Total + Notes)
     const ccSummary10 = calculateCoatingCostTable('rev-ntr001-00', ntr10Steps);
     const ccPages10 = paginateCcSteps(ccSummary10.steps, true);
     assert.equal(ccPages10.length, 2);
-    assert.equal(ccPages10[0].steps.length, 8);
+    assert.equal(ccPages10[0].steps.length, 9);
     assert.equal(ccPages10[0].showTotalAndNotes, false);
-    assert.equal(ccPages10[1].steps.length, 2);
+    assert.equal(ccPages10[1].steps.length, 1);
     assert.equal(ccPages10[1].showTotalAndNotes, true);
   });
+
+  it('adds pages instead of overfilling when material names wrap onto several lines', () => {
+    const longName = 'NC WOOD SEALER CLEAR GLOSS EXTRA LONG PRODUCT NAME 0123456789 ABC';
+    const steps: ScheduleStep[] = [];
+    for (let s = 1; s <= 10; s++) {
+      const step = makeChemStep(s, s, 'TOP COAT COLOR', 'SPRAY', '100-120', true);
+      step.items = step.items.map((it) => ({ ...it, materialName: longName }));
+      steps.push(step);
+    }
+
+    const csPages = paginateCsSteps(steps);
+    assert.ok(csPages.length >= 2);
+    const ccPages = paginateCcSteps(calculateCoatingCostTable('rev-long', steps).steps, false);
+    assert.ok(ccPages.length >= 3);
+    // Every step is placed exactly once
+    assert.equal(csPages.reduce((n, p) => n + p.steps.length, 0), 10);
+    assert.equal(ccPages.reduce((n, p) => n + p.steps.length, 0), 10);
+  });
+
+  it('keeps a SANDING row with its following step even when the sanding spec is very long', () => {
+    const steps: ScheduleStep[] = [];
+    let order = 1;
+    for (let s = 1; s <= 7; s++) {
+      steps.push({
+        id: `sanding-${s}`,
+        stepOrder: order++,
+        stepNumber: null,
+        rowType: 'SANDING',
+        stepName: 'SANDING',
+        sandingSpec: 'SANDING PAPER #180-240 '.repeat(6).trim(),
+        items: []
+      });
+      steps.push(makeChemStep(order++, s, 'TOP COAT COLOR', 'SPRAY', '100-120', true));
+    }
+
+    const pages = paginateCsSteps(steps);
+    for (const page of pages) {
+      if (page.steps.length === 0) continue;
+      assert.notEqual(page.steps[page.steps.length - 1].rowType, 'SANDING');
+    }
+  });
 });
+
