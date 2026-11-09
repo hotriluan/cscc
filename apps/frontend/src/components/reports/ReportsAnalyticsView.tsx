@@ -124,11 +124,14 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
   const [systemFilter, setSystemFilter] = React.useState<string>('ALL');
   const [keyword, setKeyword] = React.useState<string>('');
 
-  // Tab 1 specific filters
+  // Tab 1 specific filters & expand state
   const [selectedMaterialCode, setSelectedMaterialCode] =
-    React.useState<string>('ALL');
+    React.useState<string>('');
   const [selectedFurnitureProduct, setSelectedFurnitureProduct] =
     React.useState<string>('ALL');
+  const [expandedProductRevIds, setExpandedProductRevIds] = React.useState<
+    Record<string, boolean>
+  >({});
 
   // Tab 2 specific expand state
   const [expandedCustomerIds, setExpandedCustomerIds] = React.useState<
@@ -171,7 +174,9 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
           : undefined,
       customerId: customerFilter !== 'ALL' ? customerFilter : undefined,
       materialCode:
-        selectedMaterialCode !== 'ALL' ? selectedMaterialCode : undefined,
+        selectedMaterialCode && selectedMaterialCode !== 'ALL'
+          ? selectedMaterialCode
+          : undefined,
       productName:
         selectedFurnitureProduct !== 'ALL'
           ? selectedFurnitureProduct
@@ -303,18 +308,10 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
     return opts;
   }, [overview?.meta.availableCustomers]);
 
-  // Combobox options for Chemical Material (Tab 1)
+  // Combobox options for Chemical Material (Tab 1 — On-Demand Single Product Selection)
   const materialComboboxOptions = React.useMemo<ComboboxOption[]>(() => {
     const catalog = overview?.productUsage.productCatalog || [];
-    const opts: ComboboxOption[] = [
-      {
-        value: 'ALL',
-        label:
-          'All Chemical Products / Tất cả Sản phẩm Sơn đang dùng trong CS',
-        badge: `${catalog.length} mã`,
-        badgeColor: 'blue'
-      }
-    ];
+    const opts: ComboboxOption[] = [];
     for (const item of catalog) {
       opts.push({
         value: item.materialCode,
@@ -386,22 +383,21 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
 
             <button
               type="button"
-              disabled={exporting || loading}
+              disabled={
+                exporting ||
+                loading ||
+                (activeReportTab === 'PRODUCT_USAGE' && !selectedMaterialCode)
+              }
+              title={
+                activeReportTab === 'PRODUCT_USAGE' && !selectedMaterialCode
+                  ? 'Please select a chemical product first to export Where-Used flat step data for PivotTable / Vui lòng chọn 1 mã vật tư sơn trước khi xuất Excel'
+                  : 'Export active report tab to Excel (.xlsx) / Xuất bảng báo cáo hiện tại ra Excel'
+              }
               onClick={() => handleExportExcel(activeReportTab)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50 shadow-sm"
             >
               <Download className="h-3.5 w-3.5" />
               Export Active Tab (.xlsx) / Xuất Tab hiện tại
-            </button>
-
-            <button
-              type="button"
-              disabled={exporting || loading}
-              onClick={() => handleExportExcel('ALL')}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50 shadow-sm"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Export All 7 Reports (.xlsx) / Xuất Trọn bộ 7 Báo cáo
             </button>
           </div>
         </div>
@@ -559,7 +555,8 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                 setSalesmanFilter('ALL');
                 setCustomerFilter('ALL');
                 setSystemFilter('ALL');
-                setSelectedMaterialCode('ALL');
+                setSelectedMaterialCode('');
+                setExpandedProductRevIds({});
                 setSelectedFurnitureProduct('ALL');
                 setKeyword('');
                 setCompareProjectId('');
@@ -647,7 +644,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
       ) : overview ? (
         <>
           {/* =================================================================
-              REPORT 1: PRODUCT USAGE & WHERE-USED REPORT
+              REPORT 1: PRODUCT USAGE & WHERE-USED REPORT (ON-DEMAND + REVISION BREAKDOWN)
              ================================================================= */}
           {activeReportTab === 'PRODUCT_USAGE' && (
             <div className="space-y-4">
@@ -659,21 +656,38 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                       1. Product Usage & Where-Used Report / Báo cáo Tần suất & Chi phí theo Sản phẩm Sơn
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Select a chemical material or furniture item to inspect every Coating Schedule (CS) & Coating Cost (CC) where it is applied / Chọn mã sơn hoặc sản phẩm gỗ để thống kê chi tiết số lượng CS/CC, khách hàng, số Rev, định mức g/m² và chi phí VND/m²
+                      Select a chemical material on-demand to inspect every CS/CC Revision where it is applied and breakdown into individual steps / Chọn 1 mã vật tư sơn để tra cứu các bản CS/CC (gộp theo Revision) và sổ chi tiết từng bước sơn (Step Breakdown)
                     </p>
                   </div>
+
+                  {selectedMaterialCode && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedMaterialCode('');
+                        setExpandedProductRevIds({});
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200 transition"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Change / Clear Product / Chọn mã sơn khác
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
                   <div className="md:col-span-8">
                     <label className="mb-1 block text-xs font-bold text-slate-700">
-                      Select Chemical Product (Material Code / Name) / Chọn Mã Vật tư Sơn:
+                      Select Chemical Product (On-Demand) / Chọn Mã Vật tư Sơn cần phân tích ({overview.productUsage.productCatalog.length} mã đang dùng trong CS):
                     </label>
                     <SearchableCombobox
                       value={selectedMaterialCode}
                       options={materialComboboxOptions}
-                      onChange={(val) => setSelectedMaterialCode(val || 'ALL')}
-                      placeholder="Search chemical code (e.g., PSV-76000, NC, PU...) / Tìm mã vật tư sơn..."
+                      onChange={(val) => {
+                        setSelectedMaterialCode(val || '');
+                        setExpandedProductRevIds({});
+                      }}
+                      placeholder="Type or select a chemical code (e.g., PSV-76000, NC, PU...) / Nhập hoặc chọn 1 mã vật tư sơn..."
                     />
                   </div>
 
@@ -700,278 +714,562 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                   </div>
                 </div>
 
-                {/* KPI Summary Cards */}
-                <div
-                  className={`grid grid-cols-2 gap-3 pt-2 ${
-                    canViewCost ? 'lg:grid-cols-6' : 'lg:grid-cols-4'
-                  }`}
-                >
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <div className="text-[11px] font-bold text-slate-500">
-                      Customers / Khách hàng sử dụng
-                    </div>
-                    <div className="mt-1 text-xl font-black text-slate-900">
-                      {overview.productUsage.summary.totalCustomers}
-                    </div>
-                    <div className="text-[10px] text-slate-500">
-                      Across {overview.productUsage.summary.totalProjects}{' '}
-                      Project(s) / Dự án
-                    </div>
-                  </div>
+                {/* Selected Product Highlight Banner & KPI Summary Cards (Only when a product is selected) */}
+                {selectedMaterialCode && (
+                  <>
+                    {(() => {
+                      const activeCatalogItem =
+                        overview.productUsage.productCatalog.find(
+                          (item) =>
+                            item.materialCode.toLowerCase() ===
+                            selectedMaterialCode.toLowerCase()
+                        );
+                      const firstRevRow =
+                        overview.productUsage.revisionUsages[0];
+                      const matName =
+                        activeCatalogItem?.materialName ||
+                        firstRevRow?.materialName ||
+                        selectedMaterialCode;
+                      const packingDesc =
+                        activeCatalogItem?.packingDesc ||
+                        firstRevRow?.packingDesc ||
+                        '-';
+                      const nettWeight =
+                        activeCatalogItem?.nettWeight ??
+                        firstRevRow?.nettWeight ??
+                        1;
 
-                  <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3">
-                    <div className="text-[11px] font-bold text-blue-800">
-                      CS/CC Revisions / Số bản CS sử dụng
-                    </div>
-                    <div className="mt-1 text-xl font-black text-blue-950">
-                      {overview.productUsage.summary.totalRevisions}
-                    </div>
-                    <div className="text-[10px] font-semibold text-blue-700">
-                      ✅ {overview.productUsage.summary.approvedRevisions}{' '}
-                      Approved • 📝{' '}
-                      {overview.productUsage.summary.draftRevisions} Draft
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <div className="text-[11px] font-bold text-slate-500">
-                      Step Occurrences / Tổng số Bước sơn
-                    </div>
-                    <div className="mt-1 text-xl font-black text-slate-900">
-                      {overview.productUsage.summary.totalOccurrences}
-                    </div>
-                    <div className="text-[10px] text-slate-500">
-                      Application step lines / Dòng công đoạn
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                    <div className="text-[11px] font-bold text-slate-500">
-                      Avg Consumption / Định mức TB (CA+Loss)
-                    </div>
-                    <div className="mt-1 text-xl font-black text-slate-900">
-                      {formatDecimal2(
-                        overview.productUsage.summary.avgCaPlusLossGramM2
-                      )}{' '}
-                      <span className="text-xs font-semibold text-slate-500">
-                        g/m²
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-slate-500">
-                      Weighted by mixing ratio / Theo tỷ lệ pha
-                    </div>
-                  </div>
-
-                  {canViewCost && (
-                    <>
-                      <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3">
-                        <div className="text-[11px] font-bold text-emerald-800">
-                          Avg Item Cost / Chi phí VT Trung bình
+                      return (
+                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white font-bold">
+                              <FlaskConical className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="rounded bg-blue-700 px-2 py-0.5 font-mono text-xs font-extrabold text-white">
+                                  {selectedMaterialCode}
+                                </span>
+                                <span className="text-sm font-extrabold text-slate-900">
+                                  {matName}
+                                </span>
+                              </div>
+                              <div className="mt-0.5 text-[11px] font-medium text-slate-600">
+                                Packing / Quy cách: <span className="font-bold text-slate-800">{packingDesc}</span> ({nettWeight} Kg/Ltr) • Excel Export: Flat Step-level table ready for PivotTable
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="mt-1 text-xl font-black text-emerald-950">
+                      );
+                    })()}
+
+                    <div
+                      className={`grid grid-cols-2 gap-3 pt-1 ${
+                        canViewCost ? 'lg:grid-cols-6' : 'lg:grid-cols-4'
+                      }`}
+                    >
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div className="text-[11px] font-bold text-slate-500">
+                          Customers / Khách hàng sử dụng
+                        </div>
+                        <div className="mt-1 text-xl font-black text-slate-900">
+                          {overview.productUsage.summary.totalCustomers}
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          Across {overview.productUsage.summary.totalProjects}{' '}
+                          Project(s) / Dự án
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3">
+                        <div className="text-[11px] font-bold text-blue-800">
+                          CS/CC Revisions / Số bản CS sử dụng
+                        </div>
+                        <div className="mt-1 text-xl font-black text-blue-950">
+                          {overview.productUsage.summary.totalRevisions}
+                        </div>
+                        <div className="text-[10px] font-semibold text-blue-700">
+                          ✅ {overview.productUsage.summary.approvedRevisions}{' '}
+                          Approved • 📝{' '}
+                          {overview.productUsage.summary.draftRevisions} Draft
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div className="text-[11px] font-bold text-slate-500">
+                          Step Occurrences / Tổng số Bước sơn
+                        </div>
+                        <div className="mt-1 text-xl font-black text-slate-900">
+                          {overview.productUsage.summary.totalOccurrences}
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          Across {overview.productUsage.revisionUsages.length} Revision(s)
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <div className="text-[11px] font-bold text-slate-500">
+                          Avg Step Consumption / Định mức TB mỗi Bước
+                        </div>
+                        <div className="mt-1 text-xl font-black text-slate-900">
                           {formatDecimal2(
-                            overview.productUsage.summary.avgItemCostVndM2
+                            overview.productUsage.summary.avgCaPlusLossGramM2
                           )}{' '}
-                          <span className="text-xs font-semibold text-emerald-700">
-                            đ/m²
+                          <span className="text-xs font-semibold text-slate-500">
+                            g/m²
                           </span>
                         </div>
-                        <div className="text-[10px] text-emerald-700">
-                          Material contribution / Đóng góp vào CC
+                        <div className="text-[10px] text-slate-500">
+                          Weighted by mixing ratio / Theo tỷ lệ pha
                         </div>
                       </div>
 
-                      <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3">
-                        <div className="text-[11px] font-bold text-emerald-800">
-                          Min – Max Item Cost (VND/m²)
-                        </div>
-                        <div className="mt-1 text-sm font-black text-emerald-950">
-                          {formatDecimal2(
-                            overview.productUsage.summary.minItemCostVndM2
-                          )}{' '}
-                          –{' '}
-                          {formatDecimal2(
-                            overview.productUsage.summary.maxItemCostVndM2
-                          )}
-                        </div>
-                        <div className="text-[10px] text-emerald-700">
-                          Cost range across steps / Biên độ chi phí
-                        </div>
+                      {canViewCost && (
+                        <>
+                          <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3">
+                            <div className="text-[11px] font-bold text-emerald-800">
+                              Avg Step Cost / Chi phí TB mỗi Bước
+                            </div>
+                            <div className="mt-1 text-xl font-black text-emerald-950">
+                              {formatDecimal2(
+                                overview.productUsage.summary.avgItemCostVndM2
+                              )}{' '}
+                              <span className="text-xs font-semibold text-emerald-700">
+                                đ/m²
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-emerald-700">
+                              Material contribution / Đóng góp vào CC
+                            </div>
+                          </div>
+
+                          <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3">
+                            <div className="text-[11px] font-bold text-emerald-800">
+                              Min – Max Step Cost (VND/m²)
+                            </div>
+                            <div className="mt-1 text-sm font-black text-emerald-950">
+                              {formatDecimal2(
+                                overview.productUsage.summary.minItemCostVndM2
+                              )}{' '}
+                              –{' '}
+                              {formatDecimal2(
+                                overview.productUsage.summary.maxItemCostVndM2
+                              )}
+                            </div>
+                            <div className="text-[10px] text-emerald-700">
+                              Cost range across steps / Biên độ chi phí
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Conditional Content: On-Demand Empty State vs Revision Rollup + Step Breakdown Table */}
+              {!selectedMaterialCode ? (
+                <div className="rounded-xl border border-dashed border-blue-300 bg-white p-6 shadow-sm space-y-5">
+                  <div className="flex flex-col items-center text-center max-w-2xl mx-auto space-y-2">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+                      <FlaskConical className="h-6 w-6" />
+                    </div>
+                    <h4 className="text-sm font-extrabold uppercase text-slate-900">
+                      On-Demand Product Selection / Chọn Sản Phẩm Sơn Để Xem Báo Cáo Chi Tiết
+                    </h4>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      To keep the system fast and focused, please select a specific chemical product in the search box above or click one of the most-used products below. The report will display <strong>1 row per CS/CC Revision</strong> with interactive <strong>Step Breakdown</strong>.
+                      <br />
+                      <span className="text-slate-500">
+                        Để tối ưu tốc độ và tập trung đúng mã sơn cần phân tích, vui lòng chọn 1 mã vật tư sơn trên ô tìm kiếm hoặc bấm chọn nhanh bên dưới. Hệ thống sẽ hiển thị gọn theo từng <strong>Revision</strong> kèm chức năng <strong>Breakdown chi tiết từng bước sơn</strong>.
+                      </span>
+                    </p>
+                  </div>
+
+                  {overview.productUsage.productCatalog.length > 0 && (
+                    <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-extrabold uppercase text-slate-600">
+                          ⚡ Quick-Pick Top Used Chemical Products / Chọn nhanh các mã sơn sử dụng nhiều nhất ({Math.min(12, overview.productUsage.productCatalog.length)}/{overview.productUsage.productCatalog.length}):
+                        </span>
                       </div>
-                    </>
+                      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {overview.productUsage.productCatalog
+                          .slice(0, 12)
+                          .map((item) => (
+                            <button
+                              key={item.materialCode}
+                              type="button"
+                              onClick={() => {
+                                setSelectedMaterialCode(item.materialCode);
+                                setExpandedProductRevIds({});
+                              }}
+                              className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-left hover:border-blue-500 hover:bg-blue-50/50 transition shadow-sm"
+                            >
+                              <div>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="rounded bg-slate-900 px-2 py-0.5 font-mono text-xs font-extrabold text-white group-hover:bg-blue-600 transition">
+                                    {item.materialCode}
+                                  </span>
+                                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+                                    {item.usageRevisionCount} Rev • {item.usageStepCount} Step
+                                  </span>
+                                </div>
+                                <div className="mt-1.5 text-xs font-bold text-slate-900 line-clamp-1">
+                                  {item.materialName}
+                                </div>
+                              </div>
+                              <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-200/70 pt-1.5">
+                                <span>
+                                  {item.packingDesc || '-'} ({item.nettWeight} Kg/Ltr)
+                                </span>
+                                <span className="font-bold text-blue-700">
+                                  {item.customerCount} KH →
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
+              ) : (
+                /* Revision-Level Where-Used Table with Interactive Step Breakdown */
+                <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
+                    <div>
+                      <div className="text-xs font-bold uppercase text-slate-800">
+                        Where-Used Revisions Table (1 Row / Revision + Step Breakdown) / Bảng các bản CS/CC sử dụng ({overview.productUsage.revisionUsages.length} Revisions • {overview.productUsage.summary.totalOccurrences} Steps)
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        Click any Revision row to breakdown individual application steps / Bấm vào dòng Revision bất kỳ để sổ chi tiết các bước công đoạn có dùng mã sơn{' '}
+                        <span className="font-bold text-slate-800">
+                          {selectedMaterialCode}
+                        </span>
+                      </div>
+                    </div>
 
-              {/* Where-Used Detail Table */}
-              <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
-                  <div className="text-xs font-bold uppercase text-slate-800">
-                    Where-Used Detail Table / Bảng chi tiết các bản CS/CC sử dụng ({overview.productUsage.usages.length} dòng)
+                    {overview.productUsage.revisionUsages.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next: Record<string, boolean> = {};
+                            for (const r of overview.productUsage.revisionUsages) {
+                              next[r.revisionId] = true;
+                            }
+                            setExpandedProductRevIds(next);
+                          }}
+                          className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] font-bold text-blue-800 hover:bg-blue-100 transition"
+                        >
+                          Expand All Steps / Mở rộng tất cả bước
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedProductRevIds({})}
+                          className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition"
+                        >
+                          Collapse All / Thu gọn tất cả
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-200 bg-slate-900 text-[11px] font-bold uppercase text-white">
-                        <th className="px-3 py-2.5">
-                          Material / Sản phẩm Sơn
-                        </th>
-                        <th className="px-3 py-2.5">
-                          Customer & Salesman / Khách hàng
-                        </th>
-                        <th className="px-3 py-2.5">
-                          Project & Rev / Hồ sơ & Rev
-                        </th>
-                        <th className="px-3 py-2.5">
-                          Furniture & System / SP Gỗ & Hệ sơn
-                        </th>
-                        <th className="px-3 py-2.5">
-                          Step & Method / Công đoạn & PP
-                        </th>
-                        <th className="px-3 py-2.5 text-right">
-                          Ratio / Tỷ lệ pha
-                        </th>
-                        <th className="px-3 py-2.5 text-right">
-                          Item CA+Loss (g/m²)
-                        </th>
-                        {canViewCost && (
-                          <>
-                            <th className="px-3 py-2.5 text-right bg-emerald-950">
-                              Price Snapshot (VND/Kg)
-                            </th>
-                            <th className="px-3 py-2.5 text-right bg-emerald-950">
-                              Item Cost (VND/m²)
-                            </th>
-                            <th className="px-3 py-2.5 text-right bg-emerald-950">
-                              Total Rev CC (VND/m²)
-                            </th>
-                          </>
-                        )}
-                        <th className="px-3 py-2.5 text-center">
-                          Action / Mở
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200">
-                      {overview.productUsage.usages.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={canViewCost ? 11 : 8}
-                            className="px-4 py-8 text-center text-xs font-semibold text-slate-400"
-                          >
-                            No matching usage records found / Không có bản CS/CC nào sử dụng vật tư trong phạm vi lọc hiện tại.
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-900 text-[11px] font-bold uppercase text-white">
+                          <th className="px-3 py-2.5 w-8"></th>
+                          <th className="px-3 py-2.5">
+                            Customer & Salesman / Khách hàng
+                          </th>
+                          <th className="px-3 py-2.5">
+                            Project & Rev / Hồ sơ & Rev
+                          </th>
+                          <th className="px-3 py-2.5">
+                            Furniture & System / SP Gỗ & Hệ sơn
+                          </th>
+                          <th className="px-3 py-2.5">
+                            Steps Used (Breakdown) / Các bước sử dụng
+                          </th>
+                          <th className="px-3 py-2.5 text-right">
+                            Σ Product CA+Loss in Rev (g/m²)
+                          </th>
+                          {canViewCost && (
+                            <>
+                              <th className="px-3 py-2.5 text-right bg-emerald-950">
+                                Price Snapshot (VND/Kg)
+                              </th>
+                              <th className="px-3 py-2.5 text-right bg-emerald-950">
+                                Σ Product Cost in Rev (VND/m²)
+                              </th>
+                              <th className="px-3 py-2.5 text-right bg-emerald-950">
+                                Total Rev CC (VND/m²)
+                              </th>
+                            </>
+                          )}
+                          <th className="px-3 py-2.5 text-center">
+                            Action / Mở CS
+                          </th>
                         </tr>
-                      ) : (
-                        overview.productUsage.usages.map((u, idx) => (
-                          <tr
-                            key={`${u.revisionId}-${u.stepId}-${u.materialCode}-${idx}`}
-                            className="hover:bg-blue-50/40"
-                          >
-                            <td className="px-3 py-2">
-                              <div className="font-bold text-slate-900">
-                                {u.materialCode}
-                              </div>
-                              <div className="text-[11px] text-slate-500">
-                                {u.materialName}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2">
-                              <div className="font-bold text-slate-900">
-                                {u.customerShortName}
-                              </div>
-                              <div className="text-[10px] text-slate-500">
-                                ID: {u.customerId}
-                                {u.salesmanName
-                                  ? ` • Sales: ${u.salesmanName}`
-                                  : ''}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-bold text-blue-700">
-                                  {u.projectCode}
-                                </span>
-                                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                                  Rev {String(u.revisionNo).padStart(2, '0')}
-                                </span>
-                                <span
-                                  className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                                    u.status === 'APPROVED' ||
-                                    u.status === 'LOCKED'
-                                      ? 'bg-emerald-100 text-emerald-800'
-                                      : u.status === 'INACTIVE'
-                                        ? 'bg-amber-100 text-amber-800'
-                                        : 'bg-slate-200 text-slate-700'
-                                  }`}
-                                >
-                                  {u.status}
-                                </span>
-                              </div>
-                              <div className="text-[10px] text-slate-400">
-                                {u.scheduleDate}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2">
-                              <div className="font-semibold text-slate-800">
-                                {u.productName} • {u.colorName}
-                              </div>
-                              <div className="text-[10px] text-slate-500">
-                                {u.finishingSystem} • {u.substrate}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2">
-                              <div className="font-bold text-slate-800">
-                                {u.stepNumber ? `#${u.stepNumber} ` : ''}
-                                {u.stepName}
-                              </div>
-                              <div className="text-[10px] text-slate-500">
-                                {u.methodName} ({u.efficiencyPercent})
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 text-right font-mono">
-                              <div className="font-bold text-slate-900">
-                                {u.mixingRatio}
-                              </div>
-                              <div className="text-[10px] text-slate-500">
-                                ({u.ratioSharePercent}%)
-                              </div>
-                            </td>
-                            <td className="px-3 py-2 text-right font-mono font-bold text-blue-900">
-                              {formatDecimal2(u.itemCaPlusLossGramM2)}
-                            </td>
-                            {canViewCost && (
-                              <>
-                                <td className="px-3 py-2 text-right font-mono text-slate-700 bg-emerald-50/30">
-                                  {formatVnd(u.priceSnapshotVnd)}
-                                </td>
-                                <td className="px-3 py-2 text-right font-mono font-bold text-emerald-800 bg-emerald-50/30">
-                                  {formatDecimal2(u.itemCoatingCostVndM2)}
-                                </td>
-                                <td className="px-3 py-2 text-right font-mono font-bold text-slate-900 bg-emerald-50/30">
-                                  {formatVnd(u.revisionTotalCostVndM2)}
-                                </td>
-                              </>
-                            )}
-                            <td className="px-3 py-2 text-center">
-                              <button
-                                type="button"
-                                onClick={() => onSelectRevision(u.revisionId)}
-                                className="inline-flex items-center gap-1 rounded bg-blue-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-blue-700"
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                                Open
-                              </button>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {overview.productUsage.revisionUsages.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan={canViewCost ? 10 : 7}
+                              className="px-4 py-8 text-center text-xs font-semibold text-slate-400"
+                            >
+                              No matching CS/CC Revisions found for {selectedMaterialCode} under current filters / Không có bản CS/CC nào sử dụng mã vật tư này trong phạm vi lọc hiện tại.
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                        ) : (
+                          overview.productUsage.revisionUsages.map((rev) => {
+                            const isExpanded = Boolean(
+                              expandedProductRevIds[rev.revisionId]
+                            );
+                            return (
+                              <React.Fragment key={rev.revisionId}>
+                                <tr
+                                  onClick={() =>
+                                    setExpandedProductRevIds((prev) => ({
+                                      ...prev,
+                                      [rev.revisionId]: !isExpanded
+                                    }))
+                                  }
+                                  className="cursor-pointer bg-white hover:bg-blue-50/40 transition"
+                                >
+                                  <td className="px-3 py-2.5 text-center">
+                                    {isExpanded ? (
+                                      <ChevronDown className="h-4 w-4 text-blue-600" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4 text-slate-400" />
+                                    )}
+                                  </td>
+                                  <td className="px-3 py-2.5">
+                                    <div className="font-bold text-slate-900">
+                                      {rev.customerShortName}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500">
+                                      ID: {rev.customerId}
+                                      {rev.salesmanName
+                                        ? ` • Sales: ${rev.salesmanName}`
+                                        : ''}
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2.5">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-bold text-blue-700">
+                                        {rev.projectCode}
+                                      </span>
+                                      <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                                        Rev {String(rev.revisionNo).padStart(2, '0')}
+                                      </span>
+                                      <span
+                                        className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                                          rev.status === 'APPROVED' ||
+                                          rev.status === 'LOCKED'
+                                            ? 'bg-emerald-100 text-emerald-800'
+                                            : rev.status === 'INACTIVE'
+                                              ? 'bg-amber-100 text-amber-800'
+                                              : 'bg-slate-200 text-slate-700'
+                                        }`}
+                                      >
+                                        {rev.status}
+                                      </span>
+                                    </div>
+                                    <div className="text-[10px] text-slate-400">
+                                      {rev.scheduleDate}
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2.5">
+                                    <div className="font-semibold text-slate-800">
+                                      {rev.productName} • {rev.colorName}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500">
+                                      {rev.finishingSystem} • {rev.substrate}
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2.5">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-extrabold text-blue-900">
+                                        {rev.stepCount} bước
+                                      </span>
+                                    </div>
+                                    <div className="mt-0.5 text-[10px] font-medium text-blue-600">
+                                      {isExpanded
+                                        ? '▼ Hide step breakdown / Ẩn chi tiết bước'
+                                        : '▶ Click to breakdown steps / Bấm xem chi tiết bước'}
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2.5 text-right font-mono">
+                                    <div className="font-extrabold text-blue-900">
+                                      {formatDecimal2(rev.totalItemCaPlusLossGramM2)}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400">
+                                      g/m² in Rev
+                                    </div>
+                                  </td>
+                                  {canViewCost && (
+                                    <>
+                                      <td className="px-3 py-2.5 text-right font-mono text-slate-700 bg-emerald-50/30">
+                                        {formatVnd(rev.priceSnapshotVnd)}
+                                      </td>
+                                      <td className="px-3 py-2.5 text-right font-mono bg-emerald-50/30">
+                                        <div className="font-extrabold text-emerald-800">
+                                          {formatDecimal2(rev.totalItemCoatingCostVndM2)}
+                                        </div>
+                                        {rev.costShareOfRevPercent !== null && (
+                                          <div className="text-[10px] font-bold text-emerald-700">
+                                            ({rev.costShareOfRevPercent}% of Rev CC)
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-900 bg-emerald-50/30">
+                                        {formatVnd(rev.revisionTotalCostVndM2)}
+                                      </td>
+                                    </>
+                                  )}
+                                  <td
+                                    className="px-3 py-2.5 text-center"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => onSelectRevision(rev.revisionId)}
+                                      className="inline-flex items-center gap-1 rounded bg-blue-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-blue-700"
+                                    >
+                                      <ExternalLink className="h-3 w-3" />
+                                      Open
+                                    </button>
+                                  </td>
+                                </tr>
+
+                                {/* Step Breakdown Sub-table */}
+                                {isExpanded && rev.steps.length > 0 && (
+                                  <tr className="bg-slate-50/90">
+                                    <td
+                                      colSpan={canViewCost ? 10 : 7}
+                                      className="px-6 py-3"
+                                    >
+                                      <div className="rounded-lg border border-blue-200 bg-white overflow-hidden shadow-sm">
+                                        <div className="flex flex-wrap items-center justify-between gap-2 bg-blue-50/80 px-3 py-1.5 text-[11px] font-bold text-blue-950 border-b border-blue-100">
+                                          <span>
+                                            🔍 Step-by-Step Breakdown for {rev.materialCode} ({rev.materialName}) in {rev.projectCode} — Rev {String(rev.revisionNo).padStart(2, '0')} ({rev.stepCount} bước sử dụng):
+                                          </span>
+                                          <span className="text-[10px] font-semibold text-blue-700">
+                                            Σ Định mức SP trong Rev: {formatDecimal2(rev.totalItemCaPlusLossGramM2)} g/m²
+                                            {canViewCost
+                                              ? ` • Σ Chi phí SP trong Rev: ${formatDecimal2(rev.totalItemCoatingCostVndM2)} đ/m² (${rev.costShareOfRevPercent}% tổng CC)`
+                                              : ''}
+                                          </span>
+                                        </div>
+                                        <table className="w-full text-[11px]">
+                                          <thead>
+                                            <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
+                                              <th className="px-3 py-1.5">
+                                                Step # & Name / Công đoạn sơn
+                                              </th>
+                                              <th className="px-3 py-1.5">
+                                                Method & Eff. / Phương pháp & Hiệu suất
+                                              </th>
+                                              <th className="px-3 py-1.5 text-right">
+                                                Mix Ratio & Share / Tỷ lệ pha & Tỷ trọng
+                                              </th>
+                                              <th className="px-3 py-1.5 text-right">
+                                                Step Total CA+Loss (g/m²) / Định mức cả bước
+                                              </th>
+                                              <th className="px-3 py-1.5 text-right text-blue-900">
+                                                Product CA+Loss in Step (g/m²) / Định mức SP ở bước này
+                                              </th>
+                                              {canViewCost && (
+                                                <>
+                                                  <th className="px-3 py-1.5 text-right text-emerald-800">
+                                                    Price Snapshot (VND/Kg)
+                                                  </th>
+                                                  <th className="px-3 py-1.5 text-right text-emerald-800">
+                                                    Product Cost in Step (VND/m²)
+                                                  </th>
+                                                  <th className="px-3 py-1.5 text-right text-slate-700">
+                                                    Step Total Cost (VND/m²)
+                                                  </th>
+                                                </>
+                                              )}
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-100">
+                                            {rev.steps.map((st, sIdx) => (
+                                              <tr
+                                                key={`${rev.revisionId}-${st.stepId}-${sIdx}`}
+                                                className="hover:bg-blue-50/30"
+                                              >
+                                                <td className="px-3 py-1.5 font-bold text-slate-900">
+                                                  {st.stepNumber
+                                                    ? `#${st.stepNumber} — `
+                                                    : ''}
+                                                  {st.stepName}
+                                                </td>
+                                                <td className="px-3 py-1.5 text-slate-600">
+                                                  {st.methodName} (
+                                                  <span className="font-mono font-semibold">
+                                                    {st.efficiencyPercent}
+                                                  </span>
+                                                  )
+                                                </td>
+                                                <td className="px-3 py-1.5 text-right font-mono">
+                                                  <span className="font-bold text-slate-900">
+                                                    {st.mixingRatio}
+                                                  </span>{' '}
+                                                  <span className="text-slate-500">
+                                                    ({st.ratioSharePercent}%)
+                                                  </span>
+                                                </td>
+                                                <td className="px-3 py-1.5 text-right font-mono text-slate-600">
+                                                  {formatDecimal2(
+                                                    st.stepCaPlusLossGramM2
+                                                  )}
+                                                </td>
+                                                <td className="px-3 py-1.5 text-right font-mono font-extrabold text-blue-900">
+                                                  {formatDecimal2(
+                                                    st.itemCaPlusLossGramM2
+                                                  )}
+                                                </td>
+                                                {canViewCost && (
+                                                  <>
+                                                    <td className="px-3 py-1.5 text-right font-mono text-slate-700">
+                                                      {formatVnd(
+                                                        st.priceSnapshotVnd
+                                                      )}
+                                                    </td>
+                                                    <td className="px-3 py-1.5 text-right font-mono font-extrabold text-emerald-700">
+                                                      {formatDecimal2(
+                                                        st.itemCoatingCostVndM2
+                                                      )}
+                                                    </td>
+                                                    <td className="px-3 py-1.5 text-right font-mono text-slate-600">
+                                                      {formatDecimal2(
+                                                        st.stepCoatingCostVndM2
+                                                      )}
+                                                    </td>
+                                                  </>
+                                                )}
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

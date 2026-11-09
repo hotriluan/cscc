@@ -324,6 +324,50 @@ export interface ProductUsageRow {
   revisionTotalCostVndM2: number | null;
 }
 
+export interface ProductUsageStepBreakdownRow {
+  stepId: string;
+  stepNumber: number | null;
+  stepName: string;
+  methodName: string;
+  efficiencyPercent: string;
+  mixingRatio: number;
+  ratioSharePercent: number;
+  stepCaAvgGramM2: number;
+  stepCaPlusLossGramM2: number;
+  itemCaPlusLossGramM2: number;
+  priceSnapshotVnd: number | null;
+  itemCoatingCostVndM2: number | null;
+  stepCoatingCostVndM2: number | null;
+}
+
+export interface ProductUsageRevisionRow {
+  revisionId: string;
+  projectId: string;
+  projectCode: string;
+  customerId: string;
+  customerShortName: string;
+  customerName: string;
+  salesmanName: string | null;
+  revisionNo: number;
+  status: RevisionStatus;
+  scheduleDate: string;
+  productName: string;
+  colorName: string;
+  substrate: string;
+  finishingSystem: string;
+  materialCode: string;
+  materialName: string;
+  packingDesc: string | null;
+  nettWeight: number;
+  stepCount: number;
+  totalItemCaPlusLossGramM2: number;
+  priceSnapshotVnd: number | null;
+  totalItemCoatingCostVndM2: number | null;
+  revisionTotalCostVndM2: number | null;
+  costShareOfRevPercent: number | null;
+  steps: ProductUsageStepBreakdownRow[];
+}
+
 export interface ProductUsageReport {
   productCatalog: ProductCatalogOption[];
   furnitureProducts: string[];
@@ -340,6 +384,7 @@ export interface ProductUsageReport {
     minItemCostVndM2: number | null;
     maxItemCostVndM2: number | null;
   };
+  revisionUsages: ProductUsageRevisionRow[];
   usages: ProductUsageRow[];
 }
 

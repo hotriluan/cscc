@@ -12,7 +12,9 @@ import {
   PriceDriftRow,
   ProductCatalogOption,
   ProductUsageReport,
+  ProductUsageRevisionRow,
   ProductUsageRow,
+  ProductUsageStepBreakdownRow,
   ProjectRevision,
   ProjectRevisionVarianceRow,
   QuotationItem,
@@ -597,21 +599,100 @@ export async function generateReportsOverview(params: {
       : null;
 
   const productUsageRows: ProductUsageRow[] = [];
-  for (const ctx of allScopedRevisions) {
-    for (const stepCalc of ctx.costSummary.steps) {
-      for (const item of stepCalc.items) {
-        const code = (item.materialCode || '').trim();
-        if (!code) continue;
-        if (
-          selectedMaterialCode &&
-          code.toLowerCase() !== selectedMaterialCode.toLowerCase()
-        ) {
-          continue;
-        }
-        const itemCaPlusLossRaw = stepCalc.caPlusLossRaw * item.ratioShare;
-        const itemCostRaw = (itemCaPlusLossRaw * item.priceSnapshotVnd) / 1000;
+  const revisionUsageRows: ProductUsageRevisionRow[] = [];
 
-        productUsageRows.push({
+  if (selectedMaterialCode) {
+    for (const ctx of allScopedRevisions) {
+      const matchedSteps: ProductUsageStepBreakdownRow[] = [];
+      let revItemCaPlusLossRaw = 0;
+      let revItemCostRaw = 0;
+      let latestPriceSnapshotVnd = 0;
+      let matchedMatCode = selectedMaterialCode;
+      let matchedMatName = selectedMaterialCode;
+      let matchedPackingDesc: string | null = null;
+      let matchedNettWeight = 1;
+
+      for (const stepCalc of ctx.costSummary.steps) {
+        for (const item of stepCalc.items) {
+          const code = (item.materialCode || '').trim();
+          if (!code) continue;
+          if (code.toLowerCase() !== selectedMaterialCode.toLowerCase()) {
+            continue;
+          }
+          const itemCaPlusLossRaw = stepCalc.caPlusLossRaw * item.ratioShare;
+          const itemCostRaw = (itemCaPlusLossRaw * item.priceSnapshotVnd) / 1000;
+
+          matchedMatCode = code;
+          matchedMatName = item.materialName || code;
+          matchedPackingDesc = item.packingDesc;
+          matchedNettWeight = item.nettWeight;
+          latestPriceSnapshotVnd = Math.round(item.priceSnapshotVnd);
+
+          revItemCaPlusLossRaw += itemCaPlusLossRaw;
+          revItemCostRaw += itemCostRaw;
+
+          const stepBreakdownRow: ProductUsageStepBreakdownRow = {
+            stepId: stepCalc.stepId,
+            stepNumber: stepCalc.stepNumber,
+            stepName: stepCalc.stepName,
+            methodName: stepCalc.methodName,
+            efficiencyPercent: stepCalc.efficiencyPercentDisplay,
+            mixingRatio: item.mixingRatio,
+            ratioSharePercent: Number((item.ratioShare * 100).toFixed(1)),
+            stepCaAvgGramM2: Number(stepCalc.caAvg.toFixed(2)),
+            stepCaPlusLossGramM2: stepCalc.caPlusLossDisplay,
+            itemCaPlusLossGramM2: Number(itemCaPlusLossRaw.toFixed(2)),
+            priceSnapshotVnd: isTech ? null : Math.round(item.priceSnapshotVnd),
+            itemCoatingCostVndM2: isTech ? null : Number(itemCostRaw.toFixed(2)),
+            stepCoatingCostVndM2: isTech ? null : stepCalc.coatingCostDisplay
+          };
+          matchedSteps.push(stepBreakdownRow);
+
+          productUsageRows.push({
+            revisionId: ctx.revision.id,
+            projectId: ctx.projectId,
+            projectCode: ctx.projectCode,
+            customerId: ctx.customer.customerId,
+            customerShortName: ctx.customer.shortName,
+            customerName: ctx.customer.customerName,
+            salesmanName: ctx.customer.salesmanName ?? null,
+            revisionNo: ctx.revision.revisionNo,
+            status: ctx.revision.status,
+            scheduleDate: ctx.revision.scheduleDate,
+            productName: ctx.revision.productName,
+            colorName: ctx.revision.colorName,
+            substrate: ctx.revision.substrate,
+            finishingSystem: ctx.revision.finishingSystem,
+            stepId: stepCalc.stepId,
+            stepNumber: stepCalc.stepNumber,
+            stepName: stepCalc.stepName,
+            methodName: stepCalc.methodName,
+            efficiencyPercent: stepCalc.efficiencyPercentDisplay,
+            materialCode: code,
+            materialName: item.materialName || code,
+            packingDesc: item.packingDesc,
+            nettWeight: item.nettWeight,
+            mixingRatio: item.mixingRatio,
+            ratioSharePercent: Number((item.ratioShare * 100).toFixed(1)),
+            stepCaAvgGramM2: Number(stepCalc.caAvg.toFixed(2)),
+            stepCaPlusLossGramM2: stepCalc.caPlusLossDisplay,
+            itemCaPlusLossGramM2: Number(itemCaPlusLossRaw.toFixed(2)),
+            priceSnapshotVnd: isTech ? null : Math.round(item.priceSnapshotVnd),
+            itemCoatingCostVndM2: isTech ? null : Number(itemCostRaw.toFixed(2)),
+            stepCoatingCostVndM2: isTech ? null : stepCalc.coatingCostDisplay,
+            revisionTotalCostVndM2: isTech ? null : ctx.costSummary.totalCoatingCostDisplay
+          });
+        }
+      }
+
+      if (matchedSteps.length > 0) {
+        const revTotalCostRaw = ctx.costSummary.totalCoatingCostRaw;
+        const costSharePercent =
+          revTotalCostRaw > 0
+            ? Number(((revItemCostRaw / revTotalCostRaw) * 100).toFixed(1))
+            : 0;
+
+        revisionUsageRows.push({
           revisionId: ctx.revision.id,
           projectId: ctx.projectId,
           projectCode: ctx.projectCode,
@@ -626,24 +707,17 @@ export async function generateReportsOverview(params: {
           colorName: ctx.revision.colorName,
           substrate: ctx.revision.substrate,
           finishingSystem: ctx.revision.finishingSystem,
-          stepId: stepCalc.stepId,
-          stepNumber: stepCalc.stepNumber,
-          stepName: stepCalc.stepName,
-          methodName: stepCalc.methodName,
-          efficiencyPercent: stepCalc.efficiencyPercentDisplay,
-          materialCode: code,
-          materialName: item.materialName || code,
-          packingDesc: item.packingDesc,
-          nettWeight: item.nettWeight,
-          mixingRatio: item.mixingRatio,
-          ratioSharePercent: Number((item.ratioShare * 100).toFixed(1)),
-          stepCaAvgGramM2: Number(stepCalc.caAvg.toFixed(2)),
-          stepCaPlusLossGramM2: stepCalc.caPlusLossDisplay,
-          itemCaPlusLossGramM2: Number(itemCaPlusLossRaw.toFixed(2)),
-          priceSnapshotVnd: isTech ? null : Math.round(item.priceSnapshotVnd),
-          itemCoatingCostVndM2: isTech ? null : Number(itemCostRaw.toFixed(2)),
-          stepCoatingCostVndM2: isTech ? null : stepCalc.coatingCostDisplay,
-          revisionTotalCostVndM2: isTech ? null : ctx.costSummary.totalCoatingCostDisplay
+          materialCode: matchedMatCode,
+          materialName: matchedMatName,
+          packingDesc: matchedPackingDesc,
+          nettWeight: matchedNettWeight,
+          stepCount: matchedSteps.length,
+          totalItemCaPlusLossGramM2: Number(revItemCaPlusLossRaw.toFixed(2)),
+          priceSnapshotVnd: isTech ? null : latestPriceSnapshotVnd,
+          totalItemCoatingCostVndM2: isTech ? null : Number(revItemCostRaw.toFixed(2)),
+          revisionTotalCostVndM2: isTech ? null : ctx.costSummary.totalCoatingCostDisplay,
+          costShareOfRevPercent: isTech ? null : costSharePercent,
+          steps: matchedSteps
         });
       }
     }
@@ -702,6 +776,7 @@ export async function generateReportsOverview(params: {
           ? Number(Math.max(...usageItemCosts).toFixed(2))
           : 0
     },
+    revisionUsages: revisionUsageRows,
     usages: productUsageRows
   };
 

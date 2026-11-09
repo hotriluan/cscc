@@ -24,18 +24,23 @@ describe('CSCC Reports & Analytics System — 7 Reports, Revision Scope, Salesma
     await dataStore.disconnect();
   });
 
-  it('1. Product Usage Report & Customer Portfolio Report compute exact NTR 001 metrics for PROJECT_LEADER', async () => {
+  it('1. Product Usage Report (On-Demand + Revision Breakdown) & Customer Portfolio compute exact NTR 001 metrics for PROJECT_LEADER', async () => {
     const res = await fetch(`${baseUrl}/api/reports/overview`, {
       headers: { 'x-user-role': 'PROJECT_LEADER' }
     });
     assert.equal(res.status, 200);
     const overview = (await res.json()) as ReportsOverviewResponse;
 
+    // On-Demand mode: without materialCode, productCatalog is populated while usages & revisionUsages are empty
     assert.ok(overview.productUsage.productCatalog.length > 0);
-    assert.ok(overview.productUsage.usages.length >= 10);
+    assert.equal(overview.productUsage.selectedMaterialCode, null);
+    assert.equal(overview.productUsage.usages.length, 0);
+    assert.equal(overview.productUsage.revisionUsages.length, 0);
 
-    // Pick the first material in catalog and filter specifically by that materialCode
-    const targetMat = overview.productUsage.productCatalog[0];
+    // Pick a material used in multiple steps if available (or first material in catalog) and filter by materialCode
+    const targetMat =
+      overview.productUsage.productCatalog.find((m) => m.usageStepCount > 1) ||
+      overview.productUsage.productCatalog[0];
     const filteredRes = await fetch(
       `${baseUrl}/api/reports/overview?materialCode=${encodeURIComponent(targetMat.materialCode)}`,
       { headers: { 'x-user-role': 'PROJECT_LEADER' } }
@@ -48,9 +53,47 @@ describe('CSCC Reports & Analytics System — 7 Reports, Revision Scope, Salesma
       targetMat.materialCode
     );
     assert.equal(
+      filteredOverview.productUsage.summary.totalRevisions,
+      targetMat.usageRevisionCount
+    );
+    assert.equal(
       filteredOverview.productUsage.summary.totalOccurrences,
       targetMat.usageStepCount
     );
+    assert.equal(
+      filteredOverview.productUsage.revisionUsages.length,
+      targetMat.usageRevisionCount
+    );
+    assert.equal(
+      filteredOverview.productUsage.usages.length,
+      targetMat.usageStepCount
+    );
+
+    // Verify Revision-level rollup + Step breakdown
+    for (const revRow of filteredOverview.productUsage.revisionUsages) {
+      assert.equal(revRow.materialCode, targetMat.materialCode);
+      assert.equal(revRow.projectCode, 'NTR 001');
+      assert.equal(revRow.customerId, '1200001169');
+      assert.equal(revRow.stepCount, revRow.steps.length);
+      assert.ok(revRow.steps.length > 0);
+      assert.equal(revRow.revisionTotalCostVndM2, 894143);
+      assert.ok(
+        typeof revRow.totalItemCoatingCostVndM2 === 'number' &&
+          revRow.totalItemCoatingCostVndM2 >= 0
+      );
+      assert.ok(
+        typeof revRow.costShareOfRevPercent === 'number' &&
+          revRow.costShareOfRevPercent >= 0
+      );
+
+      const sumStepGrams = Number(
+        revRow.steps.reduce((s, st) => s + st.itemCaPlusLossGramM2, 0).toFixed(2)
+      );
+      assert.ok(
+        Math.abs(revRow.totalItemCaPlusLossGramM2 - sumStepGrams) <= 0.05
+      );
+    }
+
     for (const u of filteredOverview.productUsage.usages) {
       assert.equal(u.materialCode, targetMat.materialCode);
       assert.equal(u.projectCode, 'NTR 001');
@@ -253,16 +296,38 @@ describe('CSCC Reports & Analytics System — 7 Reports, Revision Scope, Salesma
   });
 
   it('4. Column-level Cost Redaction strips all VND/m² and VND/Kg fields to null across all 7 reports for TECHNICAL', async () => {
-    const res = await fetch(`${baseUrl}/api/reports/overview`, {
+    const initialRes = await fetch(`${baseUrl}/api/reports/overview`, {
       headers: { 'x-user-role': 'TECHNICAL' }
     });
+    assert.equal(initialRes.status, 200);
+    const initialTech = (await initialRes.json()) as ReportsOverviewResponse;
+    const sampleMatCode = initialTech.productUsage.productCatalog[0].materialCode;
+
+    const res = await fetch(
+      `${baseUrl}/api/reports/overview?materialCode=${encodeURIComponent(sampleMatCode)}`,
+      { headers: { 'x-user-role': 'TECHNICAL' } }
+    );
     assert.equal(res.status, 200);
     const tech = (await res.json()) as ReportsOverviewResponse;
 
-    // Report 1: Product Usage
+    // Report 1: Product Usage (Revision Rollup + Step Breakdown + Flat Usages)
     assert.equal(tech.productUsage.summary.avgItemCostVndM2, null);
     assert.equal(tech.productUsage.summary.minItemCostVndM2, null);
     assert.equal(tech.productUsage.summary.maxItemCostVndM2, null);
+    assert.ok(tech.productUsage.revisionUsages.length > 0);
+    for (const rev of tech.productUsage.revisionUsages) {
+      assert.ok(rev.totalItemCaPlusLossGramM2 > 0);
+      assert.equal(rev.priceSnapshotVnd, null);
+      assert.equal(rev.totalItemCoatingCostVndM2, null);
+      assert.equal(rev.revisionTotalCostVndM2, null);
+      assert.equal(rev.costShareOfRevPercent, null);
+      for (const st of rev.steps) {
+        assert.ok(st.itemCaPlusLossGramM2 > 0);
+        assert.equal(st.priceSnapshotVnd, null);
+        assert.equal(st.itemCoatingCostVndM2, null);
+        assert.equal(st.stepCoatingCostVndM2, null);
+      }
+    }
     assert.ok(tech.productUsage.usages.length > 0);
     for (const u of tech.productUsage.usages) {
       assert.ok(u.itemCaPlusLossGramM2 > 0);
@@ -331,42 +396,52 @@ describe('CSCC Reports & Analytics System — 7 Reports, Revision Scope, Salesma
     }
   });
 
-  it('5. Exports valid 7-sheet Analytics Excel (.xlsx) for PROJECT_LEADER and omits cost columns for TECHNICAL', async () => {
+  it('5. Exports flat PivotTable-ready Product Usage Excel (.xlsx) for PROJECT_LEADER (20 cols) and omits cost columns for TECHNICAL (16 cols)', async () => {
+    const catalogRes = await fetch(`${baseUrl}/api/reports/overview`, {
+      headers: { 'x-user-role': 'PROJECT_LEADER' }
+    });
+    const catalogData = (await catalogRes.json()) as ReportsOverviewResponse;
+    const matCode = catalogData.productUsage.productCatalog[0].materialCode;
+
     const leaderRes = await fetch(
-      `${baseUrl}/api/reports/export-excel?reportTab=ALL`,
+      `${baseUrl}/api/reports/export-excel?reportTab=PRODUCT_USAGE&materialCode=${encodeURIComponent(matCode)}`,
       { headers: { 'x-user-role': 'PROJECT_LEADER' } }
     );
     assert.equal(leaderRes.status, 200);
     const leaderBuf = Buffer.from(await leaderRes.arrayBuffer());
     const leaderWb = new ExcelJS.Workbook();
     await leaderWb.xlsx.load(leaderBuf as unknown as ExcelJS.Buffer);
-    assert.equal(leaderWb.worksheets.length, 7);
+    assert.equal(leaderWb.worksheets.length, 1);
 
-    const leaderSheet1Headers = (
-      leaderWb.getWorksheet('1_Product_Usage')!.getRow(4).values as string[]
-    )
-      .filter(Boolean)
-      .join(' | ');
+    const leaderSheet1 = leaderWb.getWorksheet('1_Product_Usage')!;
+    const leaderHeaderValues = (
+      leaderSheet1.getRow(4).values as string[]
+    ).filter(Boolean);
+    assert.equal(leaderHeaderValues.length, 20);
+    const leaderSheet1Headers = leaderHeaderValues.join(' | ');
     assert.ok(leaderSheet1Headers.includes('Price Snapshot (VND/Kg)'));
     assert.ok(leaderSheet1Headers.includes('Total Rev CC (VND/m²)'));
+    assert.ok(leaderSheet1.rowCount >= 5);
 
     // TECHNICAL Excel export
     const techRes = await fetch(
-      `${baseUrl}/api/reports/export-excel?reportTab=ALL`,
+      `${baseUrl}/api/reports/export-excel?reportTab=PRODUCT_USAGE&materialCode=${encodeURIComponent(matCode)}`,
       { headers: { 'x-user-role': 'TECHNICAL' } }
     );
     assert.equal(techRes.status, 200);
     const techBuf = Buffer.from(await techRes.arrayBuffer());
     const techWb = new ExcelJS.Workbook();
     await techWb.xlsx.load(techBuf as unknown as ExcelJS.Buffer);
-    assert.equal(techWb.worksheets.length, 7);
+    assert.equal(techWb.worksheets.length, 1);
 
-    const techSheet1Headers = (
-      techWb.getWorksheet('1_Product_Usage')!.getRow(4).values as string[]
-    )
-      .filter(Boolean)
-      .join(' | ');
+    const techSheet1 = techWb.getWorksheet('1_Product_Usage')!;
+    const techHeaderValues = (techSheet1.getRow(4).values as string[]).filter(
+      Boolean
+    );
+    assert.equal(techHeaderValues.length, 16);
+    const techSheet1Headers = techHeaderValues.join(' | ');
     assert.ok(!techSheet1Headers.includes('VND'));
+    assert.ok(techSheet1.rowCount >= 5);
   });
 });
 
