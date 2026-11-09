@@ -4,6 +4,18 @@
 
 ---
 
+## 0. Tài liệu Hướng dẫn Sử dụng Trực quan Song ngữ (EN / *VI*)
+
+Bộ **Hướng dẫn Sử dụng Người dùng Cuối (End-User Manual)** được trình bày theo định dạng **Song ngữ cố định** (**English ở dòng trên** / ***Tiếng Việt in nghiêng ở dòng dưới***) kèm **25 ảnh chụp màn hình thực tế có đánh số Callout (`①`, `②`, `③`, `④`)** tại thư mục [`docs/user-guide/`](docs/user-guide/):
+
+- **Bản PDF (Chuẩn in A4):** [`docs/user-guide/ALKANA_CSCC_User_Manual_EN_VI.pdf`](docs/user-guide/ALKANA_CSCC_User_Manual_EN_VI.pdf)
+- **Bản Microsoft Word (`.docx`):** [`docs/user-guide/ALKANA_CSCC_User_Manual_EN_VI.docx`](docs/user-guide/ALKANA_CSCC_User_Manual_EN_VI.docx)
+- **Bản Markdown (`.md`):** [`docs/user-guide/ALKANA_CSCC_User_Manual_EN_VI.md`](docs/user-guide/ALKANA_CSCC_User_Manual_EN_VI.md)
+- **Bản Web HTML (`.html`):** [`docs/user-guide/ALKANA_CSCC_User_Manual_EN_VI.html`](docs/user-guide/ALKANA_CSCC_User_Manual_EN_VI.html)
+- **Thư viện 25 ảnh chụp màn hình thực tế:** [`docs/user-guide/screenshots/`](docs/user-guide/screenshots/)
+
+---
+
 ## 1. Kiến trúc Monorepo
 
 - [`packages/shared`](packages/shared):

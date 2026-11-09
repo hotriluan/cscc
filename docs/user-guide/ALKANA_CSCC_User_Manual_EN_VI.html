@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ALKANA COATING — CS &amp; CC SYSTEM USER MANUAL</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 14mm 12mm 16mm 12mm;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Inter, Roboto, Arial, sans-serif;
+      color: #0f172a;
+      background: #f8fafc;
+      line-height: 1.45;
+      font-size: 10.5pt;
+    }
+    .page-container {
+      max-width: 980px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 28px 32px;
+    }
+    @media print {
+      body {
+        background: #ffffff;
+      }
+      .page-container {
+        max-width: 100%;
+        padding: 0;
+      }
+      .chapter-block {
+        page-break-before: always;
+      }
+      .section-card {
+        page-break-inside: avoid;
+      }
+      .step-card, .manual-table, .screenshot-figure {
+        page-break-inside: avoid;
+      }
+    }
+    .cover-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 65%, #064e3b 100%);
+      color: #ffffff;
+      border-radius: 14px;
+      padding: 28px 30px;
+      margin-bottom: 22px;
+      border: 2px solid #334155;
+    }
+    .cover-badge {
+      display: inline-block;
+      background: #10b981;
+      color: #052e16;
+      font-weight: 800;
+      font-size: 9pt;
+      padding: 3px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+    .cover-title-en {
+      font-size: 20pt;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      margin: 0 0 4px 0;
+    }
+    .cover-title-vi {
+      font-size: 13.5pt;
+      font-style: italic;
+      color: #a7f3d0;
+      font-weight: 600;
+      margin: 0 0 14px 0;
+    }
+    .cover-sub-en {
+      font-size: 10.5pt;
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+    .cover-sub-vi {
+      font-size: 10pt;
+      font-style: italic;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+    .cover-meta {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.18);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      font-size: 9.5pt;
+      color: #e2e8f0;
+    }
+    .toc-box {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      background: #f8fafc;
+      padding: 18px 22px;
+      margin-bottom: 24px;
+    }
+    .toc-header-en {
+      font-size: 13pt;
+      font-weight: 900;
+      color: #0f172a;
+      text-transform: uppercase;
+    }
+    .toc-header-vi {
+      font-size: 10.5pt;
+      font-style: italic;
+      color: #475569;
+      margin-bottom: 12px;
+    }
+    .toc-chapter {
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed #cbd5e1;
+    }
+    .toc-chapter:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .toc-ch-en a {
+      color: #1e3a8a;
+      font-weight: 800;
+      text-decoration: none;
+      font-size: 10.5pt;
+    }
+    .toc-ch-vi {
+      font-style: italic;
+      color: #475569;
+      font-size: 9.5pt;
+      margin-bottom: 6px;
+    }
+    .toc-sections {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px 16px;
+      padding-left: 12px;
+    }
+    .toc-sec-en {
+      color: #0f172a;
+      text-decoration: none;
+      font-size: 9.5pt;
+    }
+    .toc-sec-vi {
+      font-style: italic;
+      color: #64748b;
+      font-size: 8.8pt;
+    }
+    .chapter-banner {
+      background: #0f172a;
+      color: #ffffff;
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin: 22px 0 16px 0;
+      border-left: 6px solid #2563eb;
+    }
+    .chapter-en {
+      font-size: 14pt;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+    .chapter-vi {
+      font-size: 11pt;
+      font-style: italic;
+      color: #93c5fd;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .chapter-summary-en {
+      font-size: 9.8pt;
+      color: #e2e8f0;
+      margin-top: 8px;
+    }
+    .chapter-summary-vi {
+      font-size: 9.3pt;
+      font-style: italic;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+    .section-card {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      border-bottom: 1.5px solid #e2e8f0;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+    .section-en {
+      font-size: 12.5pt;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .section-vi {
+      font-size: 10.5pt;
+      font-style: italic;
+      color: #334155;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .section-roles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+    .role-badge {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+      font-size: 8pt;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-family: monospace;
+    }
+    .purpose-box {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+    .purpose-en {
+      font-size: 9.8pt;
+      color: #1e3a8a;
+    }
+    .purpose-vi {
+      font-size: 9.3pt;
+      color: #3b82f6;
+      margin-top: 2px;
+    }
+    .screenshot-figure {
+      margin: 0 0 12px 0;
+      border: 1.5px solid #94a3b8;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0f172a;
+    }
+    .screenshot-figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .screenshot-figure figcaption {
+      background: #f1f5f9;
+      padding: 6px 12px;
+      border-top: 1px solid #cbd5e1;
+      text-align: center;
+    }
+    .cap-en {
+      font-size: 9pt;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .cap-vi {
+      font-size: 8.5pt;
+      font-style: italic;
+      color: #475569;
+    }
+    .steps-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .step-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #e11d48;
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 10pt;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+    .step-body {
+      flex: 1;
+    }
+    .step-en {
+      font-size: 9.8pt;
+      color: #0f172a;
+    }
+    .step-vi {
+      font-size: 9.3pt;
+      color: #475569;
+      margin-top: 2px;
+    }
+    .manual-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 9pt;
+    }
+    .manual-table th, .manual-table td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .manual-table th {
+      background: #1e293b;
+      color: #ffffff;
+    }
+    .th-en {
+      font-weight: 800;
+      font-size: 9pt;
+    }
+    .th-vi {
+      font-style: italic;
+      color: #cbd5e1;
+      font-weight: 500;
+      font-size: 8.3pt;
+      margin-top: 1px;
+    }
+    .td-en {
+      font-weight: 600;
+      color: #0f172a;
+    }
+    .td-vi {
+      font-style: italic;
+      color: #475569;
+      margin-top: 2px;
+      font-size: 8.5pt;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <header class="cover-banner">
+      <div class="cover-badge">OFFICIAL BILINGUAL USER MANUAL (EN / VI)</div>
+      <h1 class="cover-title-en">ALKANA COATING — CS &amp; CC SYSTEM USER MANUAL</h1>
+      <div class="cover-title-vi">HƯỚNG DẪN SỬ DỤNG HỆ THỐNG QUI TRÌNH SƠN (CS) &amp; TÍNH GIÁ THÀNH SƠN (CC)</div>
+      <div class="cover-sub-en">Complete Step-by-Step Visual Guide for Technical (TA), Sales, Project Leader &amp; System Administrator</div>
+      <div class="cover-sub-vi">Tài liệu hướng dẫn trực quan từng bước dành cho Kỹ thuật viên (TA), Kinh doanh (Sales), Trưởng nhóm Dự án (Project Leader) &amp; Quản trị viên (Admin)</div>
+      <div class="cover-meta">
+        <span><strong>Version / Phiên bản:</strong> v2.0 — Production Release</span>
+        <span><strong>Updated / Ngày cập nhật:</strong> 2026-11-09</span>
+        <span><strong>System URL / Địa chỉ Web:</strong> http://alkanacscc.com</span>
+      </div>
+    </header>
+
+    <nav class="toc-box">
+      <div class="toc-header-en">TABLE OF CONTENTS</div>
+      <div class="toc-header-vi">MỤC LỤC HƯỚNG DẪN SỬ DỤNG</div>
+      
+      <div class="toc-chapter">
+        <div class="toc-ch-en"><a href="#ch-1">CHAPTER 1: SYSTEM SIGN IN, WORKSPACE &amp; ROLE-BASED ACCESS (RBAC)</a></div>
+        <div class="toc-ch-vi">CHƯƠNG 1: ĐĂNG NHẬP HỆ THỐNG, KHÔNG GIAN LÀM VIỆC &amp; PHÂN QUYỀN (RBAC)</div>
+        <div class="toc-sections">
+          
+            <div class="toc-sec-item">
+              <a href="#sec-1-1" class="toc-sec-en"><strong>1.1</strong> — System Sign In &amp; Authentication</a>
+              <div class="toc-sec-vi">Đăng nhập &amp; Xác thực Tài khoản Hệ thống</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-1-2" class="toc-sec-en"><strong>1.2</strong> — Main Workspace Layout &amp; Navigation Architecture</a>
+              <div class="toc-sec-vi">Bố cục Không gian Làm việc Chính &amp; Thanh Điều hướng</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-1-3" class="toc-sec-en"><strong>1.3</strong> — Account Profile &amp; Self-Service Password Update</a>
+              <div class="toc-sec-vi">Thông tin Tài khoản &amp; Đổi Mật khẩu Cá nhân</div>
+            </div>
+          
+        </div>
+      </div>
+    
+      <div class="toc-chapter">
+        <div class="toc-ch-en"><a href="#ch-2">CHAPTER 2: PROJECT EXPLORER &amp; REVISION LIFECYCLE MANAGEMENT</a></div>
+        <div class="toc-ch-vi">CHƯƠNG 2: QUẢN LÝ HỒ SƠ DỰ ÁN &amp; VÒNG ĐỜI PHIÊN BẢN (REVISION)</div>
+        <div class="toc-sections">
+          
+            <div class="toc-sec-item">
+              <a href="#sec-2-1" class="toc-sec-en"><strong>2.1</strong> — Searching &amp; Filtering Projects in Project Explorer</a>
+              <div class="toc-sec-vi">Tra cứu &amp; Lọc Hồ sơ trong Quản lý Dự án (Projects Explorer)</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-2-2" class="toc-sec-en"><strong>2.2</strong> — Creating a New Coating Project (Initializing Rev 00)</a>
+              <div class="toc-sec-vi">Khởi tạo Hồ sơ Dự án Sơn Mới (Tạo Phiên bản Gốc Rev 00)</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-2-3" class="toc-sec-en"><strong>2.3</strong> — Approving Revisions, Auto-Supersede &amp; Mandatory Audit Reason</a>
+              <div class="toc-sec-vi">Phê duyệt Phiên bản (APPROVED), Tự động Thay thế &amp; Lý do Bắt buộc</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-2-4" class="toc-sec-en"><strong>2.4</strong> — Inspecting the Revision Status Audit History Timeline</a>
+              <div class="toc-sec-vi">Tra cứu Dòng thời gian Lịch sử Thay đổi Trạng thái (Audit History)</div>
+            </div>
+          
+        </div>
+      </div>
+    
+      <div class="toc-chapter">
+        <div class="toc-ch-en"><a href="#ch-3">CHAPTER 3: COATING SCHEDULE (CS) DYNAMIC EDITOR &amp; SMART AUTO-SAVE</a></div>
+        <div class="toc-ch-vi">CHƯƠNG 3: LẬP QUI TRÌNH SƠN (CS) ĐỘNG &amp; CƠ CHẾ TỰ ĐỘNG LƯU</div>
+        <div class="toc-sections">
+          
+            <div class="toc-sec-item">
+              <a href="#sec-3-1" class="toc-sec-en"><strong>3.1</strong> — Editing Project Header, Environmental Conditions &amp; Signatories</a>
+              <div class="toc-sec-vi">Nhập Thông tin Chung, Điều kiện Môi trường &amp; Chữ ký Phê duyệt</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-3-2" class="toc-sec-en"><strong>3.2</strong> — Building the Dynamic Process Table (Chemical Steps &amp; Sanding Rows)</a>
+              <div class="toc-sec-vi">Xây dựng Bảng Quy trình Sơn Động (Bước Hóa chất &amp; Bước Chà nhám)</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-3-3" class="toc-sec-en"><strong>3.3</strong> — Smart Auto-Save, Viewport Pinning, Revision Cloning &amp; Price Sync</a>
+              <div class="toc-sec-vi">Tự động Lưu Thông minh (Auto-Save), Ghim Khung Bảng, Nhân bản &amp; Đồng bộ Giá</div>
+            </div>
+          
+        </div>
+      </div>
+    
+      <div class="toc-chapter">
+        <div class="toc-ch-en"><a href="#ch-4">CHAPTER 4: REAL-TIME COATING COST (CC), RBAC REDACTION &amp; BOM SUMMARY</a></div>
+        <div class="toc-ch-vi">CHƯƠNG 4: BẢNG TÍNH CHI PHÍ SƠN (CC), ẨN GIÁ KỸ THUẬT &amp; DỰ TOÁN VẬT TƯ (BOM)</div>
+        <div class="toc-sections">
+          
+            <div class="toc-sec-item">
+              <a href="#sec-4-1" class="toc-sec-en"><strong>4.1</strong> — Reading the Automated Coating Cost (CC) Table</a>
+              <div class="toc-sec-vi">Cách đọc Bảng Tính Toán Chi Phí Sơn Tự động (Coating Cost - CC)</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-4-2" class="toc-sec-en"><strong>4.2</strong> — Technical Role (TECHNICAL) Automatic Price Redaction</a>
+              <div class="toc-sec-vi">Chế độ Bảo mật Tự động Ẩn Đơn giá đối với Kỹ thuật viên (TECHNICAL)</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-4-3" class="toc-sec-en"><strong>4.3</strong> — Estimating Material Quantities &amp; Packaging in BOM Summary</a>
+              <div class="toc-sec-vi">Dự toán Khối lượng Sơn &amp; Số Thùng Đặt hàng tại BOM Summary</div>
+            </div>
+          
+        </div>
+      </div>
+    
+      <div class="toc-chapter">
+        <div class="toc-ch-en"><a href="#ch-5">CHAPTER 5: LIVE-FORMULA EXCEL EXPORT &amp; A4 LANDSCAPE PRINTING</a></div>
+        <div class="toc-ch-vi">CHƯƠNG 5: XUẤT FILE EXCEL CÔNG THỨC SỐNG &amp; IN BIỂU MẪU CHUẨN A4 NGANG</div>
+        <div class="toc-sections">
+          
+            <div class="toc-sec-item">
+              <a href="#sec-5-1" class="toc-sec-en"><strong>5.1</strong> — A4 Landscape Print Preview, PDF Save &amp; Excel Formula Export</a>
+              <div class="toc-sec-vi">Xem trước Bản in Chuẩn A4 Ngang, Lưu PDF &amp; Xuất Excel Công thức Sống</div>
+            </div>
+          
+        </div>
+      </div>
+    
+      <div class="toc-chapter">
+        <div class="toc-ch-en"><a href="#ch-6">CHAPTER 6: 7-TAB ANALYTICS &amp; EXECUTIVE REPORTING CENTER</a></div>
+        <div class="toc-ch-vi">CHƯƠNG 6: TRUNG TÂM 7 BÁO CÁO PHÂN TÍCH &amp; THỐNG KÊ CHUYÊN SÂU</div>
+        <div class="toc-sections">
+          
+            <div class="toc-sec-item">
+              <a href="#sec-6-1" class="toc-sec-en"><strong>6.1</strong> — Report 1: Product Usage — On-Demand Selection &amp; Step Breakdown</a>
+              <div class="toc-sec-vi">Báo cáo 1: Phân tích Theo Sản phẩm Sơn — Gộp theo Revision &amp; Sổ xuống Từng Step</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-6-2" class="toc-sec-en"><strong>6.2</strong> — Report 2: Customer Portfolio &amp; Project Cost Range Analysis</a>
+              <div class="toc-sec-vi">Báo cáo 2: Phân tích Danh mục Khách hàng &amp; Biên độ Giá thành Dự án</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-6-3" class="toc-sec-en"><strong>6.3</strong> — Report 3: Revision Cost Variance (Base vs. Target Revision Diff)</a>
+              <div class="toc-sec-vi">Báo cáo 3: Phân tích Biến động Chi phí Giữa các Phiên bản (Revision Variance)</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-6-4" class="toc-sec-en"><strong>6.4</strong> — Report 4: Price &amp; Quotation Drift Alert</a>
+              <div class="toc-sec-vi">Báo cáo 4: Cảnh báo Chênh lệch Đơn giá Snapshot so với Báo giá Gốc Hiện hành</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-6-5" class="toc-sec-en"><strong>6.5</strong> — Report 5: Application Step &amp; Finishing System Benchmark</a>
+              <div class="toc-sec-vi">Báo cáo 5: Đối chuẩn Cơ cấu Công đoạn Thi công &amp; Hệ Sơn (Benchmark)</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-6-6" class="toc-sec-en"><strong>6.6</strong> — Report 6: Multi-Project BOM Demand Forecast</a>
+              <div class="toc-sec-vi">Báo cáo 6: Dự báo Tổng Nhu cầu Vật tư Gộp Đa Dự án (Multi-BOM Forecast)</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-6-7" class="toc-sec-en"><strong>6.7</strong> — Report 7: Project &amp; Revision Activity Funnel (Sales &amp; Technical KPI)</a>
+              <div class="toc-sec-vi">Báo cáo 7: Phễu Hoạt động Dự án &amp; Hiệu suất Nhân sự (Sales &amp; Technical)</div>
+            </div>
+          
+        </div>
+      </div>
+    
+      <div class="toc-chapter">
+        <div class="toc-ch-en"><a href="#ch-7">CHAPTER 7: MASTER DATA CRUD, BULK EXCEL IMPORT &amp; USER ADMINISTRATION</a></div>
+        <div class="toc-ch-vi">CHƯƠNG 7: QUẢN TRỊ DỮ LIỆU NGUỒN (MASTER DATA), NHẬP EXCEL &amp; TÀI KHOẢN USER</div>
+        <div class="toc-sections">
+          
+            <div class="toc-sec-item">
+              <a href="#sec-7-1" class="toc-sec-en"><strong>7.1</strong> — Managing Customers &amp; Assigning Responsible Salesmen</a>
+              <div class="toc-sec-vi">Quản lý Danh mục Khách hàng &amp; Gán Nhân viên Sales Phụ trách</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-7-2" class="toc-sec-en"><strong>7.2</strong> — Managing Material Quotations &amp; Bulk Price Uploads</a>
+              <div class="toc-sec-vi">Quản lý Bảng Báo giá Vật tư (Quotations) &amp; Tải lên Đơn giá Excel</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-7-3" class="toc-sec-en"><strong>7.3</strong> — Configuring Application Steps, Transfer Efficiency Methods &amp; Packings</a>
+              <div class="toc-sec-vi">Cấu hình Bước Thi công Chuẩn, Phương pháp (Hiệu suất %) &amp; Quy cách Đóng gói</div>
+            </div>
+          
+            <div class="toc-sec-item">
+              <a href="#sec-7-4" class="toc-sec-en"><strong>7.4</strong> — Administering User Accounts, Roles &amp; Salesman RBAC Scopes</a>
+              <div class="toc-sec-vi">Quản trị Tài khoản Người dùng, Phân quyền Role &amp; Gán Phạm vi Salesman</div>
+            </div>
+          
+        </div>
+      </div>
+    
+    </nav>
+
+    
+      <section class="chapter-block" id="ch-1">
+        <div class="chapter-banner">
+          <div class="chapter-en">CHAPTER 1: SYSTEM SIGN IN, WORKSPACE &amp; ROLE-BASED ACCESS (RBAC)</div>
+          <div class="chapter-vi">CHƯƠNG 1: ĐĂNG NHẬP HỆ THỐNG, KHÔNG GIAN LÀM VIỆC &amp; PHÂN QUYỀN (RBAC)</div>
+          <div class="chapter-summary-en">Understand how to sign in, navigate the 4 main modules, manage your password, and verify permissions across the 4 user roles.</div>
+          <div class="chapter-summary-vi">Nắm vững cách đăng nhập, điều hướng qua 4 phân hệ chính, đổi mật khẩu cá nhân và cơ chế phân quyền bảo mật theo 4 vai trò người dùng.</div>
+        </div>
+    
+        <article class="section-card" id="sec-1-1">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">1.1. System Sign In &amp; Authentication</div>
+              <div class="section-vi">1.1. Đăng nhập &amp; Xác thực Tài khoản Hệ thống</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span><span class="role-badge">ADMIN</span><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">SALES</span><span class="role-badge">TECHNICAL</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Sign in with your corporate email and password to load your role permissions and assigned customer scope.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Đăng nhập bằng email và mật khẩu được cấp để hệ thống tải đúng quyền hạn (Role) và phạm vi khách hàng phụ trách.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/01-login-page.png" alt="Figure 1.1 — ALKANA Coating System Sign In Screen" />
+            <figcaption>
+              <div class="cap-en">Figure 1.1 — ALKANA Coating System Sign In Screen</div>
+              <div class="cap-vi">Hình 1.1 — Màn hình Đăng nhập Hệ thống ALKANA Coating CS &amp; CC</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Enter Account Email (Email Address):</strong> Type your registered email address (e.g., leader@alkana.vn, sales@alkana.vn, tech@alkana.vn) in the Email field.</div>
+              <div class="step-vi"><em><strong>Nhập Email Tài khoản (Email Address):</strong> Nhập địa chỉ email đã được cấp (ví dụ: leader@alkana.vn, sales@alkana.vn, tech@alkana.vn) vào ô Email tài khoản.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Enter Password (Password):</strong> Enter your password. Click the eye icon on the right if you need to verify typed characters.</div>
+              <div class="step-vi"><em><strong>Nhập Mật khẩu (Password):</strong> Nhập mật khẩu của bạn. Nhấn biểu tượng con mắt bên phải nếu cần kiểm tra ký tự vừa nhập.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Click Sign In (Đăng nhập hệ thống):</strong> Click the Sign In button (or press Enter). Your session token is stored securely so you stay signed in across page refreshes.</div>
+              <div class="step-vi"><em><strong>Nhấn nút Đăng nhập Hệ thống (Sign In):</strong> Nhấn nút Đăng nhập (hoặc phím Enter). Phiên đăng nhập được lưu tự động giúp bạn không bị mất phiên khi tải lại trang.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+          <table class="manual-table">
+            <thead>
+              <tr>
+                
+                  <th>
+                    <div class="th-en">Role Code</div>
+                    <div class="th-vi">Mã Vai trò</div>
+                  </th>
+                
+                  <th>
+                    <div class="th-en">Target User Group</div>
+                    <div class="th-vi">Nhóm Người dùng</div>
+                  </th>
+                
+                  <th>
+                    <div class="th-en">Coating Schedule (CS) &amp; BOM</div>
+                    <div class="th-vi">Qui Trình Sơn (CS) &amp; BOM</div>
+                  </th>
+                
+                  <th>
+                    <div class="th-en">Coating Cost (CC) &amp; Unit Prices</div>
+                    <div class="th-vi">Bảng Giá (CC) &amp; Đơn giá VND</div>
+                  </th>
+                
+                  <th>
+                    <div class="th-en">Status Approval &amp; Master Data</div>
+                    <div class="th-vi">Phê duyệt Trạng thái &amp; Master Data</div>
+                  </th>
+                
+              </tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  
+                    <td>
+                      <div class="td-en">TECHNICAL</div>
+                      <div class="td-vi">Kỹ thuật viên (TA)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Field Technical Application (TA)</div>
+                      <div class="td-vi">Kỹ thuật viên hiện trường / Pha màu</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Full Edit (Technical specs &amp; quantities only)</div>
+                      <div class="td-vi">Toàn quyền lập CS &amp; xem lượng Kg/Lít BOM</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">HIDDEN (100% price &amp; cost redaction)</div>
+                      <div class="td-vi">ẨN HOÀN TOÀN (Tự động ẩn tab CC &amp; mọi cột giá)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">View status only; scoped to assigned Salesman</div>
+                      <div class="td-vi">Chỉ xem trạng thái; giới hạn theo Sales phụ trách</div>
+                    </td>
+                  
+                </tr>
+              
+                <tr>
+                  
+                    <td>
+                      <div class="td-en">SALES</div>
+                      <div class="td-vi">Kinh doanh</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Sales &amp; Quotation Executive</div>
+                      <div class="td-vi">Nhân viên Kinh doanh &amp; Báo giá</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Full Edit within assigned Salesman scope</div>
+                      <div class="td-vi">Xem &amp; chỉnh sửa trong phạm vi Sales phụ trách</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">VISIBLE (View CC, BOM Cost &amp; Reports)</div>
+                      <div class="td-vi">HIỂN THỊ ĐẦY ĐỦ (Xem bảng CC, chi phí BOM &amp; Báo cáo)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">View status; manage scoped Customers/Quotations</div>
+                      <div class="td-vi">Xem trạng thái; cập nhật KH &amp; Báo giá thuộc phạm vi</div>
+                    </td>
+                  
+                </tr>
+              
+                <tr>
+                  
+                    <td>
+                      <div class="td-en">PROJECT_LEADER</div>
+                      <div class="td-vi">Trưởng nhóm Dự án</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Project Leader / Technical Manager</div>
+                      <div class="td-vi">Trưởng nhóm Dự án / Quản lý Kỹ thuật</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Full Edit across all customers &amp; projects</div>
+                      <div class="td-vi">Toàn quyền lập &amp; chỉnh sửa mọi hồ sơ dự án</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">VISIBLE (Full cost &amp; analytical access)</div>
+                      <div class="td-vi">HIỂN THỊ ĐẦY ĐỦ (Toàn bộ chi phí &amp; 7 báo cáo)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Approve / Set Inactive / Reopen Draft + Master Data</div>
+                      <div class="td-vi">Phê duyệt APPROVED / INACTIVE / Mở lại Draft</div>
+                    </td>
+                  
+                </tr>
+              
+                <tr>
+                  
+                    <td>
+                      <div class="td-en">ADMIN</div>
+                      <div class="td-vi">Quản trị Hệ thống</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">System Administrator / IT / Director</div>
+                      <div class="td-vi">Quản trị viên Hệ thống / Ban Giám đốc</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Full Unrestricted Access</div>
+                      <div class="td-vi">Toàn quyền không giới hạn</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">VISIBLE (Full unrestricted access)</div>
+                      <div class="td-vi">HIỂN THỊ ĐẦY ĐỦ (Toàn quyền truy cập)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Full Approval + User Accounts &amp; RBAC Management</div>
+                      <div class="td-vi">Toàn quyền Phê duyệt + Quản lý Tài khoản User</div>
+                    </td>
+                  
+                </tr>
+              
+            </tbody>
+          </table>
+        
+        </article>
+      
+        <article class="section-card" id="sec-1-2">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">1.2. Main Workspace Layout &amp; Navigation Architecture</div>
+              <div class="section-vi">1.2. Bố cục Không gian Làm việc Chính &amp; Thanh Điều hướng</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Switch seamlessly between the 4 core functional modules, search projects from the left sidebar, and monitor real-time coating cost.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Chuyển đổi nhanh giữa 4 phân hệ chức năng chính, tra cứu cây dự án ngay trên thanh menu trái và theo dõi tổng chi phí sơn theo thời gian thực.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/02-workspace-overview.png" alt="Figure 1.2 — Main Workspace Overview &amp; Collapsible Left Sidebar" />
+            <figcaption>
+              <div class="cap-en">Figure 1.2 — Main Workspace Overview &amp; Collapsible Left Sidebar</div>
+              <div class="cap-vi">Hình 1.2 — Tổng quan Không gian Làm việc Chính &amp; Thanh Menu Trái Thu gọn được</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Active Account &amp; RBAC Card:</strong> Displays your Full Name, Role Badge (e.g., PROJECT_LEADER), Assigned Salesman scope (if applicable), Change Password button, and Sign Out button.</div>
+              <div class="step-vi"><em><strong>Thẻ Tài khoản &amp; Vai trò Đang đăng nhập:</strong> Hiển thị Họ tên, Nhãn vai trò (Role), Tên Sales phụ trách (nếu có), nút Đổi mật khẩu và nút Đăng xuất.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Main Navigation Menu (4 Core Modules):</strong> Switch between: (1) Workspace (CS/CC/BOM), (2) Projects Explorer, (3) Reports &amp; Analytics (7 Tabs), and (4) Master Data.</div>
+              <div class="step-vi"><em><strong>Menu Điều hướng Chính (4 Phân hệ Cốt lõi):</strong> Chuyển đổi giữa 4 phân hệ: (1) Workspace (Qui Trình Sơn &amp; Chi Phí), (2) Projects (Quản lý Hồ sơ Dự án), (3) Reports &amp; Analytics (7 Báo cáo), và (4) Master Data (Dữ liệu Gốc).</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Quick Project &amp; Revision Accordion Tree:</strong> Type a project code (e.g., NTR 001), customer name, or color to filter immediately. Click any Rev pill (Rev 00, Rev 01, Rev 02) to load it into the Workspace.</div>
+              <div class="step-vi"><em><strong>Cây Tra cứu Nhanh Hồ sơ Dự án &amp; Phiên bản (Revision):</strong> Nhập mã dự án (VD: NTR 001), tên khách hàng hoặc màu sơn để lọc tức thì. Nhấn vào thẻ phiên bản (Rev 00, Rev 01, Rev 02) để mở ngay trên màn hình làm việc.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Live Total Coating Cost Footer (VND/m²):</strong> Continuously recalculates and displays the exact Total Coating Cost (VND/m²) as you edit steps in the Coating Schedule.</div>
+              <div class="step-vi"><em><strong>Khung Tổng Chi phí Sơn Thời gian Thực (VND/m²):</strong> Tự động tính toán và nhảy số Tổng chi phí sơn (VND/m²) ngay lập tức mỗi khi bạn thay đổi thông số bên bảng Qui Trình Sơn.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">5</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Top Workspace Sub-Tabs &amp; Global Action Bar:</strong> Switch between Tab 1 (CS), Tab 2 (CC), and Tab 3 (BOM), or execute actions: Auto-Save Flush, Clone Revision, Approve/Status Change, Status History, Export Excel (.xlsx), and Print A4/PDF.</div>
+              <div class="step-vi"><em><strong>Thanh Tab Làm việc (CS / CC / BOM) &amp; Công cụ Tác vụ Hồ sơ:</strong> Chuyển giữa 3 Tab (1. CS, 2. CC, 3. BOM) và thực hiện các lệnh: Lưu đồng bộ, Nhân bản Revision, Phê duyệt trạng thái, Xem lịch sử, Xuất Excel (.xlsx) và In A4/PDF.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-1-3">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">1.3. Account Profile &amp; Self-Service Password Update</div>
+              <div class="section-vi">1.3. Thông tin Tài khoản &amp; Đổi Mật khẩu Cá nhân</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Inspect your active session permissions and update your personal password at any time.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Kiểm tra chi tiết quyền hạn tài khoản hiện tại và chủ động đổi mật khẩu bảo mật cá nhân.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/03-user-profile-modal.png" alt="Figure 1.3 — Account Profile &amp; Change Password Dialog" />
+            <figcaption>
+              <div class="cap-en">Figure 1.3 — Account Profile &amp; Change Password Dialog</div>
+              <div class="cap-vi">Hình 1.3 — Hộp thoại Thông tin Tài khoản &amp; Đổi Mật khẩu Cá nhân</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Review Active Session &amp; Role Scope:</strong> Click &quot;Đổi mật khẩu&quot; on the left sidebar to open the profile dialog and verify your assigned Role and Salesman scope.</div>
+              <div class="step-vi"><em><strong>Kiểm tra Thông tin Phiên &amp; Phạm vi Phân quyền:</strong> Nhấn nút &quot;Đổi mật khẩu&quot; ở thanh menu trái để mở hộp thoại kiểm tra Vai trò (Role) và Salesman phụ trách.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Fill Current &amp; New Password (minimum 6 characters):</strong> Enter your Current Password, New Password, and Confirm New Password.</div>
+              <div class="step-vi"><em><strong>Nhập Mật khẩu Hiện tại &amp; Mật khẩu Mới (tối thiểu 6 ký tự):</strong> Nhập đầy đủ Mật khẩu hiện tại, Mật khẩu mới (tối thiểu 6 ký tự) và Nhập lại mật khẩu mới.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Click Update Password (Cập nhật mật khẩu):</strong> Click &quot;Cập nhật mật khẩu&quot; to save immediately without losing your current work in the Workspace.</div>
+              <div class="step-vi"><em><strong>Nhấn nút Cập nhật Mật khẩu:</strong> Nhấn &quot;Cập nhật mật khẩu&quot; để lưu thay đổi ngay lập tức mà không làm gián đoạn công việc đang mở.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      </section>
+      <section class="chapter-block" id="ch-2">
+        <div class="chapter-banner">
+          <div class="chapter-en">CHAPTER 2: PROJECT EXPLORER &amp; REVISION LIFECYCLE MANAGEMENT</div>
+          <div class="chapter-vi">CHƯƠNG 2: QUẢN LÝ HỒ SƠ DỰ ÁN &amp; VÒNG ĐỜI PHIÊN BẢN (REVISION)</div>
+          <div class="chapter-summary-en">Search existing coating projects, initialize new customer projects (Rev 00), clone revisions, and govern status transitions (DRAFT, APPROVED, INACTIVE) with full audit trails.</div>
+          <div class="chapter-summary-vi">Tra cứu danh mục dự án sơn, khởi tạo dự án mới (Rev 00), nhân bản phiên bản và kiểm soát chặt chẽ vòng đời trạng thái (DRAFT, APPROVED, INACTIVE) kèm lịch sử kiểm toán.</div>
+        </div>
+    
+        <article class="section-card" id="sec-2-1">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">2.1. Searching &amp; Filtering Projects in Project Explorer</div>
+              <div class="section-vi">2.1. Tra cứu &amp; Lọc Hồ sơ trong Quản lý Dự án (Projects Explorer)</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Locate any project or revision across customers and filter by approval status.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Tìm kiếm nhanh hồ sơ dự án theo khách hàng, mã dự án, sản phẩm, màu sắc hoặc lọc theo trạng thái phê duyệt.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/04-project-explorer.png" alt="Figure 2.1 — Projects Explorer &amp; Multi-Revision Cards" />
+            <figcaption>
+              <div class="cap-en">Figure 2.1 — Projects Explorer &amp; Multi-Revision Cards</div>
+              <div class="cap-vi">Hình 2.1 — Màn hình Quản lý Hồ sơ Dự án &amp; Danh sách Phiên bản</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Click Create New Project (+ Tạo Hồ Sơ Dự Án Mới):</strong> Click the top-right button whenever you need to start a brand-new project code (initializes Rev 00).</div>
+              <div class="step-vi"><em><strong>Nhấn nút + Tạo Hồ Sơ Dự Án Mới:</strong> Nhấn nút &quot;+ Tạo Hồ Sơ Dự Án Mới&quot; ở góc phải trên cùng khi cần tạo một mã dự án hoàn toàn mới (khởi tạo từ Rev 00).</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Filter by Keyword, Customer &amp; Revision Status:</strong> Use the search box, Customer searchable dropdown, or Status pills (ALL / DRAFT / APPROVED / INACTIVE) to narrow down projects.</div>
+              <div class="step-vi"><em><strong>Lọc theo Từ khóa, Khách hàng &amp; Trạng thái Phiên bản:</strong> Sử dụng ô tìm kiếm từ khóa, hộp chọn Khách hàng hoặc các nút lọc trạng thái (ALL / DRAFT / APPROVED / INACTIVE) để thu hẹp danh sách.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Any Revision Pill to Open in Workspace:</strong> Each project card lists all its revisions (Rev 00, Rev 01, Rev 02...) with status badges (✅ APPROVED, ⏸️ INACTIVE, 📝 DRAFT). Click any revision to open its Coating Schedule.</div>
+              <div class="step-vi"><em><strong>Nhấn vào Thẻ Revision để Mở trong Không gian Làm việc:</strong> Mỗi thẻ dự án hiển thị đầy đủ lịch sử phiên bản (Rev 00, Rev 01, Rev 02...) kèm biểu tượng trạng thái. Nhấn vào phiên bản bất kỳ để mở ngay bảng Qui Trình Sơn.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-2-2">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">2.2. Creating a New Coating Project (Initializing Rev 00)</div>
+              <div class="section-vi">2.2. Khởi tạo Hồ sơ Dự án Sơn Mới (Tạo Phiên bản Gốc Rev 00)</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">TECHNICAL</span><span class="role-badge">SALES</span><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">ADMIN</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Register a new project with core customer and substrate metadata to generate an initial empty Draft schedule (Rev 00).</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Đăng ký mã dự án mới cùng thông tin khách hàng và chất liệu nền để hệ thống khởi tạo bảng Qui Trình Sơn bản nháp đầu tiên (Rev 00).</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/05-new-project-modal.png" alt="Figure 2.2 — Create New Project Modal Dialog" />
+            <figcaption>
+              <div class="cap-en">Figure 2.2 — Create New Project Modal Dialog</div>
+              <div class="cap-vi">Hình 2.2 — Hộp thoại Khởi tạo Hồ sơ Dự án Mới</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Complete Required Project Identification Fields:</strong> Enter the Project Code (e.g., NTR 002), select the Customer from the searchable dropdown, and fill in Product Name, Color Name, Substrate, and Finishing System.</div>
+              <div class="step-vi"><em><strong>Điền Đầy đủ Thông tin Định danh Dự án Bắt buộc:</strong> Nhập Mã dự án (VD: NTR 002), chọn Khách hàng từ danh sách tìm kiếm, và nhập Tên sản phẩm, Tên màu, Loại gỗ/Chất liệu nền, Hệ sơn.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Click Initialize Project (Tạo Dự Án &amp; Mở Qui Trình Sơn):</strong> Click submit. The system creates the project with Rev 00 (DRAFT) and opens the Coating Schedule editor immediately.</div>
+              <div class="step-vi"><em><strong>Nhấn nút Tạo Dự Án &amp; Mở Qui Trình Sơn:</strong> Nhấn nút xác nhận. Hệ thống lập tức tạo hồ sơ Rev 00 ở trạng thái Bản nháp (DRAFT) và chuyển thẳng vào màn hình lập Qui Trình Sơn.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-2-3">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">2.3. Approving Revisions, Auto-Supersede &amp; Mandatory Audit Reason</div>
+              <div class="section-vi">2.3. Phê duyệt Phiên bản (APPROVED), Tự động Thay thế &amp; Lý do Bắt buộc</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">ADMIN</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Lock a verified schedule as APPROVED for production, or transition between APPROVED, INACTIVE, and DRAFT with mandatory audit notes.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Chốt khóa hồ sơ đã duyệt sang trạng thái APPROVED để đưa vào sản xuất, hoặc chuyển đổi giữa APPROVED, INACTIVE và DRAFT kèm lý do kiểm toán bắt buộc.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/12-revision-status-modal.png" alt="Figure 2.3 — Confirm Status Change &amp; Auto-Supersede Notice" />
+            <figcaption>
+              <div class="cap-en">Figure 2.3 — Confirm Status Change &amp; Auto-Supersede Notice</div>
+              <div class="cap-vi">Hình 2.3 — Hộp thoại Xác nhận Đổi Trạng thái &amp; Cảnh báo Tự động Chuyển INACTIVE</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Verify Target Status Transition Banner:</strong> Click &quot;Approve / Phê duyệt (APPROVED)&quot; (or &quot;Set Inactive&quot; / &quot;Reopen Draft&quot;) on the top bar. Verify the transition path (e.g., DRAFT ➔ APPROVED).</div>
+              <div class="step-vi"><em><strong>Kiểm tra Biểu ngữ Chuyển đổi Trạng thái:</strong> Nhấn nút &quot;Approve / Phê duyệt (APPROVED)&quot; (hoặc &quot;Set Inactive&quot; / &quot;Reopen Draft&quot;) trên thanh công cụ. Kiểm tra chiều chuyển trạng thái (VD: DRAFT ➔ APPROVED).</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Review Auto-Supersede Warning (Single Active Approved Rule):</strong> When approving a new revision (e.g., Rev 02), any previously APPROVED revision in the same project (e.g., Rev 01) is automatically set to INACTIVE so only one active approved schedule exists per project.</div>
+              <div class="step-vi"><em><strong>Lưu ý Cơ chế Tự động Chuyển INACTIVE (Quy tắc 1 Phiên bản Hiệu lực):</strong> Khi phê duyệt phiên bản mới (VD: Rev 02), phiên bản đang APPROVED trước đó của cùng dự án (VD: Rev 01) sẽ tự động chuyển sang INACTIVE để đảm bảo mỗi dự án chỉ có 1 bản hiệu lực duy nhất.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Enter Mandatory Reason for Status Change (*):</strong> Type a clear business or technical reason (required). The Confirm button remains disabled until a reason is provided.</div>
+              <div class="step-vi"><em><strong>Nhập Lý do Thay đổi Trạng thái Bắt buộc (*):</strong> Nhập rõ lý do phê duyệt, ngưng hiệu lực hoặc mở lại bản nháp (bắt buộc). Nút Xác nhận chỉ bật lên khi đã nhập lý do.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Click Confirm Change (Xác nhận đổi trạng thái):</strong> Click Confirm. Approved and Inactive revisions are locked against accidental edits.</div>
+              <div class="step-vi"><em><strong>Nhấn nút Xác nhận Đổi trạng thái:</strong> Nhấn xác nhận. Các phiên bản ở trạng thái APPROVED và INACTIVE sẽ tự động khóa (Read-only) để bảo vệ dữ liệu lịch sử.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-2-4">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">2.4. Inspecting the Revision Status Audit History Timeline</div>
+              <div class="section-vi">2.4. Tra cứu Dòng thời gian Lịch sử Thay đổi Trạng thái (Audit History)</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Track who approved, reopened, or superseded a revision, when it happened, and the exact reason recorded.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Theo dõi minh bạch ai đã phê duyệt, mở lại bản nháp hoặc thay thế phiên bản vào thời điểm nào cùng lý do chi tiết.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/13-revision-audit-history.png" alt="Figure 2.4 — Revision Status History Timeline Modal" />
+            <figcaption>
+              <div class="cap-en">Figure 2.4 — Revision Status History Timeline Modal</div>
+              <div class="cap-vi">Hình 2.4 — Hộp thoại Lịch sử Thay đổi Trạng thái Hồ sơ</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Click History / Lịch sử on the Top Action Bar:</strong> Click the &quot;History / Lịch sử&quot; button (shows a badge count of recorded transitions) from any open revision.</div>
+              <div class="step-vi"><em><strong>Nhấn nút History / Lịch sử trên Thanh Công cụ Trên cùng:</strong> Nhấn nút &quot;History / Lịch sử&quot; (hiển thị số lượng bản ghi lịch sử) trên thanh công cụ của phiên bản đang mở.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Read Chronological Transition Cards &amp; Audit Reasons:</strong> Each card displays From Status ➔ To Status, exact timestamp, mandatory reason note, and the full name + role of the user who performed the action.</div>
+              <div class="step-vi"><em><strong>Xem Chi tiết Từng Bản ghi Chuyển Trạng thái &amp; Lý do:</strong> Mỗi thẻ ghi rõ Trạng thái cũ ➔ Trạng thái mới, thời gian chính xác tới từng giây, lý do bắt buộc và họ tên + vai trò người thực hiện.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Identify Auto-Supersede Events (⚡ Auto-supersede):</strong> Entries marked with the amber &quot;⚡ Auto-supersede&quot; badge indicate revisions that were automatically retired when a newer revision was approved.</div>
+              <div class="step-vi"><em><strong>Nhận diện Sự kiện Tự động Thay thế (⚡ Auto-supersede):</strong> Các bản ghi gắn nhãn màu vàng &quot;⚡ Auto-supersede&quot; cho biết phiên bản này đã tự động chuyển sang hết hiệu lực khi có phiên bản mới hơn được phê duyệt.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      </section>
+      <section class="chapter-block" id="ch-3">
+        <div class="chapter-banner">
+          <div class="chapter-en">CHAPTER 3: COATING SCHEDULE (CS) DYNAMIC EDITOR &amp; SMART AUTO-SAVE</div>
+          <div class="chapter-vi">CHƯƠNG 3: LẬP QUI TRÌNH SƠN (CS) ĐỘNG &amp; CƠ CHẾ TỰ ĐỘNG LƯU</div>
+          <div class="chapter-summary-en">Enter project header specifications, build multi-step coating processes with interleaved sanding rows, configure mixing ratios and CA (g/m²) ranges, and use smart viewport and price-sync tools.</div>
+          <div class="chapter-summary-vi">Nhập thông tin chung của hồ sơ, xây dựng bảng quy trình sơn đa công đoạn xen kẽ bước chà nhám, thiết lập tỷ lệ pha và khoảng định mức CA (g/m²), cùng công cụ ghim bảng và đồng bộ đơn giá.</div>
+        </div>
+    
+        <article class="section-card" id="sec-3-1">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">3.1. Editing Project Header, Environmental Conditions &amp; Signatories</div>
+              <div class="section-vi">3.1. Nhập Thông tin Chung, Điều kiện Môi trường &amp; Chữ ký Phê duyệt</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">TECHNICAL</span><span class="role-badge">SALES</span><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">ADMIN</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Define customer, furniture item, substrate, environmental parameters, and the 4 signatory names that appear on official Excel and A4 printouts.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Khai báo khách hàng, tên sản phẩm, loại gỗ, thông số môi trường xưởng và 4 đại diện ký duyệt sẽ xuất hiện trên bản in A4 và file Excel.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/06-cs-header-metadata.png" alt="Figure 3.1 — Coating Schedule (CS) Header &amp; Technical Metadata" />
+            <figcaption>
+              <div class="cap-en">Figure 3.1 — Coating Schedule (CS) Header &amp; Technical Metadata</div>
+              <div class="cap-vi">Hình 3.1 — Khu vực Thông tin Chung &amp; Điều kiện Kỹ thuật của Qui Trình Sơn (CS)</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Coating Schedule Banner &amp; Header Collapse Control:</strong> Shows the active Project Code, Revision Number, and Status. Click &quot;Thu gọn Thông tin chung&quot; anytime to maximize vertical space for the process table.</div>
+              <div class="step-vi"><em><strong>Thanh Tiêu đề CS &amp; Nút Thu gọn Thông tin Chung:</strong> Hiển thị Mã dự án, Số Revision và Trạng thái. Nhấn &quot;Thu gọn Thông tin chung&quot; khi muốn mở rộng tối đa diện tích làm việc cho bảng quy trình bên dưới.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Customer &amp; Core Product Specifications:</strong> Select the Customer (filters available Quotation material codes automatically), then enter Project Code, Date, Product Name, Color Name, Substrate, Positioning, Finishing System, and Gloss Level.</div>
+              <div class="step-vi"><em><strong>Chọn Khách hàng &amp; Thông số Kỹ thuật Sản phẩm:</strong> Chọn Khách hàng (hệ thống sẽ tự động lọc danh mục Mã vật tư báo giá của đúng khách hàng đó), sau đó điền Mã dự án, Ngày lập, Sản phẩm, Màu sắc, Chất liệu gỗ, Vị trí sử dụng, Hệ sơn và Độ bóng.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Specify Shopfloor &amp; Drying Conditions:</strong> Enter Moisture Content of Wood (MC 8-12%), Room Humidity (40-80%), Room Temperature (25-40°C), Line Speed, Drying Condition, and Technical Remarks.</div>
+              <div class="step-vi"><em><strong>Thiết lập Điều kiện Môi trường Xưởng &amp; Chế độ Sấy:</strong> Nhập Độ ẩm gỗ (MC of Wood), Độ ẩm phòng, Nhiệt độ phòng, Tốc độ chuyền (Line Speed), Điều kiện sấy và Ghi chú kỹ thuật (Remark).</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Fill 4 Approval Signatory Names:</strong> Enter names for Prepared by TA, Checked by Project Leader, Approved by PD/PM, and Customer Confirmation.</div>
+              <div class="step-vi"><em><strong>Điền Tên 4 Đại diện Ký duyệt Hồ sơ:</strong> Nhập tên người lập (Prepared by TA), người kiểm tra (Project Leader), người duyệt (PD/PM) và xác nhận của Khách hàng (Customer).</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-3-2">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">3.2. Building the Dynamic Process Table (Chemical Steps &amp; Sanding Rows)</div>
+              <div class="section-vi">3.2. Xây dựng Bảng Quy trình Sơn Động (Bước Hóa chất &amp; Bước Chà nhám)</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">TECHNICAL</span><span class="role-badge">SALES</span><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">ADMIN</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Add coating steps, interleave sanding specifications, combine multiple chemical components per step, and enter viscosity, CA (g/m²), and application methods.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Thêm các bước thi công sơn, chèn xen kẽ hàng phụ chà nhám (SANDING), phối trộn nhiều mã hóa chất trong cùng 1 bước và nhập độ nhớt, định mức CA (g/m²), phương pháp thi công.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/07-cs-process-steps-table.png" alt="Figure 3.2 — Coating Schedule Dynamic Process Table" />
+            <figcaption>
+              <div class="cap-en">Figure 3.2 — Coating Schedule Dynamic Process Table</div>
+              <div class="cap-vi">Hình 3.2 — Bảng Quy trình Thi công Sơn Động (Gộp dòng tự động theo Bước)</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Add Chemical Step (+ Thêm Bước Sơn) or Sanding Row (+ Chèn Bước Chà Nhám):</strong> Use the action buttons to append a numbered Coating Step (#1, #2...) or insert an unnumbered Sanding row (e.g., SANDING PAPER #180-240) between steps.</div>
+              <div class="step-vi"><em><strong>Thêm Bước Sơn Mới hoặc Chèn Bước Chà Nhám (SANDING):</strong> Sử dụng thanh nút bấm để thêm bước sơn có đánh số thứ tự (#1, #2...) hoặc chèn hàng phụ Chà nhám (VD: SANDING PAPER #180-240) xen kẽ giữa các bước.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Configure Interleaved Sanding Row (SANDING):</strong> Enter the abrasive grit specification (e.g., SANDING PAPER #180-240 or #320) and optional step remarks. Sanding rows do not consume chemical cost.</div>
+              <div class="step-vi"><em><strong>Cấu hình Hàng phụ Chà nhám (SANDING):</strong> Nhập thông số giấy nhám (VD: SANDING PAPER #180-240 hoặc #320) và ghi chú nếu có. Hàng chà nhám không tính vào chi phí hóa chất.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Application Step, Product Codes, Mixing Ratio, CA (g/m²) &amp; Method:</strong> Choose the Step Name (e.g., WIPING FILLER, SANDING SEALER, TOP COAT COLOR), select each Product Code from the customer quotation list, enter Mixing Ratio (e.g., 10 : 10 : 60 : 20 : 20), Viscosity, CA range (e.g., &quot;100-120&quot; automatically averages to 110 g/m²), Application Method (WIPING 35% or SPRAY 60%), and Drying Time.</div>
+              <div class="step-vi"><em><strong>Chọn Tên Công đoạn, Mã Vật tư, Tỷ lệ pha, Định mức CA (g/m²) &amp; Phương pháp:</strong> Chọn Tên bước thi công, chọn từng Mã vật tư (Product Code) từ báo giá khách hàng, nhập Tỷ lệ pha (Mixing Ratio), Độ nhớt (Visco), Định mức CA (nhập khoảng &quot;100-120&quot; hệ thống tự động lấy trung bình 110 g/m²), Phương pháp thi công (tự động ánh xạ hiệu suất 35% hoặc 60%) và Thời gian khô.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Add Multiple Chemical Items Within a Step (+ Thêm mã vật tư):</strong> Click &quot;+ Thêm mã vật tư&quot; inside any step to add hardeners, thinners, or colorants. Shared step columns (Step #, Step Name, Visco, CA, Method, Drying Time) merge automatically via dynamic rowSpan.</div>
+              <div class="step-vi"><em><strong>Chèn Thêm Nhiều Mã Hóa chất vào Cùng Một Bước (+ Thêm mã vật tư):</strong> Nhấn &quot;+ Thêm mã vật tư&quot; ngay trong bước đó để thêm chất đóng rắn, dung môi hoặc tinh màu. Các cột chung của bước sẽ tự động gộp ô (rowSpan) chuẩn xác.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-3-3">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">3.3. Smart Auto-Save, Viewport Pinning, Revision Cloning &amp; Price Sync</div>
+              <div class="section-vi">3.3. Tự động Lưu Thông minh (Auto-Save), Ghim Khung Bảng, Nhân bản &amp; Đồng bộ Giá</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">TECHNICAL</span><span class="role-badge">SALES</span><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">ADMIN</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Ensure zero data loss with real-time hybrid auto-save, lock the table scroll area on large schedules, clone revisions, and refresh material prices from Master Quotations.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Đảm bảo không bao giờ mất dữ liệu nhờ cơ chế tự động lưu lai ghép, ghim cố định khung cuộn bảng khi quy trình dài, nhân bản Revision và cập nhật đơn giá mới nhất từ Master Data.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/08-cs-toolbar-viewport-autosave.png" alt="Figure 3.3 — Smart Auto-Save Status, Clone Revision &amp; Price Sync Controls" />
+            <figcaption>
+              <div class="cap-en">Figure 3.3 — Smart Auto-Save Status, Clone Revision &amp; Price Sync Controls</div>
+              <div class="cap-vi">Hình 3.3 — Trạng thái Tự động Lưu, Nhân bản Revision &amp; Đồng bộ Đơn giá Mới nhất</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Monitor Smart Auto-Save Indicator (Auto-saved / Ctrl+S):</strong> Discrete actions (adding/deleting steps or selecting dropdowns) save in ~250ms; typing saves after ~900ms idle. Press Ctrl+S or click the pill to flush immediately.</div>
+              <div class="step-vi"><em><strong>Theo dõi Trạng thái Tự động Lưu Thông minh (Auto-saved / Ctrl+S):</strong> Các thao tác chọn/thêm/xóa bước được lưu tự động sau ~250ms; thao tác gõ phím lưu sau ~900ms nghỉ tay. Có thể nhấn Ctrl+S hoặc bấm trực tiếp vào nút trạng thái để lưu tức thì.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Clone Revision (Clone Rev / Nhân bản Rev):</strong> Click &quot;Clone Rev / Nhân bản Rev&quot; to duplicate all steps of the current schedule into a new Draft revision (e.g., Rev 02 ➔ Rev 03) with refreshed quotation prices.</div>
+              <div class="step-vi"><em><strong>Nhân bản Phiên bản Mới (Clone Rev / Nhân bản Rev):</strong> Nhấn &quot;Clone Rev / Nhân bản Rev&quot; để sao chép toàn bộ quy trình hiện tại sang một phiên bản nháp mới (VD: Rev 02 ➔ Rev 03) đồng thời cập nhật đơn giá mới nhất.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Toggle Header Collapse &amp; Pin Table Viewport:</strong> Use &quot;Mở rộng/Thu gọn Thông tin chung&quot; and &quot;Ghim khung cuộn bảng&quot; together with the synchronized top/bottom horizontal scrollbars to navigate wide schedules effortlessly.</div>
+              <div class="step-vi"><em><strong>Bật/Tắt Thu gọn Header &amp; Ghim Khung Cuộn Bảng:</strong> Kết hợp nút &quot;Mở rộng/Thu gọn Thông tin chung&quot;, &quot;Ghim khung cuộn bảng&quot; và thanh cuộn ngang đồng bộ trên/dưới để thao tác mượt mà với các quy trình nhiều bước.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Sync Latest Quotation Prices (Đồng bộ Đơn giá mới nhất):</strong> On any DRAFT revision, click &quot;Đồng bộ Đơn giá&quot; to pull the latest VND/kg prices from the Master Quotation table into all steps of the active revision.</div>
+              <div class="step-vi"><em><strong>Đồng bộ Đơn giá Báo giá Mới nhất (Sync Latest Prices):</strong> Khi hồ sơ đang ở trạng thái DRAFT, nhấn nút &quot;Đồng bộ Đơn giá&quot; để cập nhật toàn bộ đơn giá vật tư trong quy trình theo bảng Master Quotation mới nhất.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      </section>
+      <section class="chapter-block" id="ch-4">
+        <div class="chapter-banner">
+          <div class="chapter-en">CHAPTER 4: REAL-TIME COATING COST (CC), RBAC REDACTION &amp; BOM SUMMARY</div>
+          <div class="chapter-vi">CHƯƠNG 4: BẢNG TÍNH CHI PHÍ SƠN (CC), ẨN GIÁ KỸ THUẬT &amp; DỰ TOÁN VẬT TƯ (BOM)</div>
+          <div class="chapter-summary-en">Review the 100% automated read-only Coating Cost calculation, understand IEEE-754 full-precision formulas, verify Technical RBAC price redaction, and estimate material drums in BOM Summary.</div>
+          <div class="chapter-summary-vi">Kiểm tra bảng tính Chi phí Sơn (CC) tự động hóa 100% ở chế độ chỉ xem, nắm rõ công thức tính chính xác tuyệt đối, cơ chế ẩn giá đối với Kỹ thuật viên và dự toán số lượng thùng sơn cần đặt tại BOM Summary.</div>
+        </div>
+    
+        <article class="section-card" id="sec-4-1">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">4.1. Reading the Automated Coating Cost (CC) Table</div>
+              <div class="section-vi">4.1. Cách đọc Bảng Tính Toán Chi Phí Sơn Tự động (Coating Cost - CC)</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">SALES</span><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">ADMIN</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Inspect step-by-step and item-by-item cost calculations without manual formula entry.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Xem chi tiết đơn giá, độ phủ và giá thành sơn (VND/m²) của từng hóa chất và từng công đoạn được tính tự động hoàn toàn từ bảng CS.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/09-cc-cost-table.png" alt="Figure 4.1 — Coating Cost (CC) Read-Only Real-Time Calculation Table" />
+            <figcaption>
+              <div class="cap-en">Figure 4.1 — Coating Cost (CC) Read-Only Real-Time Calculation Table</div>
+              <div class="cap-vi">Hình 4.1 — Màn hình Bảng Tính Toán Chi Phí Sơn (CC) Tự động Thời gian Thực</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Switch to Tab 2: Coating Cost (CC):</strong> Click Tab &quot;2. Coating Cost (CC)&quot; on the top bar. The tab badge displays the live Total Coating Cost (e.g., 891,825 đ/m²).</div>
+              <div class="step-vi"><em><strong>Chuyển sang Tab 2: Coating Cost (CC) / Chi phí sơn:</strong> Nhấn vào Tab &quot;2. Coating Cost (CC)&quot; trên thanh công cụ. Nhãn tab luôn hiển thị sẵn Tổng chi phí sơn hiện tại (VD: 891,825 đ/m²).</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Verify Read-Only Real-Time Synchronization:</strong> The CC table is strictly Read-Only to prevent manual formula tampering. Every edit in CS updates CC instantaneously.</div>
+              <div class="step-vi"><em><strong>Cơ chế Đồng bộ Tự động Chế độ Chỉ xem (Read-Only):</strong> Bảng CC được khóa ở chế độ Chỉ xem (Read-Only) nhằm ngăn chặn sai lệch công thức thủ công. Mọi thay đổi bên tab CS đều tự động cập nhật sang CC tức thì.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Inspect Consumption, Coverage &amp; Mixed Price Columns:</strong> Review Price (VND/kg), Mixing Ratio, Mixed Price, CA (g/m²), Application Efficiency (%), CA + Loss (g/m²), Coverage (m²/kg), and Coating Cost (VND/m²).</div>
+              <div class="step-vi"><em><strong>Kiểm tra Các Cột Định mức Tiêu hao, Độ phủ (Coverage) &amp; Giá Hỗn hợp (Mixed Price):</strong> Đối chiếu các cột: Đơn giá gốc (Price), Tỷ lệ pha, Giá hỗn hợp (Mixed Price), Định mức CA, Hiệu suất thu hồi (%), Lượng tiêu hao gồm hao hụt (CA + Loss), Độ phủ (Coverage m²/kg) và Chi phí công đoạn (Coating Cost VND/m²).</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Check Grand Total Coating Cost (VND/m²):</strong> The bottom footer sums all chemical steps using full 64-bit IEEE-754 intermediate precision before final display rounding.</div>
+              <div class="step-vi"><em><strong>Kiểm tra Dòng Tổng Chi Phí Sơn Toàn Quy trình (Total Coating Cost VND/m²):</strong> Dòng tổng cộng cuối bảng cộng dồn toàn bộ các bước hóa chất với độ chính xác số thực 64-bit tuyệt đối trước khi làm tròn hiển thị.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+          <table class="manual-table">
+            <thead>
+              <tr>
+                
+                  <th>
+                    <div class="th-en">Metric / Column</div>
+                    <div class="th-vi">Chỉ số / Cột tính toán</div>
+                  </th>
+                
+                  <th>
+                    <div class="th-en">Exact Mathematical Formula</div>
+                    <div class="th-vi">Công thức Toán học Chính xác</div>
+                  </th>
+                
+                  <th>
+                    <div class="th-en">Business Meaning</div>
+                    <div class="th-vi">Ý nghĩa Nghiệp vụ</div>
+                  </th>
+                
+              </tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  
+                    <td>
+                      <div class="td-en">CA Average (g/m²)</div>
+                      <div class="td-vi">Định mức CA trung bình (g/m²)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">(CA_min + CA_max) / 2</div>
+                      <div class="td-vi"> Trung bình cộng khoảng định mức (VD: &quot;100-120&quot; ➔ 110 g/m²)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Target wet film application weight per m²</div>
+                      <div class="td-vi">Lượng sơn tiêu chuẩn phủ trên 1 m² bề mặt</div>
+                    </td>
+                  
+                </tr>
+              
+                <tr>
+                  
+                    <td>
+                      <div class="td-en">Item CA + Loss (g/m²)</div>
+                      <div class="td-vi">Lượng sơn từng mã gồm hao hụt (g/m²)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">[CA_step × (Ratio_i / ΣRatio)] / Efficiency</div>
+                      <div class="td-vi">[CA bước × (Tỷ lệ mã i / Tổng tỷ lệ bước)] / Hiệu suất (%)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Actual paint required after spray/wiping loss</div>
+                      <div class="td-vi">Lượng sơn thực tế cần xuất kho sau khi tính hao hụt</div>
+                    </td>
+                  
+                </tr>
+              
+                <tr>
+                  
+                    <td>
+                      <div class="td-en">Step Coverage (m²/kg)</div>
+                      <div class="td-vi">Độ phủ công đoạn (m²/kg)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">1000 / Step_CA_Plus_Loss</div>
+                      <div class="td-vi">1000 / Tổng (CA + Loss) của bước</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Square meters coated per 1 kg of mixed paint</div>
+                      <div class="td-vi">Số m² bề mặt sơn được với 1 kg hỗn hợp pha</div>
+                    </td>
+                  
+                </tr>
+              
+                <tr>
+                  
+                    <td>
+                      <div class="td-en">Mixed Price (VND/kg)</div>
+                      <div class="td-vi">Đơn giá hỗn hợp pha (VND/kg)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Σ(Price_i × Ratio_i) / ΣRatio</div>
+                      <div class="td-vi">Tổng tích (Đơn giá × Tỷ lệ pha) / Tổng tỷ lệ pha</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Weighted average price of 1 kg of mixed paint</div>
+                      <div class="td-vi">Đơn giá bình quân gia quyền của 1 kg hỗn hợp sơn</div>
+                    </td>
+                  
+                </tr>
+              
+                <tr>
+                  
+                    <td>
+                      <div class="td-en">Step Coating Cost (VND/m²)</div>
+                      <div class="td-vi">Chi phí sơn công đoạn (VND/m²)</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Mixed_Price / Step_Coverage</div>
+                      <div class="td-vi">Đơn giá hỗn hợp / Độ phủ công đoạn</div>
+                    </td>
+                  
+                    <td>
+                      <div class="td-en">Exact coating cost per m² for that step</div>
+                      <div class="td-vi">Chi phí sơn trên 1 m² của công đoạn đó</div>
+                    </td>
+                  
+                </tr>
+              
+            </tbody>
+          </table>
+        
+        </article>
+      
+        <article class="section-card" id="sec-4-2">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">4.2. Technical Role (TECHNICAL) Automatic Price Redaction</div>
+              <div class="section-vi">4.2. Chế độ Bảo mật Tự động Ẩn Đơn giá đối với Kỹ thuật viên (TECHNICAL)</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">TECHNICAL</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Protect commercial pricing confidentiality while allowing Technical Application (TA) staff full access to technical specifications and material quantities.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Bảo mật tuyệt đối đơn giá thương mại nhưng vẫn đảm bảo Kỹ thuật viên (TA) thao tác đầy đủ thông số kỹ thuật và định mức khối lượng.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/10-technical-rbac-redaction.png" alt="Figure 4.2 — Workspace View under TECHNICAL Role (Prices &amp; CC Tab Redacted)" />
+            <figcaption>
+              <div class="cap-en">Figure 4.2 — Workspace View under TECHNICAL Role (Prices &amp; CC Tab Redacted)</div>
+              <div class="cap-vi">Hình 4.2 — Giao diện Làm việc của Vai trò TECHNICAL (Tự động Ẩn Tab CC &amp; Đơn giá)</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Verify TECHNICAL Role Badge &amp; Assigned Salesman Scope:</strong> When signed in as TECHNICAL (e.g., tech@alkana.vn), the sidebar displays the TECHNICAL badge and restricts visible projects to the assigned Salesman.</div>
+              <div class="step-vi"><em><strong>Nhận diện Nhãn Vai trò TECHNICAL &amp; Phạm vi Sales Phụ trách:</strong> Khi đăng nhập bằng tài khoản TECHNICAL (VD: tech@alkana.vn), thanh bên trái hiển thị nhãn TECHNICAL và chỉ hiển thị các khách hàng/dự án thuộc Salesman được phân công.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Coating Cost (CC) Tab is Automatically Hidden:</strong> Only Tab 1 (Coating Schedule) and Tab 3 (BOM Summary quantities without prices) are accessible.</div>
+              <div class="step-vi"><em><strong>Tab 2 (Coating Cost - CC) Tự động Ẩn khỏi Thanh Công cụ:</strong> Thanh công cụ phía trên chỉ hiển thị Tab 1 (Coating Schedule) và Tab 3 (BOM Summary chỉ hiện số Kg/Thùng, ẩn cột giá).</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Backend API Redacts All Price Fields to Zero/Null:</strong> Both the UI footer and backend API responses strip out unit prices and total VND figures so commercial data cannot be inspected even via browser developer tools.</div>
+              <div class="step-vi"><em><strong>Tầng Backend Tự động Xóa Ẩn Toàn bộ Trường Đơn giá:</strong> Cả giao diện lẫn dữ liệu trả về từ API Backend đều tự động lọc bỏ đơn giá và thành tiền, đảm bảo an toàn bảo mật tuyệt đối.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-4-3">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">4.3. Estimating Material Quantities &amp; Packaging in BOM Summary</div>
+              <div class="section-vi">4.3. Dự toán Khối lượng Sơn &amp; Số Thùng Đặt hàng tại BOM Summary</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Aggregate identical material codes across all coating steps and calculate exact Kg/Ltr and drum/packing counts for any production area (m²).</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Tự động gom nhóm các mã hóa chất trùng nhau xuất hiện ở nhiều bước thi công và tính tổng số Kg/Lít cùng số thùng (Packing) cần đặt hàng theo diện tích dự án (m²).</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/11-bom-summary-view.png" alt="Figure 4.3 — BOM Summary &amp; Packaging Estimator View" />
+            <figcaption>
+              <div class="cap-en">Figure 4.3 — BOM Summary &amp; Packaging Estimator View</div>
+              <div class="cap-vi">Hình 4.3 — Màn hình Dự toán Định mức Vật tư &amp; Quy đổi Số Thùng (BOM Summary)</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Enter Target Coating Area (m²):</strong> Click Tab &quot;3. BOM Summary&quot; and type the required production area in m² (e.g., 100 m² or 500 m²) in the top-right input box.</div>
+              <div class="step-vi"><em><strong>Nhập Diện tích Cần Sơn của Dự án (Coating Area m²):</strong> Chuyển sang Tab &quot;3. BOM Summary&quot; và nhập tổng diện tích cần sơn (m²) vào ô &quot;Coating Area / Diện tích cần sơn (m²)&quot; ở góc phải trên.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Review Executive BOM KPI Cards:</strong> Instantly view Total Unique Material Codes, Total Paint Required (Kg/Ltr), and Total Estimated Material Cost (VND — visible to Sales/Leader/Admin).</div>
+              <div class="step-vi"><em><strong>Xem 3 Thẻ Chỉ số Tổng hợp BOM:</strong> Theo dõi tức thì: Tổng số mã vật tư duy nhất, Tổng lượng sơn cần dùng (Kg/Ltr) và Tổng chi phí vật tư dự kiến (VND).</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Inspect Consolidated Material &amp; Packing Table:</strong> Each unique product code shows its summed Total CA + Loss (g/m²), Required Quantity (Kg/Ltr), Packing Specification, Nett Weight, and exact Full Packs Needed (rounded up) to place warehouse or purchasing orders.</div>
+              <div class="step-vi"><em><strong>Kiểm tra Bảng Tổng hợp Định mức &amp; Số Thùng Nguyên (Packs Required):</strong> Mỗi mã sơn hiển thị Tổng định mức thực tế g/m² (cộng gộp từ mọi bước sử dụng), Lượng cần dùng (Kg/Ltr), Quy cách đóng gói (Nett) và Số thùng nguyên cần đặt (làm tròn lên).</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      </section>
+      <section class="chapter-block" id="ch-5">
+        <div class="chapter-banner">
+          <div class="chapter-en">CHAPTER 5: LIVE-FORMULA EXCEL EXPORT &amp; A4 LANDSCAPE PRINTING</div>
+          <div class="chapter-vi">CHƯƠNG 5: XUẤT FILE EXCEL CÔNG THỨC SỐNG &amp; IN BIỂU MẪU CHUẨN A4 NGANG</div>
+          <div class="chapter-summary-en">Export native Excel workbooks (.xlsx) with embedded live formulas and dynamic merged cells, or print standardized A4 Landscape sheets with 4 signature blocks.</div>
+          <div class="chapter-summary-vi">Xuất file Excel (.xlsx) giữ nguyên công thức tính toán sống và gộp ô tự động, hoặc in biểu mẫu chuẩn A4 ngang công nghiệp với 4 ô chữ ký xác nhận.</div>
+        </div>
+    
+        <article class="section-card" id="sec-5-1">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">5.1. A4 Landscape Print Preview, PDF Save &amp; Excel Formula Export</div>
+              <div class="section-vi">5.1. Xem trước Bản in Chuẩn A4 Ngang, Lưu PDF &amp; Xuất Excel Công thức Sống</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Generate customer-ready A4 PDF documents or editable Excel files containing live SUMPRODUCT and coverage formulas.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Tạo bản in A4/PDF chuẩn công nghiệp để trình ký khách hàng hoặc xuất file Excel (.xlsx) nhúng sẵn công thức sống.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/14-print-a4-preview.png" alt="Figure 5.1 — A4 Landscape Print &amp; PDF Preview Dialog" />
+            <figcaption>
+              <div class="cap-en">Figure 5.1 — A4 Landscape Print &amp; PDF Preview Dialog</div>
+              <div class="cap-vi">Hình 5.1 — Giao diện Xem trước Bản in Chuẩn A4 Ngang &amp; Xuất PDF</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Switch Between CS and CC Print Modes &amp; Click Print / Save PDF:</strong> Click &quot;Print A4 - PDF&quot; on the top workspace toolbar. Inside the preview bar, toggle between &quot;In Qui Trình Sơn (CS)&quot; and &quot;In Bảng Chi Phí (CC)&quot;, then click &quot;In ngay / Lưu PDF (A4 Ngang)&quot;.</div>
+              <div class="step-vi"><em><strong>Chuyển Đổi Chế độ In (CS / CC) &amp; Nhấn Nút In A4 / Lưu PDF:</strong> Nhấn nút &quot;Print A4 - PDF&quot; trên thanh công cụ. Tại thanh điều khiển phía trên, chọn chế độ &quot;In Qui Trình Sơn (CS)&quot; hoặc &quot;In Bảng Chi Phí (CC)&quot;, sau đó nhấn &quot;In ngay / Lưu PDF (A4 Ngang)&quot;.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Verify Dual-Brand Industrial Header &amp; Multi-Page Pagination:</strong> Long schedules automatically paginate across multiple A4 Landscape sheets without splitting multi-item steps mid-row, repeating the header on every page.</div>
+              <div class="step-vi"><em><strong>Kiểm tra Tiêu đề Logo Đôi (PROPAN &amp; ALKANA) &amp; Phân trang Tự động:</strong> Các quy trình dài được tự động ngắt trang A4 ngang thông minh (không cắt đứt ngang bước sơn) và lặp lại tiêu đề chuẩn trên từng trang (Page 1/2, 2/2).</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>4-Party Industrial Signatory Block &amp; Live Excel Export:</strong> The footer renders 4 signature boxes (CUSTOMER, PD/PM, TA, PROJECT LEADER). To export an editable spreadsheet with live formulas (SUMPRODUCT, Coverage, BOM), click &quot;Export Excel / Xuất Excel (.xlsx)&quot; on the Workspace top bar.</div>
+              <div class="step-vi"><em><strong>Khung 4 Ô Chữ ký Phê duyệt &amp; Nút Xuất Excel (.xlsx):</strong> Cuối biểu mẫu hiển thị chuẩn 4 ô chữ ký (CUSTOMER, PD/PM, TA, PROJECT LEADER). Để tải file bảng tính nhúng sẵn công thức Excel sống (SUMPRODUCT, Coverage, BOM), nhấn nút &quot;Export Excel / Xuất Excel (.xlsx)&quot; ngoài thanh công cụ chính.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      </section>
+      <section class="chapter-block" id="ch-6">
+        <div class="chapter-banner">
+          <div class="chapter-en">CHAPTER 6: 7-TAB ANALYTICS &amp; EXECUTIVE REPORTING CENTER</div>
+          <div class="chapter-vi">CHƯƠNG 6: TRUNG TÂM 7 BÁO CÁO PHÂN TÍCH &amp; THỐNG KÊ CHUYÊN SÂU</div>
+          <div class="chapter-summary-en">Analyze product usage across revisions and steps, evaluate customer portfolios, compare revision cost variances, detect outdated quotation prices, benchmark steps, forecast multi-project BOM demand, and track team activity.</div>
+          <div class="chapter-summary-vi">Phân tích tần suất sử dụng sản phẩm theo từng Revision &amp; Step, đánh giá danh mục khách hàng, so sánh biến động chi phí giữa các Revision, phát hiện chênh lệch đơn giá báo giá, đối chuẩn công đoạn, dự báo tổng nhu cầu BOM đa dự án và theo dõi hiệu suất nhân sự.</div>
+        </div>
+    
+        <article class="section-card" id="sec-6-1">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">6.1. Report 1: Product Usage — On-Demand Selection &amp; Step Breakdown</div>
+              <div class="section-vi">6.1. Báo cáo 1: Phân tích Theo Sản phẩm Sơn — Gộp theo Revision &amp; Sổ xuống Từng Step</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Select any paint product code on demand to see every project revision where it is used, its share of total revision cost, and expand down to individual coating steps.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Chọn nhanh một mã sơn theo yêu cầu (On-Demand) để xem toàn bộ các Revision có sử dụng mã sơn đó, tỷ trọng chi phí của mã sơn trong Revision và bấm sổ xuống (Breakdown) chi tiết từng bước thi công.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/15-report-01-product-usage.png" alt="Figure 6.1 — Report 1: Product Usage with Revision Rollup &amp; Step Breakdown" />
+            <figcaption>
+              <div class="cap-en">Figure 6.1 — Report 1: Product Usage with Revision Rollup &amp; Step Breakdown</div>
+              <div class="cap-vi">Hình 6.1 — Báo cáo 1: Thống kê Sử dụng Sản phẩm Sơn (Tổng hợp theo Revision &amp; Breakdown xuống Step)</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Navigate the 7 Analytics Tabs &amp; Global Filters:</strong> Open &quot;Reports &amp; Analytics&quot; from the left sidebar, select Tab &quot;1. Product Usage&quot;, and filter by Revision Scope (ALL / LATEST / APPROVED), Salesman, Customer, or Finishing System.</div>
+              <div class="step-vi"><em><strong>Chọn Chuyên đề Báo cáo &amp; Thiết lập Bộ lọc Toàn cục:</strong> Mở mục &quot;Reports &amp; Analytics&quot; trên menu trái, chọn Tab &quot;1. Product Usage&quot; và tùy chỉnh bộ lọc Phạm vi Phiên bản (ALL / LATEST / APPROVED), Salesman, Khách hàng hoặc Hệ sơn.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select a Material Code On-Demand &amp; Export PivotTable-Ready Excel:</strong> Pick a paint code from the searchable combobox or click a Quick-Pick Top Product chip. Click &quot;Export Active Tab (.xlsx)&quot; anytime to export the flat step-level Excel sheet for PivotTable analysis.</div>
+              <div class="step-vi"><em><strong>Chọn Mã Sơn Cần Phân tích &amp; Xuất Excel Bảng Phẳng Phục vụ PivotTable:</strong> Chọn mã sơn từ hộp tìm kiếm hoặc bấm 1 chạm vào thẻ gợi ý mã sơn phổ biến (Quick-Pick). Nhấn &quot;Export Active Tab (.xlsx)&quot; để xuất bảng phẳng cấp Step phục vụ chạy PivotTable trên Excel.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Read the Revision-Level Rollup Row (1 Row per Revision):</strong> Each revision displays the count &amp; numbers of steps using that product (e.g., &quot;10 bước: #1..#10&quot;), Total Item Consumption (Σ g/m²), Price Snapshot, Total Item Cost (Σ VND/m²), and % Share of Total Revision Cost.</div>
+              <div class="step-vi"><em><strong>Xem Dòng Tổng hợp theo Từng Revision (1 Dòng / 1 Revision):</strong> Mỗi Revision hiển thị trên 1 dòng gọn gàng gồm: Số bước &amp; vị trí bước sử dụng, Tổng định mức tiêu hao của mã sơn trong Revision (Σ g/m²), Đơn giá Snapshot, Tổng chi phí mã sơn (Σ VND/m²) và Tỷ trọng % trên Tổng giá thành Revision.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Click Any Revision Row (or Expand All) for Step-Level Breakdown:</strong> Clicking a revision row expands the nested Breakdown sub-table showing every step (#Step, Step Name, Application Method &amp; Efficiency %, Mixing Ratio &amp; Share %, Step g/m², and Step Cost VND/m²).</div>
+              <div class="step-vi"><em><strong>Nhấn vào Dòng Revision (hoặc Mở rộng tất cả) để Xem Chi tiết Từng Step:</strong> Nhấn trực tiếp vào dòng Revision (hoặc nút &quot;Mở rộng tất cả / Expand All&quot;) để sổ xuống bảng con liệt kê chi tiết từng bước thi công có dùng mã sơn đó (#Step, Tên bước, Phương pháp &amp; Hiệu suất %, Tỷ lệ pha, Định mức g/m² và Chi phí VND/m²).</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-6-2">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">6.2. Report 2: Customer Portfolio &amp; Project Cost Range Analysis</div>
+              <div class="section-vi">6.2. Báo cáo 2: Phân tích Danh mục Khách hàng &amp; Biên độ Giá thành Dự án</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Summarize project volume, revision counts, finishing systems, and Min/Avg/Max coating cost per m² for each customer.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Tổng hợp số lượng dự án, số phiên bản, các hệ sơn đang áp dụng và biên độ chi phí sơn (Thấp nhất / Trung bình / Cao nhất VND/m²) của từng khách hàng.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/16-report-02-customer-portfolio.png" alt="Figure 6.2 — Report 2: Customer Portfolio &amp; Drill-Down Revisions" />
+            <figcaption>
+              <div class="cap-en">Figure 6.2 — Report 2: Customer Portfolio &amp; Drill-Down Revisions</div>
+              <div class="cap-vi">Hình 6.2 — Báo cáo 2: Danh mục Khách hàng &amp; Bảng Chi tiết Hồ sơ Con</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Tab 2: Customer Portfolio (Theo Khách hàng):</strong> Click Tab &quot;2. Customer Portfolio&quot; to view portfolio-wide KPIs and customer rankings.</div>
+              <div class="step-vi"><em><strong>Chọn Tab 2: Customer Portfolio (Theo Khách hàng):</strong> Nhấn vào Tab &quot;2. Customer Portfolio&quot; để xem các chỉ số tổng quan và bảng xếp hạng danh mục khách hàng.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Inspect Customer Summary Row (Projects, Systems &amp; Cost Range):</strong> Review total projects, approved/draft counts, finishing systems used, average consumption (g/m²), and Min / Avg / Max Cost (VND/m²).</div>
+              <div class="step-vi"><em><strong>Xem Dòng Tổng hợp Khách hàng (Số Dự án, Hệ sơn &amp; Khoảng Giá thành):</strong> Đối chiếu tổng số dự án, số bản đã duyệt/bản nháp, các hệ sơn sử dụng, định mức tiêu hao bình quân (g/m²) và Chi phí Thấp nhất / Trung bình / Cao nhất (VND/m²).</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Expand Customer Row &amp; Jump Directly to Workspace (Mở CS/CC):</strong> Click a customer row to list all underlying project revisions, or click &quot;Mở CS/CC&quot; on any revision row to open it immediately in the Workspace.</div>
+              <div class="step-vi"><em><strong>Mở rộng Dòng Khách hàng &amp; Nhảy Trực tiếp sang Màn hình Làm việc (Mở CS/CC):</strong> Nhấn vào dòng khách hàng để sổ xuống danh sách tất cả các Revision của khách hàng đó, hoặc nhấn nút &quot;Mở CS/CC&quot; để mở thẳng hồ sơ trong Workspace.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-6-3">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">6.3. Report 3: Revision Cost Variance (Base vs. Target Revision Diff)</div>
+              <div class="section-vi">6.3. Báo cáo 3: Phân tích Biến động Chi phí Giữa các Phiên bản (Revision Variance)</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Compare two revisions of the same project (e.g., Rev 00 vs. Rev 02) to pinpoint why coating cost or consumption increased or decreased.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> So sánh đối chiếu giữa 2 phiên bản của cùng dự án (VD: Rev 00 so với Rev 02) để chỉ rõ nguyên nhân làm tăng hoặc giảm giá thành sơn và định mức tiêu hao.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/17-report-03-revision-variance.png" alt="Figure 6.3 — Report 3: Revision Cost &amp; Consumption Variance Breakdown" />
+            <figcaption>
+              <div class="cap-en">Figure 6.3 — Report 3: Revision Cost &amp; Consumption Variance Breakdown</div>
+              <div class="cap-vi">Hình 6.3 — Báo cáo 3: So sánh Biến động Chi phí &amp; Định mức Giữa các Revision</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Tab 3: Revision Variance (Biến động Revision):</strong> Open Tab &quot;3. Revision Variance&quot; and optionally select a specific Project, Base Revision, and Target Revision to compare.</div>
+              <div class="step-vi"><em><strong>Chọn Tab 3: Revision Variance (Biến động Revision):</strong> Mở Tab &quot;3. Revision Variance&quot; và chọn Dự án cùng Phiên bản gốc (Base Rev) và Phiên bản đích (Target Rev) cần so sánh.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Review Project-Level Cost &amp; Consumption Delta (±VND/m² &amp; ±%):</strong> Compare Base Cost vs. Target Cost, Net Cost Delta (VND/m² and %), and Step Count changes.</div>
+              <div class="step-vi"><em><strong>Xem Mức Chênh lệch Tổng Chi phí &amp; Định mức (±VND/m² &amp; ±%):</strong> Xem ngay mức tăng/giảm tuyệt đối (VND/m², g/m²) và tỷ lệ phần trăm biến động (%) giữa hai phiên bản.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Inspect Material-Level Diff Table (Added, Removed, Price/Usage Changed):</strong> Expand the project row to inspect exact per-material changes in price snapshot, g/m² consumption, and VND/m² cost impact.</div>
+              <div class="step-vi"><em><strong>Kiểm tra Bảng Chi tiết Chênh lệch Từng Mã Vật tư:</strong> Sổ xuống bảng chi tiết vật tư để xem từng mã hóa chất đã thay đổi đơn giá, định mức g/m² hay được thêm mới/loại bỏ.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-6-4">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">6.4. Report 4: Price &amp; Quotation Drift Alert</div>
+              <div class="section-vi">6.4. Báo cáo 4: Cảnh báo Chênh lệch Đơn giá Snapshot so với Báo giá Gốc Hiện hành</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">SALES</span><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">ADMIN</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Detect revisions whose frozen material prices (Price Snapshot) differ from the latest Master Quotation prices or are missing quotation records.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Phát hiện tự động các hồ sơ Revision đang lưu đơn giá cũ (Price Snapshot) lệch so với bảng Báo giá Master hiện hành hoặc chưa có báo giá.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/18-report-04-price-drift.png" alt="Figure 6.4 — Report 4: Price Drift &amp; Missing Quotation Alert" />
+            <figcaption>
+              <div class="cap-en">Figure 6.4 — Report 4: Price Drift &amp; Missing Quotation Alert</div>
+              <div class="cap-vi">Hình 6.4 — Báo cáo 4: Cảnh báo Chênh lệch Đơn giá &amp; Thiếu Báo giá Vật tư</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Tab 4: Price &amp; Quotation Alert (Chênh lệch Giá &amp; Báo giá):</strong> Open Tab &quot;4. Price &amp; Quotation Alert&quot; to audit pricing accuracy across active schedules.</div>
+              <div class="step-vi"><em><strong>Chọn Tab 4: Price &amp; Quotation Alert (Chênh lệch Giá &amp; Báo giá):</strong> Mở Tab &quot;4. Price &amp; Quotation Alert&quot; để rà soát tính cập nhật của đơn giá trên toàn bộ các hồ sơ quy trình sơn.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Identify Outdated Snapshot Prices &amp; Cost Impact per m²:</strong> Review rows flagged as PRICE_INCREASED, PRICE_DECREASED, or MISSING_QUOTATION, comparing Snapshot Price vs. Current Master Quotation Price.</div>
+              <div class="step-vi"><em><strong>Nhận diện Các Mã Sơn Lệch Giá &amp; Mức Ảnh hưởng lên Giá thành (VND/m²):</strong> Kiểm tra các dòng cảnh báo Tăng giá, Giảm giá hoặc Thiếu báo giá, đối chiếu giữa Đơn giá lưu trong Revision và Đơn giá Master mới nhất, sau đó nhấn &quot;Mở CS/CC&quot; để đồng bộ lại giá.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-6-5">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">6.5. Report 5: Application Step &amp; Finishing System Benchmark</div>
+              <div class="section-vi">6.5. Báo cáo 5: Đối chuẩn Cơ cấu Công đoạn Thi công &amp; Hệ Sơn (Benchmark)</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Analyze which coating steps (e.g., TOP COAT COLOR, WIPING FILLER, SEALER) and finishing systems (WATERBASED, PU, NC) drive the highest cost and consumption.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Phân tích tỷ trọng chi phí và định mức tiêu hao bình quân của từng loại công đoạn (Stain, Sealer, Top Coat...) và từng hệ sơn (Waterbased, PU, NC).</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/19-report-05-step-benchmark.png" alt="Figure 6.5 — Report 5: Application Step &amp; Finishing System Benchmark" />
+            <figcaption>
+              <div class="cap-en">Figure 6.5 — Report 5: Application Step &amp; Finishing System Benchmark</div>
+              <div class="cap-vi">Hình 6.5 — Báo cáo 5: Phân tích Cơ cấu Chi phí theo Công đoạn &amp; Hệ Sơn</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Tab 5: Step &amp; System Benchmark:</strong> Click Tab &quot;5. Step &amp; System Benchmark&quot; to view aggregated engineering benchmarks.</div>
+              <div class="step-vi"><em><strong>Chọn Tab 5: Step &amp; System Benchmark (Cơ cấu Công đoạn &amp; Hệ sơn):</strong> Nhấn vào Tab &quot;5. Step &amp; System Benchmark&quot; để xem bảng đối chuẩn kỹ thuật và chi phí.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Compare Application Step Cost Share &amp; Spray/Wiping Split:</strong> Inspect each step name’s occurrence count, Spray vs. Wiping breakdown, average CA + Loss (g/m²), average Cost (VND/m²), and % Share of total schedule cost.</div>
+              <div class="step-vi"><em><strong>So sánh Tỷ trọng Chi phí Từng Công đoạn &amp; Tỷ lệ Phun (Spray) / Lau (Wiping):</strong> Xem tần suất xuất hiện, tỷ lệ dùng phương pháp Phun (Spray) so với Lau (Wiping), định mức g/m² bình quân, chi phí VND/m² bình quân và % tỷ trọng chi phí của từng công đoạn.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Benchmark Finishing Systems (WATERBASED vs. PU vs. NC):</strong> The bottom table compares average step count, g/m² consumption, and Min/Avg/Max VND/m² across finishing systems.</div>
+              <div class="step-vi"><em><strong>Đối sánh Hiệu quả Giữa các Hệ Sơn (WATERBASED, PU, NC):</strong> Bảng phía dưới đối sánh số bước trung bình, tổng lượng sơn g/m² và biên độ giá thành VND/m² giữa các hệ sơn.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-6-6">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">6.6. Report 6: Multi-Project BOM Demand Forecast</div>
+              <div class="section-vi">6.6. Báo cáo 6: Dự báo Tổng Nhu cầu Vật tư Gộp Đa Dự án (Multi-BOM Forecast)</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Combine multiple project revisions with custom production areas (m²) to calculate a consolidated warehouse purchasing plan (total Kg/Ltr, drums, and budget).</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Gộp nhiều hồ sơ dự án với diện tích sản xuất (m²) tùy chỉnh cho từng dự án để tính tổng nhu cầu vật tư toàn xưởng (tổng Kg/Lít, tổng số thùng cần mua và tổng ngân sách).</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/20-report-06-bom-forecast.png" alt="Figure 6.6 — Report 6: Multi-Project BOM Demand Forecast" />
+            <figcaption>
+              <div class="cap-en">Figure 6.6 — Report 6: Multi-Project BOM Demand Forecast</div>
+              <div class="cap-vi">Hình 6.6 — Báo cáo 6: Dự báo Tổng Nhu cầu Vật tư (Multi-BOM Forecast)</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Tab 6: Multi-BOM Forecast (Dự báo BOM Tổng hợp):</strong> Click Tab &quot;6. Multi-BOM Forecast&quot; to open the multi-project material planner.</div>
+              <div class="step-vi"><em><strong>Chọn Tab 6: Multi-BOM Forecast (Dự báo BOM Tổng hợp):</strong> Nhấn vào Tab &quot;6. Multi-BOM Forecast&quot; để mở công cụ lập kế hoạch vật tư tổng hợp đa dự án.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Toggle Included Revisions &amp; Enter Planned Production Area (m²):</strong> Check/uncheck project revisions in the allocation matrix and enter the planned m² for each project, then click Recalculate.</div>
+              <div class="step-vi"><em><strong>Tích chọn Các Dự án Tham gia &amp; Nhập Diện tích Sản xuất Dự kiến (m²):</strong> Tích chọn các Revision cần đưa vào kế hoạch sản xuất, nhập diện tích m² dự kiến cho từng dự án và nhấn nút Tính toán lại.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Review Consolidated Material Procurement Table:</strong> The bottom table merges identical chemical codes across all selected projects, displaying total required Kg/Ltr, full packs/drums to order, and total material cost.</div>
+              <div class="step-vi"><em><strong>Xem Bảng Tổng hợp Vật tư Cần Đặt hàng Toàn Xưởng:</strong> Bảng kết quả phía dưới tự động cộng gộp các mã sơn trùng nhau từ tất cả các dự án đã chọn, xuất ra tổng số Kg/Lít, tổng số thùng nguyên cần đặt mua và tổng chi phí.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-6-7">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">6.7. Report 7: Project &amp; Revision Activity Funnel (Sales &amp; Technical KPI)</div>
+              <div class="section-vi">6.7. Báo cáo 7: Phễu Hoạt động Dự án &amp; Hiệu suất Nhân sự (Sales &amp; Technical)</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ALL ROLES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Monitor revision approval conversion rates (DRAFT vs. APPROVED vs. INACTIVE) and evaluate workload across Salesmen and Technical (TA) staff.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Theo dõi tỷ lệ chuyển đổi phê duyệt hồ sơ (DRAFT / APPROVED / INACTIVE) và thống kê khối lượng công việc theo từng nhân viên Sales và Kỹ thuật viên (TA).</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/21-report-07-activity-funnel.png" alt="Figure 6.7 — Report 7: Project &amp; Revision Activity Funnel" />
+            <figcaption>
+              <div class="cap-en">Figure 6.7 — Report 7: Project &amp; Revision Activity Funnel</div>
+              <div class="cap-vi">Hình 6.7 — Báo cáo 7: Phễu Hoạt động Hồ sơ &amp; Thống kê Hiệu suất Nhân sự</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Tab 7: Activity Funnel (Tiến độ &amp; Phễu Hồ sơ):</strong> Click Tab &quot;7. Activity Funnel&quot; to view overall approval conversion metrics.</div>
+              <div class="step-vi"><em><strong>Chọn Tab 7: Activity Funnel (Tiến độ &amp; Phễu Hồ sơ):</strong> Nhấn vào Tab &quot;7. Activity Funnel&quot; để xem các chỉ số phễu trạng thái hồ sơ trên toàn hệ thống.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Analyze Salesman Portfolio &amp; Conversion Rate Table:</strong> Review each Salesman’s assigned customers, active projects, Approved/Draft/Inactive revision counts, approval rate (%), and average coating cost.</div>
+              <div class="step-vi"><em><strong>Phân tích Bảng Kết quả Phụ trách theo Nhân viên Kinh doanh (Salesman):</strong> Xem số lượng khách hàng, số dự án, số phiên bản Đã duyệt / Bản nháp / Hết hiệu lực, tỷ lệ duyệt (%) và giá thành bình quân của từng Salesman.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Analyze Technical TA Authoring Productivity Table:</strong> Track how many revisions and projects each Technical TA has prepared and their approval status breakdown.</div>
+              <div class="step-vi"><em><strong>Phân tích Bảng Năng suất Lập Hồ sơ theo Kỹ thuật viên (Technical TA):</strong> Theo dõi số lượng dự án và phiên bản quy trình sơn do từng Kỹ thuật viên (TA) thiết lập cùng tỷ lệ hồ sơ đã được phê duyệt.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      </section>
+      <section class="chapter-block" id="ch-7">
+        <div class="chapter-banner">
+          <div class="chapter-en">CHAPTER 7: MASTER DATA CRUD, BULK EXCEL IMPORT &amp; USER ADMINISTRATION</div>
+          <div class="chapter-vi">CHƯƠNG 7: QUẢN TRỊ DỮ LIỆU NGUỒN (MASTER DATA), NHẬP EXCEL &amp; TÀI KHOẢN USER</div>
+          <div class="chapter-summary-en">Maintain the 5 foundational Master Data tables (Customers, Quotations, Application Steps, App-Methods, Packing Mappings) with server-side pagination and Excel templates, and administer User Accounts &amp; RBAC scopes.</div>
+          <div class="chapter-summary-vi">Quản trị 5 bảng Dữ liệu Nguồn cốt lõi (Khách hàng, Báo giá Vật tư, Bước Thi công, Phương pháp &amp; Hiệu suất, Quy cách Đóng gói) hỗ trợ phân trang máy chủ và nhập/xuất file mẫu Excel, cùng phân mục Quản lý Tài khoản &amp; Phân quyền User.</div>
+        </div>
+    
+        <article class="section-card" id="sec-7-1">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">7.1. Managing Customers &amp; Assigning Responsible Salesmen</div>
+              <div class="section-vi">7.1. Quản lý Danh mục Khách hàng &amp; Gán Nhân viên Sales Phụ trách</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ADMIN</span><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">SALES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Create, edit, search, or bulk-import Customer records and link each customer to a responsible Salesman for row-level RBAC filtering.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Thêm mới, chỉnh sửa, tìm kiếm hoặc nhập hàng loạt danh sách Khách hàng từ Excel, đồng thời gán tên Salesman phụ trách để phân quyền dữ liệu tự động.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/22-master-customers.png" alt="Figure 7.1 — Master Data Sub-Tab 1: Customers Directory &amp; Excel Import" />
+            <figcaption>
+              <div class="cap-en">Figure 7.1 — Master Data Sub-Tab 1: Customers Directory &amp; Excel Import</div>
+              <div class="cap-vi">Hình 7.1 — Quản trị Master Data 1: Danh mục Khách hàng &amp; Công cụ Nhập Excel</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Master Data from Left Sidebar &amp; Choose Sub-Tab 1: Customers:</strong> Click &quot;Master Data / Quản trị Dữ liệu Gốc&quot; on the sidebar to access the 6 master management sub-tabs.</div>
+              <div class="step-vi"><em><strong>Mở Mục Master Data trên Menu Trái &amp; Chọn Tab 1: Customers:</strong> Nhấn vào &quot;Master Data / Quản trị Dữ liệu Gốc&quot; ở thanh menu trái để mở giao diện 6 phân mục dữ liệu nguồn.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Download Standard Template or Bulk Import Customers (.xlsx):</strong> Use &quot;Tải File Mẫu&quot; to download the standard Excel template, or click &quot;Import Excel&quot; to bulk-create/update customer records.</div>
+              <div class="step-vi"><em><strong>Tải File Mẫu Chuẩn hoặc Nhập Hàng loạt Khách hàng từ Excel (.xlsx):</strong> Nhấn &quot;Tải File Mẫu&quot; để lấy biểu mẫu Excel chuẩn, hoặc nhấn &quot;Import Excel&quot; để tải lên danh sách khách hàng hàng loạt.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Add or Update Individual Customer &amp; Salesman Assignment:</strong> Fill in Customer ID (SAP Code), Short Name, Full Name, and Salesman Name, then click Save. Click the Edit (pencil) icon on any table row to modify an existing record.</div>
+              <div class="step-vi"><em><strong>Thêm Mới hoặc Cập nhật Khách hàng &amp; Gán Salesman Phụ trách:</strong> Điền Mã khách hàng (Customer ID), Tên viết tắt (Short Name), Tên đầy đủ và Tên Salesman phụ trách rồi nhấn Lưu. Nhấn biểu tượng cây bút trên dòng bất kỳ để sửa.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Search &amp; Navigate Server-Side Paginated Customer Table:</strong> Use the search bar and pagination controls at the bottom to browse hundreds of customers smoothly.</div>
+              <div class="step-vi"><em><strong>Tìm kiếm Tức thì &amp; Duyệt Bảng Phân trang Khách hàng:</strong> Sử dụng ô tìm kiếm nhanh và thanh chuyển trang ở cuối bảng để tra cứu hàng trăm khách hàng mượt mà.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-7-2">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">7.2. Managing Material Quotations &amp; Bulk Price Uploads</div>
+              <div class="section-vi">7.2. Quản lý Bảng Báo giá Vật tư (Quotations) &amp; Tải lên Đơn giá Excel</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ADMIN</span><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">SALES</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Maintain customer-specific material codes, packing sizes, and unit prices (VND/kg) that drive automated Coating Cost lookups.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Quản lý danh mục mã vật tư sơn, quy cách đóng gói (Nett) và đơn giá (VND/kg) theo từng khách hàng làm nguồn dữ liệu tra cứu tự động cho bảng Coating Cost.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/23-master-quotations.png" alt="Figure 7.2 — Master Data Sub-Tab 2: Material Quotations Management" />
+            <figcaption>
+              <div class="cap-en">Figure 7.2 — Master Data Sub-Tab 2: Material Quotations Management</div>
+              <div class="cap-vi">Hình 7.2 — Quản trị Master Data 2: Bảng Báo giá Vật tư Sơn theo Khách hàng</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Select Sub-Tab 2: Quotation (Bảng giá vật tư):</strong> Click &quot;2. Quotation&quot; to manage customer material pricing.</div>
+              <div class="step-vi"><em><strong>Chọn Phân mục 2: Quotation (Bảng giá vật tư):</strong> Nhấn vào tab &quot;2. Quotation&quot; để quản lý bảng giá hóa chất sơn.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Create or Edit Quotation Item (Customer, Material Code, Nett, Price VND):</strong> Select the Customer Code, enter Material Code, Material Name, Packing Description, Nett Weight (Kg/Ltr), and Unit Price (VND), or upload via the Quotation Excel Template.</div>
+              <div class="step-vi"><em><strong>Thêm Mới hoặc Sửa Dòng Báo giá (Mã KH, Mã Vật tư, Quy cách, Đơn giá VND):</strong> Chọn Mã khách hàng, nhập Mã vật tư, Tên mô tả, Quy cách đóng gói, Trọng lượng tịnh (Nett) và Đơn giá (VND), hoặc tải lên hàng loạt bằng File mẫu Báo giá Excel.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Filter by Customer Combobox &amp; Search Material Codes:</strong> Filter the paginated table by specific customer or type any material code substring in the search box.</div>
+              <div class="step-vi"><em><strong>Lọc theo Khách hàng &amp; Tìm kiếm Nhanh Mã Hóa chất:</strong> Lọc bảng báo giá theo từng khách hàng cụ thể hoặc gõ mã vật tư vào ô tìm kiếm để kiểm tra đơn giá.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-7-3">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">7.3. Configuring Application Steps, Transfer Efficiency Methods &amp; Packings</div>
+              <div class="section-vi">7.3. Cấu hình Bước Thi công Chuẩn, Phương pháp (Hiệu suất %) &amp; Quy cách Đóng gói</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ADMIN</span><span class="role-badge">PROJECT_LEADER</span><span class="role-badge">TECHNICAL</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Standardize coating step names, application transfer efficiencies (e.g., SPRAY 60%, WIPING 35%), and container nett weights.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Chuẩn hóa danh mục tên bước thi công, tỷ lệ hiệu suất thu hồi theo phương pháp sơn (VD: SPRAY 60%, WIPING 35%) và trọng lượng thùng đóng gói.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/24-master-steps-methods-packings.png" alt="Figure 7.3 — Master Data Sub-Tabs 3–5: Steps, App-Methods &amp; Packing Mappings" />
+            <figcaption>
+              <div class="cap-en">Figure 7.3 — Master Data Sub-Tabs 3–5: Steps, App-Methods &amp; Packing Mappings</div>
+              <div class="cap-vi">Hình 7.3 — Quản trị Master Data 3–5: Bước Thi công, Phương pháp &amp; Quy cách Đóng gói</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Switch Across Sub-Tabs 3 (Steps), 4 (App-Methods), and 5 (Packings):</strong> Use Sub-Tab 3 for standard step names, Sub-Tab 4 for application methods, and Sub-Tab 5 for container size mappings.</div>
+              <div class="step-vi"><em><strong>Chuyển đổi Giữa các Tab 3 (Application Step), 4 (App-Method) &amp; 5 (Packing Mapping):</strong> Chọn Tab 3 để cấu hình tên bước chuẩn, Tab 4 để cấu hình phương pháp thi công và Tab 5 để cấu hình quy cách thùng sơn.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Define Method Name &amp; Transfer Efficiency % (or Packing Nett Weight):</strong> In App-Method, enter the Method Name (e.g., SPRAY, WIPING, ROLLER) and Efficiency % (e.g., 60% or 35%). This percentage directly governs the CA + Loss formula in Coating Cost.</div>
+              <div class="step-vi"><em><strong>Thiết lập Tên Phương pháp &amp; Tỷ lệ Hiệu suất % (hoặc Trọng lượng Thùng):</strong> Tại tab App-Method, nhập Tên phương pháp (VD: SPRAY, WIPING, ROLLER) và Hiệu suất thu hồi % (VD: 60% hoặc 35%). Chỉ số này quyết định trực tiếp công thức tính lượng hao hụt CA + Loss.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Edit or Remove Standard Master Entries:</strong> Click the Edit (pencil) or Delete (trash) icon on any row to maintain clean master standards.</div>
+              <div class="step-vi"><em><strong>Chỉnh sửa hoặc Xóa Bản ghi Danh mục Chuẩn:</strong> Nhấn biểu tượng Sửa (cây bút) hoặc Xóa (thùng rác) trên từng dòng để cập nhật danh mục chuẩn.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      
+        <article class="section-card" id="sec-7-4">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div class="section-en">7.4. Administering User Accounts, Roles &amp; Salesman RBAC Scopes</div>
+              <div class="section-vi">7.4. Quản trị Tài khoản Người dùng, Phân quyền Role &amp; Gán Phạm vi Salesman</div>
+            </div>
+            <div class="section-roles"><span class="role-badge">ADMIN</span></div>
+          </div>
+
+          <div class="purpose-box">
+            <div class="purpose-en"><strong>Objective:</strong> Provision new user accounts, reset passwords, assign roles (ADMIN, PROJECT_LEADER, SALES, TECHNICAL), and bind Sales/Technical users to their Salesman data scope.</div>
+            <div class="purpose-vi"><em><strong>Mục tiêu:</strong> Tạo tài khoản người dùng mới, cấp lại mật khẩu, gán vai trò (ADMIN, PROJECT_LEADER, SALES, TECHNICAL) và liên kết nhân viên Sales/Kỹ thuật với phạm vi Salesman phụ trách.</em></div>
+          </div>
+
+          <figure class="screenshot-figure">
+            <img src="screenshots/25-master-users-rbac.png" alt="Figure 7.4 — Master Data Sub-Tab 6: User Accounts &amp; RBAC Administration" />
+            <figcaption>
+              <div class="cap-en">Figure 7.4 — Master Data Sub-Tab 6: User Accounts &amp; RBAC Administration</div>
+              <div class="cap-vi">Hình 7.4 — Quản trị Master Data 6: Quản lý Tài khoản Người dùng &amp; Phân quyền RBAC (Chỉ ADMIN)</div>
+            </figcaption>
+          </figure>
+
+          <div class="steps-container">
+            
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Open Sub-Tab 6: Users (Visible Exclusively to ADMIN):</strong> Sign in with an ADMIN account (e.g., admin@alkana.vn) and click Sub-Tab &quot;6. Users&quot; under Master Data.</div>
+              <div class="step-vi"><em><strong>Mở Phân mục 6: Users / Tài khoản &amp; Phân quyền (Chỉ hiển thị với ADMIN):</strong> Đăng nhập bằng tài khoản ADMIN (VD: admin@alkana.vn) và chọn phân mục &quot;6. Users&quot; trong Master Data.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Create or Edit User Account, Role &amp; Assigned Salesman Scope:</strong> Enter Email, Full Name, Password, and Role. For SALES and TECHNICAL roles, select the &quot;Salesman phụ trách&quot; so the user only views and edits customers/projects belonging to that Salesman.</div>
+              <div class="step-vi"><em><strong>Tạo Mới hoặc Sửa Tài khoản, Chọn Role &amp; Gán Phạm vi Salesman Phụ trách:</strong> Nhập Email, Họ tên, Mật khẩu và chọn Vai trò (Role). Đối với vai trò SALES và TECHNICAL, chọn thêm &quot;Salesman phụ trách&quot; để hệ thống tự động giới hạn phạm vi khách hàng và hồ sơ dự án đúng theo Salesman đó.</em></div>
+            </div>
+          </div>
+        
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-en"><strong>Manage Active User Directory &amp; Reset Credentials:</strong> Click &quot;Sửa&quot; on any user row to change their role, update their assigned Salesman, or reset their password.</div>
+              <div class="step-vi"><em><strong>Quản lý Danh sách Tài khoản Hệ thống &amp; Đặt lại Mật khẩu:</strong> Nhấn nút &quot;Sửa&quot; trên dòng tài khoản bất kỳ khi cần thay đổi vai trò, đổi Salesman phụ trách hoặc cấp lại mật khẩu mới.</em></div>
+            </div>
+          </div>
+        
+          </div>
+
+          
+        </article>
+      </section>
+  </div>
+</body>
+</html>
