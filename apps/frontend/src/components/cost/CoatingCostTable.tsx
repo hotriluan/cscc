@@ -305,14 +305,14 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
                         </td>
                       )}
 
-                      {/* Col 11: Step Coating Cost (vnd/m²) (2 decimals: 119,219.05 / 69,544.44) */}
+                      {/* Col 11: Step Coating Cost (vnd/m²) (Integer only, no decimals) */}
                       {isFirstRow && (
                         <td
                           rowSpan={rowSpan}
                           title={`Unrounded: ${stepCalc.coatingCostRaw}`}
                           className="sticky right-0 z-10 border border-slate-300 bg-emerald-100 px-2.5 py-2 text-right align-middle font-extrabold text-emerald-950 text-sm shadow-[-4px_0_8px_rgba(0,0,0,0.06)]"
                         >
-                          {formatDecimal2(stepCalc.coatingCostDisplay)}
+                          {formatVnd(stepCalc.coatingCostDisplay)}
                         </td>
                       )}
                     </tr>

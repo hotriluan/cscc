@@ -96,11 +96,11 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
 
   const renderSheetHeader = (pageNumber: number, pageCount: number) => (
     <div className="flex items-center justify-between gap-2.5 border-b-2 border-slate-900 pb-1">
-      <div className="flex shrink-0 items-center justify-start">
+      <div className="flex shrink-0 items-center justify-start self-stretch">
         <img
           src={logoPropan}
           alt="Propan Logo"
-          className="h-7 w-auto object-contain"
+          className="h-[38px] max-h-full w-auto object-contain"
         />
       </div>
       <div className="min-w-0 flex-1 px-1.5 text-center">
@@ -141,11 +141,11 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
           </span>
         </div>
       </div>
-      <div className="flex shrink-0 items-center justify-end">
+      <div className="flex shrink-0 items-center justify-end self-stretch">
         <img
           src={logoAlkana}
           alt="Alkana Logo"
-          className="h-7 w-auto object-contain"
+          className="h-[38px] max-h-full w-auto object-contain"
         />
       </div>
     </div>
@@ -328,41 +328,45 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   );
 
   const renderCsSignatures = () => (
-    <div className="mt-1.5 grid grid-cols-4 gap-0 border border-slate-900 text-center text-[8pt] leading-tight break-inside-avoid">
-      <div className="border-r border-slate-900 p-1">
-        <div className="border-b border-slate-400 pb-0.5 font-bold uppercase">
+    <div className="mt-1.5 border border-slate-900 text-center text-[8pt] leading-tight break-inside-avoid">
+      <div className="grid grid-cols-4 border-b border-slate-400 font-bold uppercase text-[7.5pt] tracking-tight">
+        <div className="flex items-center justify-center border-r border-slate-900 p-1">
           CUSTOMER / KHÁCH HÀNG
         </div>
-        <div className="h-10" />
-        <div className="text-[8.5pt] font-semibold">
-          {revision.customerConfirmName || ''}
-        </div>
-      </div>
-      <div className="border-r border-slate-900 p-1">
-        <div className="border-b border-slate-400 pb-0.5 font-bold uppercase">
+        <div className="flex items-center justify-center border-r border-slate-900 p-1">
           PD/PM / PHÒNG DỰ ÁN
         </div>
-        <div className="h-10" />
-        <div className="text-[8.5pt] font-semibold">
-          {revision.approvedByPdPm || ''}
-        </div>
-      </div>
-      <div className="border-r border-slate-900 p-1">
-        <div className="border-b border-slate-400 pb-0.5 font-bold uppercase">
+        <div className="flex items-center justify-center border-r border-slate-900 p-1">
           TA / KỸ THUẬT
         </div>
-        <div className="h-10" />
-        <div className="text-[8.5pt] font-semibold">
-          {revision.preparedByTa || ''}
-        </div>
-      </div>
-      <div className="p-1">
-        <div className="border-b border-slate-400 pb-0.5 font-bold uppercase">
+        <div className="flex items-center justify-center p-1">
           PROJECT LEADER / TRƯỞNG DỰ ÁN
         </div>
-        <div className="h-10" />
-        <div className="text-[8.5pt] font-semibold">
-          {revision.checkedByLeader || ''}
+      </div>
+      <div className="grid grid-cols-4">
+        <div className="flex flex-col justify-between border-r border-slate-900 p-1">
+          <div className="h-14" />
+          <div className="min-h-[1.2em] text-[8.5pt] font-semibold">
+            {revision.customerConfirmName || ''}
+          </div>
+        </div>
+        <div className="flex flex-col justify-between border-r border-slate-900 p-1">
+          <div className="h-14" />
+          <div className="min-h-[1.2em] text-[8.5pt] font-semibold">
+            {revision.approvedByPdPm || ''}
+          </div>
+        </div>
+        <div className="flex flex-col justify-between border-r border-slate-900 p-1">
+          <div className="h-14" />
+          <div className="min-h-[1.2em] text-[8.5pt] font-semibold">
+            {revision.preparedByTa || ''}
+          </div>
+        </div>
+        <div className="flex flex-col justify-between p-1">
+          <div className="h-14" />
+          <div className="min-h-[1.2em] text-[8.5pt] font-semibold">
+            {revision.checkedByLeader || ''}
+          </div>
         </div>
       </div>
     </div>
@@ -494,7 +498,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                         rowSpan={rowSpan}
                         className={`${ccNum} text-right font-bold whitespace-nowrap tabular-nums`}
                       >
-                        {formatDecimal2(sc.coatingCostDisplay)}
+                        {formatVnd(sc.coatingCostDisplay)}
                       </td>
                     </>
                   )}
