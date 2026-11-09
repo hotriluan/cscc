@@ -376,24 +376,26 @@ export interface CcPageSlice {
 }
 
 /*
- * Pagination budget. One unit = one data row of a single-line chemical at the
- * current print size (CS 9pt, CC 8pt, leading 1.2, 1pt vertical padding).
- * A4 printable height is ~808pt; CS rows are ~14pt, CC rows ~12.4pt.
- * Page 1 additionally holds the header (~40pt), metadata grid (~90pt) and
- * table header (~26-28pt); later pages hold only header + table header.
- * Values include a ~5% safety margin for font metric differences.
+ * Pagination budget calibrated to measured Chromium A4 portrait geometry:
+ * - A4 height 297mm minus @page 6mm margins = 285mm (~808pt) printable height.
+ * - Page 1 header + metadata grid + table header = ~62mm (~176pt), leaving ~223mm.
+ * - One single-line CS row (9pt, leading 1.2, 1pt vertical padding) = 4.25mm (~12.05pt).
+ *   8 standard steps (8 sanding + 40 chemical rows = 48 units) = 204mm -> total 266mm/285mm.
+ * - One single-line CC row (8pt, leading 1.2, 1pt vertical padding) = 3.90mm (~11.05pt).
+ *   10 standard steps (50 rows = 50 units) + Total/Notes/Remark footer (5 units) = 55 units
+ *   (~273mm/285mm), fitting a full 10-step NTR 001 calculation cleanly on 1 A4 page.
  */
-const CS_FIRST_PAGE_MAX_UNITS = 44;
-const CS_NEXT_PAGE_MAX_UNITS = 49;
+const CS_FIRST_PAGE_MAX_UNITS = 50;
+const CS_NEXT_PAGE_MAX_UNITS = 56;
 const CS_REMARK_UNITS = 3.5;
 const CS_SIGNATURES_UNITS = 5.5;
 
-const CC_FIRST_PAGE_MAX_UNITS = 48;
-const CC_NEXT_PAGE_MAX_UNITS = 54;
+const CC_FIRST_PAGE_MAX_UNITS = 55;
+const CC_NEXT_PAGE_MAX_UNITS = 62;
 const CC_FOOTER_BASE_UNITS = 4;
 
-/** Extra height of a wrapped line relative to a full row (10.8pt / 14pt). */
-const WRAP_LINE_UNITS = 0.75;
+/** Extra height of a wrapped line relative to a full row (~10.2pt / 12pt). */
+const WRAP_LINE_UNITS = 0.85;
 /** Length of the band label `SANDING / CHÀ NHÁM — ` and the characters that fit on one band line. */
 const SANDING_LABEL_CHARS = 21;
 const SANDING_BAND_LINE_CHARS = 95;

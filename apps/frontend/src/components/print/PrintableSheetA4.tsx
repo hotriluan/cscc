@@ -95,12 +95,12 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   };
 
   const renderSheetHeader = (pageNumber: number, pageCount: number) => (
-    <div className="flex items-center justify-between gap-2.5 border-b-2 border-slate-900 pb-2.5 print:pb-1">
+    <div className="flex items-center justify-between gap-2.5 border-b-2 border-slate-900 pb-1">
       <div className="flex shrink-0 items-center justify-start">
         <img
           src={logoPropan}
           alt="Propan Logo"
-          className="h-10 w-auto object-contain print:h-7"
+          className="h-7 w-auto object-contain"
         />
       </div>
       <div className="min-w-0 flex-1 px-1.5 text-center">
@@ -145,14 +145,14 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
         <img
           src={logoAlkana}
           alt="Alkana Logo"
-          className="h-10 w-auto object-contain print:h-7"
+          className="h-7 w-auto object-contain"
         />
       </div>
     </div>
   );
 
   const renderMetadataGrid = () => (
-    <div className="my-2.5 grid grid-cols-3 gap-x-3 gap-y-1 border-b border-slate-400 pb-2.5 text-[8.5pt] leading-snug print:my-1.5 print:gap-x-2 print:gap-y-0.5 print:pb-1.5">
+    <div className="my-1.5 grid grid-cols-3 gap-x-2 gap-y-0.5 border-b border-slate-400 pb-1.5 text-[8.5pt] leading-snug">
       <div className="min-w-0 space-y-0.5 break-words">
         <div>
           <strong>Customer / Khách hàng:</strong> {revision.customer.shortName}
@@ -204,7 +204,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
         <col style={{ width: '20%' }} />
       </colgroup>
       <thead>
-        <tr className="bg-slate-200 text-[7.5pt] font-bold print:bg-slate-100">
+        <tr className="bg-slate-100 text-[7.5pt] font-bold">
           <th className={CS_TH}>
             No.<br />STT
           </th>
@@ -308,10 +308,8 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   const renderCsRemark = (hasTableAbove: boolean) => (
     <div
       className={`${
-        hasTableAbove
-          ? 'mt-2.5 border-t border-slate-900 pt-1.5 print:mt-1.5 print:pt-1'
-          : 'mt-2 print:mt-1.5'
-      } space-y-0.5 text-[8pt] leading-snug print:space-y-0`}
+        hasTableAbove ? 'mt-1.5 border-t border-slate-900 pt-1' : 'mt-1.5'
+      } space-y-0 text-[8pt] leading-snug`}
     >
       <div className="font-semibold">Remark / Ghi chú:</div>
       <div>
@@ -330,39 +328,39 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   );
 
   const renderCsSignatures = () => (
-    <div className="mt-3 grid grid-cols-4 gap-0 border border-slate-900 text-center text-[8pt] leading-tight print:mt-1.5 print:break-inside-avoid">
-      <div className="border-r border-slate-900 p-1.5 print:p-1">
-        <div className="border-b border-slate-400 pb-1 font-bold uppercase print:pb-0.5">
+    <div className="mt-1.5 grid grid-cols-4 gap-0 border border-slate-900 text-center text-[8pt] leading-tight break-inside-avoid">
+      <div className="border-r border-slate-900 p-1">
+        <div className="border-b border-slate-400 pb-0.5 font-bold uppercase">
           CUSTOMER / KHÁCH HÀNG
         </div>
-        <div className="h-14 print:h-10" />
+        <div className="h-10" />
         <div className="text-[8.5pt] font-semibold">
           {revision.customerConfirmName || ''}
         </div>
       </div>
-      <div className="border-r border-slate-900 p-1.5 print:p-1">
-        <div className="border-b border-slate-400 pb-1 font-bold uppercase print:pb-0.5">
+      <div className="border-r border-slate-900 p-1">
+        <div className="border-b border-slate-400 pb-0.5 font-bold uppercase">
           PD/PM / PHÒNG DỰ ÁN
         </div>
-        <div className="h-14 print:h-10" />
+        <div className="h-10" />
         <div className="text-[8.5pt] font-semibold">
           {revision.approvedByPdPm || ''}
         </div>
       </div>
-      <div className="border-r border-slate-900 p-1.5 print:p-1">
-        <div className="border-b border-slate-400 pb-1 font-bold uppercase print:pb-0.5">
+      <div className="border-r border-slate-900 p-1">
+        <div className="border-b border-slate-400 pb-0.5 font-bold uppercase">
           TA / KỸ THUẬT
         </div>
-        <div className="h-14 print:h-10" />
+        <div className="h-10" />
         <div className="text-[8.5pt] font-semibold">
           {revision.preparedByTa || ''}
         </div>
       </div>
-      <div className="p-1.5 print:p-1">
-        <div className="border-b border-slate-400 pb-1 font-bold uppercase print:pb-0.5">
+      <div className="p-1">
+        <div className="border-b border-slate-400 pb-0.5 font-bold uppercase">
           PROJECT LEADER / TRƯỞNG DỰ ÁN
         </div>
-        <div className="h-14 print:h-10" />
+        <div className="h-10" />
         <div className="text-[8.5pt] font-semibold">
           {revision.checkedByLeader || ''}
         </div>
@@ -375,9 +373,10 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
     showTotalFooter: boolean
   ) => {
     if (!costSummary) return null;
-    const ccNum = `${CELL} px-[2pt]`;
+    const ccNum = 'border border-slate-900 px-[2pt] py-[0.6pt] leading-[1.15]';
+    const ccProd = 'border border-slate-900 px-[3pt] py-[0.6pt] leading-[1.15]';
     return (
-      <table className="w-full table-fixed border-collapse border border-slate-900 text-[8pt] leading-[1.2]">
+      <table className="w-full table-fixed border-collapse border border-slate-900 text-[8pt] leading-[1.15]">
         <colgroup>
           <col style={{ width: '12%' }} />
           <col style={{ width: '21%' }} />
@@ -393,7 +392,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
         </colgroup>
         {stepsSlice.length > 0 && (
           <thead>
-            <tr className="bg-slate-200 text-[7pt] font-bold print:bg-slate-100">
+            <tr className="bg-slate-100 text-[7pt] font-bold">
               <th className={CC_TH}>
                 Item<br />Bước thi công
               </th>
@@ -444,7 +443,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                       {sc.stepName}
                     </td>
                   )}
-                  <td className={`${CS_PRODUCT_CELL} font-sans font-semibold break-words`}>
+                  <td className={`${ccProd} font-sans font-semibold break-words`}>
                     {it.materialName || it.materialCode}
                   </td>
                   <td className={`${ccNum} text-right whitespace-nowrap tabular-nums`}>
@@ -506,7 +505,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
         )}
         {showTotalFooter && (
           <tfoot>
-            <tr className="bg-slate-200 text-[9pt] font-bold print:bg-slate-100">
+            <tr className="bg-slate-100 text-[9pt] font-bold">
               <td colSpan={10} className={`${CELL} px-2 text-center`}>
                 TOTAL COATING COST / TỔNG CHI PHÍ SƠN (VND/m²)
               </td>
@@ -521,7 +520,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   };
 
   const renderCcNotes = () => (
-    <div className="mt-2.5 space-y-0.5 border-t border-slate-900 pt-1.5 text-[8pt] leading-snug print:mt-1.5 print:space-y-0 print:pt-1">
+    <div className="mt-1.5 space-y-0 border-t border-slate-900 pt-1 text-[8pt] leading-snug">
       <div className="italic">
         Notes: The price above is not including VAT 8% and valid for 30 days /
         Ghi chú: Đơn giá trên chưa bao gồm thuế VAT 8% và có hiệu lực trong 30
@@ -536,98 +535,96 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 p-4 print:static print:bg-white print:p-0">
-      <div className="mx-auto max-w-[900px] rounded-xl bg-white p-5 shadow-2xl print:max-w-none print:rounded-none print:p-0 print:shadow-none">
-        {/* Top Action Bar (Hidden when printing) */}
-        <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3.5">
-          <div className="flex flex-wrap items-center gap-1.5">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/85 p-4 print:static print:bg-white print:p-0">
+      {/* Top Action Bar (Hidden when printing, aligned to 210mm A4 sheet width) */}
+      <div className="no-print sticky top-0 z-10 mx-auto mb-4 flex w-[210mm] max-w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white/95 px-4 py-2.5 shadow-xl backdrop-blur">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setPrintMode('CS')}
+            className={`rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
+              printMode === 'CS'
+                ? 'bg-blue-600 text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            Coating Schedule (CS) / Qui Trình Sơn
+          </button>
+          {canViewCost && (
             <button
               type="button"
-              onClick={() => setPrintMode('CS')}
+              onClick={() => setPrintMode('CC')}
               className={`rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
-                printMode === 'CS'
-                  ? 'bg-blue-600 text-white'
+                printMode === 'CC'
+                  ? 'bg-emerald-700 text-white'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
-              Coating Schedule (CS) / Qui Trình Sơn
+              Coating Cost (CC) / Chi phí sơn
             </button>
-            {canViewCost && (
-              <button
-                type="button"
-                onClick={() => setPrintMode('CC')}
-                className={`rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
-                  printMode === 'CC'
-                    ? 'bg-emerald-700 text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                Coating Cost (CC) / Chi phí sơn
-              </button>
-            )}
-            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
-              A4 Portrait / Khổ dọc • Total / Tổng: <strong>{totalPages}</strong> trang
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-slate-800"
-            >
-              <Printer className="h-3.5 w-3.5" />
-              Print A4 - Export PDF / In A4 - Xuất PDF
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
-            >
-              <X className="h-3.5 w-3.5" />
-              Close / Đóng
-            </button>
-          </div>
+          )}
+          <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">
+            A4 Portrait / Khổ dọc • Total / Tổng: <strong>{totalPages}</strong> trang
+          </span>
         </div>
 
-        {/* PAGINATED A4 SHEETS */}
-        {printMode === 'CS' ? (
-          <div className="space-y-6 print:space-y-0">
-            {csPages.map((page, pageIdx) => (
-              <div
-                key={`cs-page-${pageIdx + 1}`}
-                className="a4-print-page border border-slate-900 p-4 print:p-[2mm]"
-              >
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-slate-800"
+          >
+            <Printer className="h-3.5 w-3.5" />
+            Print A4 - Export PDF / In A4 - Xuất PDF
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+          >
+            <X className="h-3.5 w-3.5" />
+            Close / Đóng
+          </button>
+        </div>
+      </div>
+
+      {/* PAGINATED TRUE-WYSIWYG A4 SHEETS (210×297mm outer paper, 198×284mm inner frame) */}
+      {printMode === 'CS' ? (
+        <div className="space-y-6 pb-8 print:space-y-0 print:pb-0">
+          {csPages.map((page, pageIdx) => (
+            <div key={`cs-page-${pageIdx + 1}`} className="a4-sheet-preview">
+              <div className="a4-print-page border border-slate-900">
                 {renderSheetHeader(pageIdx + 1, csPages.length)}
                 {page.showMetadata && renderMetadataGrid()}
                 {page.steps.length > 0 && (
-                  <div className={page.showMetadata ? '' : 'mt-2 print:mt-1.5'}>
+                  <div className={page.showMetadata ? '' : 'mt-1.5'}>
                     {renderCsTable(page.steps)}
                   </div>
                 )}
                 {page.showRemark && renderCsRemark(page.steps.length > 0)}
                 {page.showSignatures && renderCsSignatures()}
               </div>
-            ))}
-          </div>
-        ) : costSummary ? (
-          <div className="space-y-6 print:space-y-0">
-            {ccPages.map((page, pageIdx) => (
-              <div
-                key={`cc-page-${pageIdx + 1}`}
-                className="a4-print-page border border-slate-900 p-4 print:p-[2mm]"
-              >
+            </div>
+          ))}
+        </div>
+      ) : costSummary ? (
+        <div className="space-y-6 pb-8 print:space-y-0 print:pb-0">
+          {ccPages.map((page, pageIdx) => (
+            <div key={`cc-page-${pageIdx + 1}`} className="a4-sheet-preview">
+              <div className="a4-print-page border border-slate-900">
                 {renderSheetHeader(pageIdx + 1, ccPages.length)}
                 {page.showMetadata && renderMetadataGrid()}
-                <div className={page.showMetadata ? '' : 'mt-2 print:mt-1.5'}>
+                <div className={page.showMetadata ? '' : 'mt-1.5'}>
                   {renderCcTable(page.steps, page.showTotalAndNotes)}
                 </div>
                 {page.showTotalAndNotes && renderCcNotes()}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="border border-slate-900 p-4 print:p-[2mm]">
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="a4-sheet-preview">
+          <div className="a4-print-page border border-slate-900">
             {renderSheetHeader(1, 1)}
             {renderMetadataGrid()}
             <div className="my-8 rounded-lg border border-dashed border-slate-300 p-8 text-center text-xs text-slate-500 italic">
@@ -635,8 +632,8 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
               hoặc không có quyền truy cập.
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

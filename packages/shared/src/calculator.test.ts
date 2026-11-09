@@ -249,22 +249,22 @@ describe('Shared Calculation Engine (@cscc/shared)', () => {
     const csPages = paginateCsSteps(ntr10Steps);
     assert.equal(csPages.length, 2);
 
-    // Page 1/2: Metadata + Steps 1-7 (14 entries: 7 sanding + 7 chemical steps)
+    // Page 1/2: Metadata + Steps 1-8 (16 entries: 8 sanding + 8 chemical steps)
     assert.equal(csPages[0].showMetadata, true);
-    assert.equal(csPages[0].steps.length, 14);
+    assert.equal(csPages[0].steps.length, 16);
     assert.equal(csPages[0].showRemark, false);
     assert.equal(csPages[0].showSignatures, false);
 
-    // Page 2/2: Steps 8-10 (6 entries: 3 sanding + 3 chemical steps) + Remark + 4 Signature boxes together
+    // Page 2/2: Steps 9-10 (4 entries: 2 sanding + 2 chemical steps) + Remark + 4 Signature boxes together
     assert.equal(csPages[1].showMetadata, false);
-    assert.equal(csPages[1].steps.length, 6);
+    assert.equal(csPages[1].steps.length, 4);
     assert.equal(csPages[1].showRemark, true);
     assert.equal(csPages[1].showSignatures, true);
   });
 
   it('paginates Coating Cost (CC) across A4 portrait pages with accurate page counts and overflow protection', () => {
-    const ntr10Steps: ScheduleStep[] = [];
-    for (let s = 1; s <= 10; s++) {
+    const ntr12Steps: ScheduleStep[] = [];
+    for (let s = 1; s <= 12; s++) {
       const step = makeChemStep(
         s,
         s,
@@ -277,33 +277,42 @@ describe('Shared Calculation Engine (@cscc/shared)', () => {
         ...it,
         materialName: it.materialCode
       }));
-      ntr10Steps.push(step);
+      ntr12Steps.push(step);
     }
 
     // 6 steps (30 rows) -> fits on 1 single A4 portrait page (1/1) with Metadata + Steps 1-6 + Total + Notes
-    const ccSummary6 = calculateCoatingCostTable('rev-ntr001-00', ntr10Steps.slice(0, 6));
+    const ccSummary6 = calculateCoatingCostTable('rev-ntr001-00', ntr12Steps.slice(0, 6));
     const ccPages6 = paginateCcSteps(ccSummary6.steps, true);
     assert.equal(ccPages6.length, 1);
     assert.equal(ccPages6[0].showMetadata, true);
     assert.equal(ccPages6[0].steps.length, 6);
     assert.equal(ccPages6[0].showTotalAndNotes, true);
 
-    // 8 steps (40 rows) -> still fits on 1 page together with Total + Notes
-    const ccSummary8 = calculateCoatingCostTable('rev-ntr001-00', ntr10Steps.slice(0, 8));
-    const ccPages8 = paginateCcSteps(ccSummary8.steps, false);
-    assert.equal(ccPages8.length, 1);
-    assert.equal(ccPages8[0].showMetadata, true);
-    assert.equal(ccPages8[0].steps.length, 8);
-    assert.equal(ccPages8[0].showTotalAndNotes, true);
-
-    // 10 steps (50 rows) -> Page 1/2 (Steps 1-9), Page 2/2 (Step 10 + Total + Notes)
-    const ccSummary10 = calculateCoatingCostTable('rev-ntr001-00', ntr10Steps);
+    // 10 steps (50 rows) with Remark -> fits cleanly on 1 single A4 portrait page (1/1)
+    const ccSummary10 = calculateCoatingCostTable('rev-ntr001-00', ntr12Steps.slice(0, 10));
     const ccPages10 = paginateCcSteps(ccSummary10.steps, true);
-    assert.equal(ccPages10.length, 2);
-    assert.equal(ccPages10[0].steps.length, 9);
-    assert.equal(ccPages10[0].showTotalAndNotes, false);
-    assert.equal(ccPages10[1].steps.length, 1);
-    assert.equal(ccPages10[1].showTotalAndNotes, true);
+    assert.equal(ccPages10.length, 1);
+    assert.equal(ccPages10[0].showMetadata, true);
+    assert.equal(ccPages10[0].steps.length, 10);
+    assert.equal(ccPages10[0].showTotalAndNotes, true);
+
+    // 11 steps (55 rows) with Remark -> Page 1/2 (Steps 1-10), Page 2/2 (Step 11 + Total + Notes)
+    const ccSummary11 = calculateCoatingCostTable('rev-ntr001-00', ntr12Steps.slice(0, 11));
+    const ccPages11 = paginateCcSteps(ccSummary11.steps, true);
+    assert.equal(ccPages11.length, 2);
+    assert.equal(ccPages11[0].steps.length, 10);
+    assert.equal(ccPages11[0].showTotalAndNotes, false);
+    assert.equal(ccPages11[1].steps.length, 1);
+    assert.equal(ccPages11[1].showTotalAndNotes, true);
+
+    // 12 steps (60 rows) with Remark -> Page 1/2 (Steps 1-11), Page 2/2 (Step 12 + Total + Notes)
+    const ccSummary12 = calculateCoatingCostTable('rev-ntr001-00', ntr12Steps);
+    const ccPages12 = paginateCcSteps(ccSummary12.steps, true);
+    assert.equal(ccPages12.length, 2);
+    assert.equal(ccPages12[0].steps.length, 11);
+    assert.equal(ccPages12[0].showTotalAndNotes, false);
+    assert.equal(ccPages12[1].steps.length, 1);
+    assert.equal(ccPages12[1].showTotalAndNotes, true);
   });
 
   it('adds pages instead of overfilling when material names wrap onto several lines', () => {

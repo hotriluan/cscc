@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* True-WYSIWYG A4 physical sheet & printable frame geometry (shared between Screen Preview and Print) */
+.a4-sheet-preview {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 6mm;
+  margin: 0 auto;
+  background: #ffffff;
+  box-sizing: border-box;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.a4-print-page {
+  width: 198mm;
+  min-height: 284mm;
+  padding: 2mm;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  color: #0f172a;
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -34,7 +56,29 @@
     background: transparent !important;
   }
 
+  .a4-sheet-preview {
+    width: 198mm !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .a4-sheet-preview + .a4-sheet-preview {
+    break-before: page;
+    page-break-before: always;
+  }
+
   .a4-print-page {
+    width: 198mm !important;
+    min-height: 284mm !important;
+    padding: 2mm !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
     break-inside: avoid;
     page-break-inside: avoid;
   }
