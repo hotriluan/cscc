@@ -1,0 +1,100 @@
+{
+  "csResult": {
+    "screenStats": {
+      "badge": "A4 Portrait / Khổ dọc • Total / Tổng: 2 trang",
+      "sheets": [
+        {
+          "width": 793.69,
+          "height": 1122.52
+        },
+        {
+          "width": 793.69,
+          "height": 1122.52
+        }
+      ],
+      "pages": [
+        {
+          "page": 1,
+          "widthPx": 748.34,
+          "heightPx": 1073.38,
+          "widthMm": 198,
+          "heightMm": 284,
+          "contentHeightMm": 275.69,
+          "remainingBottomMm": 8.31,
+          "tbodyRows": 48
+        },
+        {
+          "page": 2,
+          "widthPx": 748.34,
+          "heightPx": 1073.38,
+          "widthMm": 198,
+          "heightMm": 284,
+          "contentHeightMm": 128.94,
+          "remainingBottomMm": 155.06,
+          "tbodyRows": 12
+        }
+      ]
+    },
+    "printStats": {
+      "pages": [
+        {
+          "page": 1,
+          "widthPx": 748.34,
+          "heightPx": 1073.38,
+          "widthMm": 198,
+          "heightMm": 284,
+          "contentHeightMm": 275.69,
+          "remainingBottomMm": 8.31,
+          "tbodyRows": 48
+        },
+        {
+          "page": 2,
+          "widthPx": 748.34,
+          "heightPx": 1073.38,
+          "widthMm": 198,
+          "heightMm": 284,
+          "contentHeightMm": 128.94,
+          "remainingBottomMm": 155.06,
+          "tbodyRows": 12
+        }
+      ]
+    }
+  },
+  "ccResult": {
+    "screenStats": {
+      "badge": "A4 Portrait / Khổ dọc • Total / Tổng: 1 trang",
+      "sheets": [
+        {
+          "width": 793.69,
+          "height": 1122.52
+        }
+      ],
+      "pages": [
+        {
+          "page": 1,
+          "widthPx": 748.34,
+          "heightPx": 1073.38,
+          "widthMm": 198,
+          "heightMm": 284,
+          "contentHeightMm": 265.47,
+          "remainingBottomMm": 18.53,
+          "tbodyRows": 50
+        }
+      ]
+    },
+    "printStats": {
+      "pages": [
+        {
+          "page": 1,
+          "widthPx": 748.34,
+          "heightPx": 1073.38,
+          "widthMm": 198,
+          "heightMm": 284,
+          "contentHeightMm": 265.47,
+          "remainingBottomMm": 18.53,
+          "tbodyRows": 50
+        }
+      ]
+    }
+  }
+}
