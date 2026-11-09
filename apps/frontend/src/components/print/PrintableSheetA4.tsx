@@ -65,21 +65,21 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   };
 
   const renderSheetHeader = (pageNumber: number, pageCount: number) => (
-    <div className="flex items-center justify-between gap-3 border-b-2 border-slate-900 pb-3 print:pb-1">
+    <div className="flex items-center justify-between gap-2.5 border-b-2 border-slate-900 pb-2.5 print:pb-1">
       <div className="flex shrink-0 items-center justify-start">
         <img
           src={logoPropan}
           alt="Propan Logo"
-          className="h-12 w-auto object-contain print:h-8"
+          className="h-10 w-auto object-contain print:h-7"
         />
       </div>
-      <div className="flex-1 px-2 text-center">
-        <h1 className="text-xl font-black uppercase tracking-widest text-slate-900 print:text-base print:tracking-wider">
+      <div className="min-w-0 flex-1 px-1.5 text-center">
+        <h1 className="text-base sm:text-lg font-black uppercase tracking-wide text-slate-900 print:text-[13px] print:leading-snug">
           {printMode === 'CS'
             ? 'COATING SCHEDULE / QUI TRÌNH SƠN'
             : 'COATING COST CALCULATION / BẢNG TÍNH TOÁN CHI PHÍ SƠN'}
         </h1>
-        <div className="mt-0.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-xs font-semibold text-slate-600 print:text-[10px] print:leading-tight">
+        <div className="mt-0.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-600 print:text-[9.5px] print:leading-tight">
           <span>
             No. / Mã: <strong className="text-slate-900">{revision.projectCode}</strong>
           </span>
@@ -115,15 +115,15 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
         <img
           src={logoAlkana}
           alt="Alkana Logo"
-          className="h-12 w-auto object-contain print:h-8"
+          className="h-10 w-auto object-contain print:h-7"
         />
       </div>
     </div>
   );
 
   const renderMetadataGrid = () => (
-    <div className="my-3 grid grid-cols-3 gap-2 border-b border-slate-400 pb-3 text-xs print:my-1.5 print:gap-1 print:pb-1.5 print:text-[10px] print:leading-tight">
-      <div>
+    <div className="my-2.5 grid grid-cols-3 gap-x-3 gap-y-1 border-b border-slate-400 pb-2.5 text-[11px] leading-snug print:my-1.5 print:gap-x-2 print:gap-y-0.5 print:pb-1.5 print:text-[9.5px] print:leading-snug">
+      <div className="min-w-0 space-y-0.5 break-words">
         <div>
           <strong>Customer / Khách hàng:</strong> {revision.customer.shortName}
         </div>
@@ -134,7 +134,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
           <strong>Product Item / Tên sản phẩm:</strong> {revision.productName}
         </div>
       </div>
-      <div>
+      <div className="min-w-0 space-y-0.5 break-words">
         <div>
           <strong>Positioning / Vị trí:</strong> {revision.positioning}
         </div>
@@ -145,7 +145,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
           <strong>Gloss Level / Độ bóng:</strong> {revision.glossLevel}
         </div>
       </div>
-      <div>
+      <div className="min-w-0 space-y-0.5 break-words">
         <div>
           <strong>Color / Màu sắc:</strong> {revision.colorName}
         </div>
@@ -161,42 +161,42 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   );
 
   const renderCsTable = (stepsSlice: ScheduleStep[]) => (
-    <table className="w-full table-fixed border-collapse border border-slate-900 text-[11px] print:text-[9.5px]">
+    <table className="w-full table-fixed border-collapse border border-slate-900 text-[10.5px] leading-snug print:text-[9px] print:leading-snug">
       <colgroup>
-        <col style={{ width: '4%' }} />
+        <col style={{ width: '4.5%' }} />
+        <col style={{ width: '14.5%' }} />
+        <col style={{ width: '34%' }} />
+        <col style={{ width: '6.5%' }} />
+        <col style={{ width: '8.5%' }} />
+        <col style={{ width: '7.5%' }} />
+        <col style={{ width: '11.5%' }} />
         <col style={{ width: '13%' }} />
-        <col style={{ width: '30%' }} />
-        <col style={{ width: '6%' }} />
-        <col style={{ width: '11%' }} />
-        <col style={{ width: '7%' }} />
-        <col style={{ width: '14%' }} />
-        <col style={{ width: '15%' }} />
       </colgroup>
       <thead>
-        <tr className="bg-slate-200 font-bold uppercase print:bg-slate-100">
+        <tr className="bg-slate-200 font-bold uppercase text-[9.5px] print:bg-slate-100 print:text-[8px]">
           <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
             No.<br />STT
           </th>
           <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
             Application Step<br />Bước thi công
           </th>
-          <th className="border border-slate-900 px-2 py-1 print:py-0.5 text-left leading-tight">
+          <th className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-left leading-tight">
             Product Name<br />Tên sản phẩm
           </th>
-          <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-            Mixing Ratio<br />Tỉ lệ pha
+          <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
+            Ratio<br />Tỉ lệ pha
           </th>
-          <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+          <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
             Visco<br />Độ nhớt
           </th>
-          <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+          <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
             CA (g/m²)<br />Lượng sơn
           </th>
           <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-            Application Method<br />Phương pháp thi công
+            Method<br />PP thi công
           </th>
           <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-            Drying Time Recommended<br />Thời gian khô đề xuất
+            Drying Time<br />Thời gian khô
           </th>
         </tr>
       </thead>
@@ -205,18 +205,18 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
           if (step.rowType === 'SANDING') {
             return (
               <tr key={step.id} className="italic">
-                <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-center" />
-                <td className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-semibold">
+                <td className="border border-slate-900 px-1 py-0.5 print:py-0.5 text-center" />
+                <td className="border border-slate-900 px-1 py-0.5 print:py-0.5 text-center font-semibold break-words">
                   SANDING / CHÀ NHÁM
                 </td>
-                <td className="border border-slate-900 px-2 py-1 print:py-0.5" />
-                <td className="border border-slate-900 px-1 py-1 print:py-0.5" />
-                <td className="border border-slate-900 px-1 py-1 print:py-0.5" />
-                <td className="border border-slate-900 px-1 py-1 print:py-0.5" />
-                <td className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-semibold">
+                <td className="border border-slate-900 px-1.5 py-0.5 print:py-0.5" />
+                <td className="border border-slate-900 px-0.5 py-0.5 print:py-0.5" />
+                <td className="border border-slate-900 px-0.5 py-0.5 print:py-0.5" />
+                <td className="border border-slate-900 px-0.5 py-0.5 print:py-0.5" />
+                <td className="border border-slate-900 px-1 py-0.5 print:py-0.5 text-center font-semibold break-words">
                   {step.sandingSpec}
                 </td>
-                <td className="border border-slate-900 px-1.5 py-1 print:py-0.5" />
+                <td className="border border-slate-900 px-1 py-0.5 print:py-0.5" />
               </tr>
             );
           }
@@ -227,47 +227,47 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                 <>
                   <td
                     rowSpan={rowSpan}
-                    className="border border-slate-900 px-1 py-1 print:py-0.5 text-center font-bold"
+                    className="border border-slate-900 px-0.5 py-0.5 print:py-0.5 text-center font-bold whitespace-nowrap tabular-nums"
                   >
                     {step.stepNumber}
                   </td>
                   <td
                     rowSpan={rowSpan}
-                    className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-bold"
+                    className="border border-slate-900 px-1 py-0.5 print:py-0.5 text-center font-bold break-words"
                   >
                     {step.stepName}
                   </td>
                 </>
               )}
-              <td className="border border-slate-900 px-2 py-1 print:py-0.5 font-mono font-semibold break-words">
+              <td className="border border-slate-900 px-1.5 py-0.5 print:py-0.5 font-sans font-semibold break-words">
                 {item.materialName || item.materialCode}
               </td>
-              <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-center">
+              <td className="border border-slate-900 px-0.5 py-0.5 print:py-0.5 text-center whitespace-nowrap tabular-nums">
                 {item.mixingRatio}
               </td>
               {idx === 0 && (
                 <>
                   <td
                     rowSpan={rowSpan}
-                    className="border border-slate-900 px-1 py-1 print:py-0.5 text-center"
+                    className="border border-slate-900 px-0.5 py-0.5 print:py-0.5 text-center break-words"
                   >
                     {step.visco ?? item.visco ?? ''}
                   </td>
                   <td
                     rowSpan={rowSpan}
-                    className="border border-slate-900 px-1 py-1 print:py-0.5 text-center font-semibold"
+                    className="border border-slate-900 px-0.5 py-0.5 print:py-0.5 text-center font-semibold whitespace-nowrap tabular-nums"
                   >
                     {step.caInputRaw}
                   </td>
                   <td
                     rowSpan={rowSpan}
-                    className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-semibold"
+                    className="border border-slate-900 px-1 py-0.5 print:py-0.5 text-center font-semibold break-words"
                   >
                     {step.methodName}
                   </td>
                   <td
                     rowSpan={rowSpan}
-                    className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center"
+                    className="border border-slate-900 px-1 py-0.5 print:py-0.5 text-center break-words"
                   >
                     {step.dryingTime}
                   </td>
@@ -284,9 +284,9 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
     <div
       className={`${
         hasTableAbove
-          ? 'mt-3 border-t border-slate-900 pt-2 print:mt-1.5 print:pt-1'
+          ? 'mt-2.5 border-t border-slate-900 pt-1.5 print:mt-1.5 print:pt-1'
           : 'mt-2 print:mt-1.5'
-      } text-[11px] space-y-0.5 print:text-[9.5px] print:space-y-0 print:leading-tight`}
+      } text-[10.5px] space-y-0.5 print:text-[9px] print:space-y-0 print:leading-snug`}
     >
       <div className="font-semibold">Remark / Ghi chú:</div>
       <div>
@@ -305,40 +305,40 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   );
 
   const renderCsSignatures = () => (
-    <div className="mt-4 grid grid-cols-4 gap-0 border border-slate-900 text-center text-xs print:mt-1.5 print:text-[10px] print:break-inside-avoid">
-      <div className="border-r border-slate-900 p-2 print:p-1">
+    <div className="mt-3 grid grid-cols-4 gap-0 border border-slate-900 text-center text-[10.5px] leading-tight print:mt-1.5 print:text-[9px] print:break-inside-avoid">
+      <div className="border-r border-slate-900 p-1.5 print:p-1">
         <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
           CUSTOMER / KHÁCH HÀNG
         </div>
-        <div className="h-16 print:h-8" />
-        <div className="font-semibold print:text-[10px]">
+        <div className="h-14 print:h-10" />
+        <div className="font-semibold print:text-[9px]">
           {revision.customerConfirmName || ''}
         </div>
       </div>
-      <div className="border-r border-slate-900 p-2 print:p-1">
+      <div className="border-r border-slate-900 p-1.5 print:p-1">
         <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
           PD/PM / PHÒNG DỰ ÁN
         </div>
-        <div className="h-16 print:h-8" />
-        <div className="font-semibold print:text-[10px]">
+        <div className="h-14 print:h-10" />
+        <div className="font-semibold print:text-[9px]">
           {revision.approvedByPdPm || ''}
         </div>
       </div>
-      <div className="border-r border-slate-900 p-2 print:p-1">
+      <div className="border-r border-slate-900 p-1.5 print:p-1">
         <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
           TA / KỸ THUẬT
         </div>
-        <div className="h-16 print:h-8" />
-        <div className="font-semibold print:text-[10px]">
+        <div className="h-14 print:h-10" />
+        <div className="font-semibold print:text-[9px]">
           {revision.preparedByTa || ''}
         </div>
       </div>
-      <div className="p-2 print:p-1">
+      <div className="p-1.5 print:p-1">
         <div className="font-bold uppercase border-b border-slate-400 pb-1 print:pb-0.5">
           PROJECT LEADER / TRƯỞNG DỰ ÁN
         </div>
-        <div className="h-16 print:h-8" />
-        <div className="font-semibold print:text-[10px]">
+        <div className="h-14 print:h-10" />
+        <div className="font-semibold print:text-[9px]">
           {revision.checkedByLeader || ''}
         </div>
       </div>
@@ -351,55 +351,55 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   ) => {
     if (!costSummary) return null;
     return (
-      <table className="w-full table-fixed border-collapse border border-slate-900 text-[10.5px] print:text-[9px]">
+      <table className="w-full table-fixed border-collapse border border-slate-900 text-[10px] leading-tight print:text-[8.5px] print:leading-tight">
         <colgroup>
-          <col style={{ width: '7%' }} />
-          <col style={{ width: '28%' }} />
-          <col style={{ width: '7.5%' }} />
+          <col style={{ width: '9%' }} />
+          <col style={{ width: '26%' }} />
+          <col style={{ width: '8%' }} />
           <col style={{ width: '5%' }} />
           <col style={{ width: '8.5%' }} />
           <col style={{ width: '7%' }} />
-          <col style={{ width: '7%' }} />
-          <col style={{ width: '7%' }} />
+          <col style={{ width: '6%' }} />
+          <col style={{ width: '5.5%' }} />
           <col style={{ width: '7.5%' }} />
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '8.5%' }} />
+          <col style={{ width: '7.5%' }} />
+          <col style={{ width: '10%' }} />
         </colgroup>
         {stepsSlice.length > 0 && (
           <thead>
-            <tr className="bg-slate-200 font-bold uppercase print:bg-slate-100">
-              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
+            <tr className="bg-slate-200 font-bold uppercase text-[9px] leading-tight print:bg-slate-100 print:text-[7.5px] print:leading-tight">
+              <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
                 Item<br />Bước thi công
               </th>
-              <th className="border border-slate-900 px-2 py-1 print:py-0.5 text-left leading-tight">
+              <th className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-left leading-tight">
                 Product Name<br />Tên sản phẩm
               </th>
-              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                Price<br />Đơn giá (VND/Ltr)
+              <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
+                Price<br />Đơn giá<br />(VND/Ltr)
               </th>
-              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                Mixing Ratio<br />Tỉ lệ pha
+              <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
+                Ratio<br />Tỉ lệ pha
               </th>
-              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                Mixed Price<br />Giá hỗn hợp (VND/Ltr set)
+              <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
+                Mixed Price<br />Giá HH<br />(VND/Ltr)
               </th>
-              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                Application<br />Phương pháp thi công
+              <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
+                Method<br />PP thi công
               </th>
-              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                Coating Amount<br />Lượng sơn (g/m²)
+              <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
+                CA (g/m²)<br />Lượng sơn
               </th>
-              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                Application Efficiency<br />Hiệu suất thi công
+              <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
+                Efficiency<br />Hiệu suất
               </th>
-              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                CA + Loss<br />Lượng gồm hao hụt (g/m²)
+              <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
+                CA + Loss<br />Gồm hao hụt<br />(g/m²)
               </th>
-              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                Coverage<br />Định mức phủ (m²/Ltr/kg)
+              <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
+                Coverage<br />Định mức phủ<br />(m²/Ltr)
               </th>
-              <th className="border border-slate-900 px-1 py-1 print:py-0.5 text-center leading-tight">
-                Coating Cost<br />Chi phí sơn (VND/m²)
+              <th className="border border-slate-900 px-0.5 py-1 print:py-0.5 text-center leading-tight">
+                Coating Cost<br />Chi phí<br />(VND/m²)
               </th>
             </tr>
           </thead>
@@ -413,61 +413,61 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                   {idx === 0 && (
                     <td
                       rowSpan={rowSpan}
-                      className="border border-slate-900 px-1.5 py-1 print:py-0.5 text-center font-bold"
+                      className="border border-slate-900 px-1 py-0.5 print:py-0.5 text-center font-bold break-words"
                     >
                       {sc.stepName}
                     </td>
                   )}
-                  <td className="border border-slate-900 px-2 py-1 print:py-0.5 font-mono font-semibold break-words">
+                  <td className="border border-slate-900 px-1.5 py-0.5 print:py-0.5 font-sans font-semibold break-words">
                     {it.materialName || it.materialCode}
                   </td>
-                  <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-right">
+                  <td className="border border-slate-900 px-1 print:px-0.5 py-0.5 print:py-0.5 text-right whitespace-nowrap tabular-nums">
                     {formatVnd(it.priceSnapshotVnd)}
                   </td>
-                  <td className="border border-slate-900 px-1 py-1 print:py-0.5 text-center">
+                  <td className="border border-slate-900 px-0.5 py-0.5 print:py-0.5 text-center whitespace-nowrap tabular-nums">
                     {it.mixingRatio}
                   </td>
                   {idx === 0 && (
                     <>
                       <td
                         rowSpan={rowSpan}
-                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-right font-semibold"
+                        className="border border-slate-900 px-1 print:px-0.5 py-0.5 print:py-0.5 text-right font-semibold whitespace-nowrap tabular-nums"
                       >
                         {formatVnd(sc.mixedPriceDisplay)}
                       </td>
                       <td
                         rowSpan={rowSpan}
-                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-center font-semibold"
+                        className="border border-slate-900 px-0.5 py-0.5 print:py-0.5 text-center font-semibold break-words"
                       >
                         {sc.methodName}
                       </td>
                       <td
                         rowSpan={rowSpan}
-                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-center"
+                        className="border border-slate-900 px-0.5 py-0.5 print:py-0.5 text-center whitespace-nowrap tabular-nums"
                       >
                         {sc.caAvg}
                       </td>
                       <td
                         rowSpan={rowSpan}
-                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-center"
+                        className="border border-slate-900 px-0.5 py-0.5 print:py-0.5 text-center whitespace-nowrap tabular-nums"
                       >
                         {sc.efficiencyPercentDisplay}
                       </td>
                       <td
                         rowSpan={rowSpan}
-                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-right"
+                        className="border border-slate-900 px-1 print:px-0.5 py-0.5 print:py-0.5 text-right whitespace-nowrap tabular-nums"
                       >
                         {formatDecimal2(sc.caPlusLossDisplay)}
                       </td>
                       <td
                         rowSpan={rowSpan}
-                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-right"
+                        className="border border-slate-900 px-1 print:px-0.5 py-0.5 print:py-0.5 text-right whitespace-nowrap tabular-nums"
                       >
                         {formatCoverage(sc.coverageDisplay)}
                       </td>
                       <td
                         rowSpan={rowSpan}
-                        className="border border-slate-900 px-1 py-1 print:py-0.5 text-right font-bold"
+                        className="border border-slate-900 px-1 print:px-0.5 py-0.5 print:py-0.5 text-right font-bold whitespace-nowrap tabular-nums"
                       >
                         {formatDecimal2(sc.coatingCostDisplay)}
                       </td>
@@ -483,11 +483,11 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
             <tr className="bg-slate-200 font-bold print:bg-slate-100">
               <td
                 colSpan={10}
-                className="border border-slate-900 px-2 py-1.5 print:py-0.5 text-center"
+                className="border border-slate-900 px-2 py-1 print:py-0.5 text-center"
               >
                 TOTAL COATING COST / TỔNG CHI PHÍ SƠN (VND/m²)
               </td>
-              <td className="border border-slate-900 px-1.5 py-1.5 print:py-0.5 text-right text-xs print:text-[9.5px]">
+              <td className="border border-slate-900 px-1 print:px-0.5 py-1 print:py-0.5 text-right text-[11px] print:text-[9px] whitespace-nowrap tabular-nums">
                 {formatVnd(costSummary.totalCoatingCostDisplay)}
               </td>
             </tr>
@@ -498,7 +498,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   };
 
   const renderCcNotes = () => (
-    <div className="mt-3 border-t border-slate-900 pt-2 text-[11px] space-y-0.5 print:mt-1.5 print:pt-1 print:text-[9.5px] print:space-y-0 print:leading-tight">
+    <div className="mt-2.5 border-t border-slate-900 pt-1.5 text-[10.5px] space-y-0.5 print:mt-1.5 print:pt-1 print:text-[9px] print:space-y-0 print:leading-snug">
       <div className="italic">
         Notes: The price above is not including VAT 8% and valid for 30 days /
         Ghi chú: Đơn giá trên chưa bao gồm thuế VAT 8% và có hiệu lực trong 30
@@ -514,9 +514,9 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 p-4 print:static print:bg-white print:p-0">
-      <div className="mx-auto max-w-6xl rounded-xl bg-white p-6 shadow-2xl print:max-w-none print:rounded-none print:p-0 print:shadow-none">
+      <div className="mx-auto max-w-[840px] rounded-xl bg-white p-5 shadow-2xl print:max-w-none print:rounded-none print:p-0 print:shadow-none">
         {/* Top Action Bar (Hidden when printing) */}
-        <div className="no-print mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+        <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3.5">
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -543,7 +543,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
               </button>
             )}
             <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-              Total / Tổng: <strong>{totalPages}</strong> trang A4
+              A4 Portrait / Khổ dọc • Total / Tổng: <strong>{totalPages}</strong> trang
             </span>
           </div>
 

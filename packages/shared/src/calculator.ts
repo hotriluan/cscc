@@ -375,19 +375,19 @@ export interface CcPageSlice {
   showTotalAndNotes: boolean;
 }
 
-const CS_FIRST_PAGE_MAX_UNITS = 30;
-const CS_NEXT_PAGE_MAX_UNITS = 30;
+const CS_FIRST_PAGE_MAX_UNITS = 44;
+const CS_NEXT_PAGE_MAX_UNITS = 46;
 const CS_REMARK_UNITS = 3.5;
 const CS_SIGNATURES_UNITS = 4.5;
 
-const CC_FIRST_PAGE_MAX_UNITS = 25;
-const CC_NEXT_PAGE_MAX_UNITS = 25;
+const CC_FIRST_PAGE_MAX_UNITS = 40;
+const CC_NEXT_PAGE_MAX_UNITS = 42;
 const CC_FOOTER_BASE_UNITS = 4.5;
 
 function estimateCsStepUnits(step: ScheduleStep): number {
   if (step.rowType === 'SANDING') {
     const specLen = (step.sandingSpec || '').trim().length;
-    return specLen > 32 ? 1.4 : 1;
+    return specLen > 24 ? 1.4 : 1;
   }
 
   const items = step.items || [];
@@ -398,19 +398,19 @@ function estimateCsStepUnits(step: ScheduleStep): number {
   let itemUnits = 0;
   for (const item of items) {
     const nameLen = (item.materialName || item.materialCode || '').trim().length;
-    const lines = Math.max(1, Math.ceil(nameLen / 44));
+    const lines = Math.max(1, Math.ceil(nameLen / 38));
     itemUnits += 1 + (lines - 1) * 0.7;
   }
 
-  const stepNameLines = Math.max(1, Math.ceil((step.stepName || '').trim().length / 16));
-  const dryingLines = Math.max(1, Math.ceil((step.dryingTime || '').trim().length / 20));
+  const stepNameLines = Math.max(1, Math.ceil((step.stepName || '').trim().length / 14));
+  const dryingLines = Math.max(1, Math.ceil((step.dryingTime || '').trim().length / 16));
   const minMergedUnits = Math.max(stepNameLines, dryingLines) * 0.65;
 
   return Math.max(itemUnits, minMergedUnits);
 }
 
 /**
- * Splits Coating Schedule (CS) steps across A4 landscape pages without breaking
+ * Splits Coating Schedule (CS) steps across A4 portrait pages without breaking
  * any coating step (or its paired preceding SANDING row) across page boundaries.
  */
 export function paginateCsSteps(steps: ScheduleStep[]): CsPageSlice[] {
@@ -514,18 +514,18 @@ function estimateCcStepUnits(stepCalc: StepCostCalculation): number {
   let itemUnits = 0;
   for (const item of items) {
     const nameLen = (item.materialName || item.materialCode || '').trim().length;
-    const lines = Math.max(1, Math.ceil(nameLen / 40));
+    const lines = Math.max(1, Math.ceil(nameLen / 32));
     itemUnits += 1 + (lines - 1) * 0.7;
   }
 
-  const stepNameLines = Math.max(1, Math.ceil((stepCalc.stepName || '').trim().length / 12));
+  const stepNameLines = Math.max(1, Math.ceil((stepCalc.stepName || '').trim().length / 11));
   const minMergedUnits = stepNameLines * 0.65;
 
   return Math.max(itemUnits, minMergedUnits);
 }
 
 /**
- * Splits Coating Cost (CC) steps across A4 landscape pages so each page displays
+ * Splits Coating Cost (CC) steps across A4 portrait pages so each page displays
  * an accurate `Page / Trang: X / Y` counter and the Total + Notes footer is never cut off.
  */
 export function paginateCcSteps(

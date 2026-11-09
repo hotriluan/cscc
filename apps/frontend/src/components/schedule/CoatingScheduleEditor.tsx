@@ -893,8 +893,8 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             {/* Column 2 */}
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-semibold uppercase text-slate-600">
                     Substrate / Loại gỗ
                   </label>
                   <input
@@ -905,15 +905,15 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                     onChange={(e) =>
                       handleHeaderChange('substrate', e.target.value)
                     }
-                    className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none disabled:bg-slate-100 ${
+                    className={`mt-auto w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none disabled:bg-slate-100 ${
                       !revision.substrate?.trim()
                         ? 'border-amber-400 bg-amber-50/60 placeholder:italic placeholder:text-amber-700 focus:border-blue-600'
                         : 'border-slate-300 focus:border-blue-600'
                     }`}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-semibold uppercase text-slate-600">
                     Positioning / Vị trí áp dụng
                   </label>
                   <input
@@ -924,14 +924,14 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                     onChange={(e) =>
                       handleHeaderChange('positioning', e.target.value)
                     }
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
+                    className="mt-auto w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-semibold uppercase text-slate-600">
                     Finishing System / Hệ sơn
                   </label>
                   <input
@@ -942,15 +942,15 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                     onChange={(e) =>
                       handleHeaderChange('finishingSystem', e.target.value)
                     }
-                    className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none disabled:bg-slate-100 ${
+                    className={`mt-auto w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none disabled:bg-slate-100 ${
                       !revision.finishingSystem?.trim()
                         ? 'border-amber-400 bg-amber-50/60 placeholder:italic placeholder:text-amber-700 focus:border-blue-600'
                         : 'border-slate-300 focus:border-blue-600'
                     }`}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-semibold uppercase text-slate-600">
                     Gloss Level / Độ bóng
                   </label>
                   <input
@@ -961,7 +961,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                     onChange={(e) =>
                       handleHeaderChange('glossLevel', e.target.value)
                     }
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
+                    className="mt-auto w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
                   />
                 </div>
               </div>
@@ -986,8 +986,8 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             {/* Column 3 */}
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-semibold uppercase text-slate-600">
                     No. / Mã hồ sơ
                   </label>
                   <input
@@ -998,15 +998,15 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                     onChange={(e) =>
                       handleHeaderChange('projectCode', e.target.value)
                     }
-                    className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm font-semibold focus:outline-none disabled:bg-slate-100 ${
+                    className={`mt-auto w-full rounded-lg border px-3 py-1.5 text-sm font-semibold focus:outline-none disabled:bg-slate-100 ${
                       !revision.projectCode?.trim()
                         ? 'border-amber-400 bg-amber-50/60 placeholder:italic placeholder:text-amber-700 focus:border-blue-600'
                         : 'border-slate-300 focus:border-blue-600'
                     }`}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-semibold uppercase text-slate-600">
                     Date / Ngày lập
                   </label>
                   <input
@@ -1016,20 +1016,21 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                     onChange={(e) =>
                       handleHeaderChange('scheduleDate', e.target.value, 'discrete')
                     }
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
+                    className="mt-auto w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
                   />
                 </div>
               </div>
 
               {/* Finishing Conditions */}
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
-                <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-600">
                   Finishing Condition / Điều kiện môi trường
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-[10px] font-medium text-slate-500">
-                      MC Wood / Độ ẩm gỗ
+                <div className="grid grid-cols-3 gap-2.5 items-stretch">
+                  <div className="flex flex-col justify-between">
+                    <label className="mb-1.5 block text-[11px] font-medium leading-snug text-slate-600">
+                      <span className="block">MC Wood /</span>
+                      <span className="block text-slate-500">Độ ẩm gỗ</span>
                     </label>
                     <input
                       type="text"
@@ -1038,12 +1039,13 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                       onChange={(e) =>
                         handleHeaderChange('mcWood', e.target.value)
                       }
-                      className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+                      className="mt-auto w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-medium text-slate-500">
-                      Humidity / Độ ẩm
+                  <div className="flex flex-col justify-between">
+                    <label className="mb-1.5 block text-[11px] font-medium leading-snug text-slate-600">
+                      <span className="block">Humidity /</span>
+                      <span className="block text-slate-500">Độ ẩm</span>
                     </label>
                     <input
                       type="text"
@@ -1052,12 +1054,13 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                       onChange={(e) =>
                         handleHeaderChange('roomHumidity', e.target.value)
                       }
-                      className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+                      className="mt-auto w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-medium text-slate-500">
-                      Room Temp / Nhiệt độ phòng
+                  <div className="flex flex-col justify-between">
+                    <label className="mb-1.5 block text-[11px] font-medium leading-snug text-slate-600">
+                      <span className="block">Room Temp /</span>
+                      <span className="block text-slate-500">Nhiệt độ phòng</span>
                     </label>
                     <input
                       type="text"
@@ -1066,7 +1069,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                       onChange={(e) =>
                         handleHeaderChange('roomTemp', e.target.value)
                       }
-                      className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs"
+                      className="mt-auto w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
                     />
                   </div>
                 </div>
@@ -1783,9 +1786,9 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
           <div className="mb-2 text-xs font-bold uppercase text-slate-600">
             Approval & Signature / Thông tin Phê duyệt & Chữ ký (Printed on A4 & Excel / Hiển thị trên A4 & Excel)
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4 items-stretch">
+            <div className="flex flex-col justify-between">
+              <label className="mb-1 block text-[11px] font-semibold text-slate-500">
                 CUSTOMER / KHÁCH HÀNG (Xác nhận)
               </label>
               <input
@@ -1795,11 +1798,11 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 onChange={(e) =>
                   handleHeaderChange('customerConfirmName', e.target.value)
                 }
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs"
+                className="mt-auto w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
               />
             </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500">
+            <div className="flex flex-col justify-between">
+              <label className="mb-1 block text-[11px] font-semibold text-slate-500">
                 APPROVED BY / PHÊ DUYỆT (PD/PM)
               </label>
               <input
@@ -1809,11 +1812,11 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 onChange={(e) =>
                   handleHeaderChange('approvedByPdPm', e.target.value)
                 }
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs"
+                className="mt-auto w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
               />
             </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500">
+            <div className="flex flex-col justify-between">
+              <label className="mb-1 block text-[11px] font-semibold text-slate-500">
                 PREPARED BY / NGƯỜI LẬP (TA — Kỹ thuật viên)
               </label>
               <input
@@ -1823,11 +1826,11 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 onChange={(e) =>
                   handleHeaderChange('preparedByTa', e.target.value)
                 }
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs"
+                className="mt-auto w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
               />
             </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-500">
+            <div className="flex flex-col justify-between">
+              <label className="mb-1 block text-[11px] font-semibold text-slate-500">
                 CHECKED BY / NGƯỜI KIỂM TRA (PROJECT LEADER)
               </label>
               <input
@@ -1837,7 +1840,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 onChange={(e) =>
                   handleHeaderChange('checkedByLeader', e.target.value)
                 }
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs"
+                className="mt-auto w-full rounded border border-slate-300 bg-white px-2.5 py-1 text-xs focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
               />
             </div>
           </div>
