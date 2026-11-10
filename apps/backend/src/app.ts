@@ -1,3 +1,4 @@
+import './env';
 import express from 'express';
 import ExcelJS from 'exceljs';
 import cors from 'cors';

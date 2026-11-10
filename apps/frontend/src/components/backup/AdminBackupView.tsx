@@ -805,10 +805,20 @@ export function AdminBackupView() {
                   mật khẩu sẽ không thể phục hồi bản sao lưu.
                 </span>
               </label>
+              {!settings?.masterKeyConfigured && (
+                <div className="rounded bg-amber-50 border border-amber-300 p-2 text-xs text-amber-900 font-semibold">
+                  ⚠️ Cần cấu hình BACKUP_MASTER_KEY trong file .env của backend để kích hoạt lưu mật khẩu.
+                </div>
+              )}
               <div className="flex items-center gap-2 pt-1">
                 <button
                   type="submit"
                   disabled={savingPassphrase || !settings?.masterKeyConfigured}
+                  title={
+                    !settings?.masterKeyConfigured
+                      ? 'Cần cấu hình BACKUP_MASTER_KEY trong file .env trước khi lưu'
+                      : undefined
+                  }
                   className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   {savingPassphrase ? 'Đang lưu...' : 'Lưu mật khẩu mã hóa'}
@@ -1090,6 +1100,14 @@ export function AdminBackupView() {
                 </span>
               )}
             </div>
+            {!settings?.masterKeyConfigured && (
+              <div className="rounded bg-amber-50 border border-amber-300 p-2.5 text-xs text-amber-900 font-semibold space-y-1">
+                <div>⚠️ Chưa cấu hình BACKUP_MASTER_KEY trong file .env của backend.</div>
+                <div className="text-[11px] font-normal text-amber-800">
+                  Vui lòng thêm biến môi trường <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">BACKUP_MASTER_KEY</code> vào file <code className="font-mono">apps/backend/.env</code> để server có thể mã hóa an toàn Client ID & Secret trước khi lưu.
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-[11px] font-bold text-slate-700 mb-1">Client ID</label>
               <input
@@ -1125,6 +1143,11 @@ export function AdminBackupView() {
             <button
               type="submit"
               disabled={savingCredentials || !settings?.masterKeyConfigured}
+              title={
+                !settings?.masterKeyConfigured
+                  ? 'Cần cấu hình BACKUP_MASTER_KEY trong file .env trước khi lưu'
+                  : undefined
+              }
               className="rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50"
             >
               {savingCredentials ? 'Đang lưu...' : 'Lưu Client ID & Secret'}

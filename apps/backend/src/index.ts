@@ -1,3 +1,4 @@
+import './env';
 import { createApp } from './app';
 import { recoverInterruptedTasks } from './services/backup/restore.service';
 import { startScheduler } from './services/backup/scheduler';

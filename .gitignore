@@ -6,6 +6,8 @@ dist/
 !.env.example
 apps/backend/data/
 .backups/
+client_secret*.json
+BACKUP_MASTER_KEY*
 *.log
 .claude/
 .agents/
