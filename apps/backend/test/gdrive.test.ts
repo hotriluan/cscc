@@ -240,4 +240,35 @@ test('Admin Backup — Phase 4: Google Drive OAuth Device Flow & REST API', asyn
 
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
+
+  await t.test('4. parseDriveApiErrorMessage formats Google Cloud 403 accessNotConfigured and general errors', () => {
+    const raw403 = JSON.stringify({
+      error: {
+        code: 403,
+        message:
+          'Google Drive API has not been used in project 127211862102 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=127211862102 then retry.',
+        errors: [
+          {
+            message:
+              'Google Drive API has not been used in project 127211862102 before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=127211862102 then retry.',
+            domain: 'usageLimits',
+            reason: 'accessNotConfigured',
+            extendedHelp:
+              'https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=127211862102'
+          }
+        ]
+      }
+    });
+
+    const msg = gdrive.parseDriveApiErrorMessage(403, raw403);
+    assert.match(msg, /Google Drive API chưa được bật trên Google Cloud Console/);
+    assert.match(msg, /Project: 127211862102/);
+    assert.match(msg, /https:\/\/console\.developers\.google\.com/);
+
+    const raw404 = JSON.stringify({ error: { code: 404, message: 'File not found: abc' } });
+    assert.equal(gdrive.parseDriveApiErrorMessage(404, raw404), 'Google Drive trả lỗi 404: File not found: abc');
+
+    const html502 = '<html><body>502 Bad Gateway</body></html>';
+    assert.equal(gdrive.parseDriveApiErrorMessage(502, html502), 'Google Drive trả lỗi 502: <html><body>502 Bad Gateway</body></html>');
+  });
 });

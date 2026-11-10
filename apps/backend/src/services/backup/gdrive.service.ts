@@ -37,6 +37,46 @@ export class DriveApiError extends Error {
   }
 }
 
+export function parseDriveApiErrorMessage(status: number, rawBody: string): string {
+  try {
+    const parsed = JSON.parse(rawBody);
+    if (parsed && typeof parsed === 'object') {
+      const err = (parsed as { error?: unknown }).error;
+      if (typeof err === 'object' && err !== null) {
+        const errObj = err as { message?: unknown; errors?: Array<{ reason?: unknown; extendedHelp?: unknown }> };
+        const message: string = typeof errObj.message === 'string' ? errObj.message : '';
+        const errors = Array.isArray(errObj.errors) ? errObj.errors : [];
+        const isAccessNotConfigured =
+          errors.some((e) => e?.reason === 'accessNotConfigured') ||
+          message.includes('has not been used in project') ||
+          message.includes('it is disabled');
+
+        if (isAccessNotConfigured) {
+          const firstHelp = errors.find((e) => typeof e?.extendedHelp === 'string')?.extendedHelp as string | undefined;
+          const matchUrl = firstHelp || message.match(/https?:\/\/[^\s]+/)?.[0];
+          const link = matchUrl || 'https://console.cloud.google.com/apis/library/drive.googleapis.com';
+          const matchProject = message.match(/project\s+(\d+)/i);
+          const projInfo = matchProject ? ` (Project: ${matchProject[1]})` : '';
+          return `Google Drive API chưa được bật trên Google Cloud Console${projInfo}. Vui lòng mở liên kết sau để BẬT (Enable) API rồi thử lại: ${link}`;
+        }
+
+        if (message) {
+          return `Google Drive trả lỗi ${status}: ${message}`;
+        }
+      } else if (typeof err === 'string') {
+        const desc = typeof (parsed as { error_description?: unknown }).error_description === 'string'
+          ? `: ${(parsed as { error_description: string }).error_description}`
+          : '';
+        return `Google Drive trả lỗi ${status}: ${err}${desc}`;
+      }
+    }
+  } catch {
+    // rawBody is not JSON
+  }
+  const cleanBody = rawBody.replace(/[\r\n]+/g, ' ').trim().slice(0, 300);
+  return cleanBody ? `Google Drive trả lỗi ${status}: ${cleanBody}` : `Google Drive trả lỗi ${status}`;
+}
+
 export interface DriveFile {
   id: string;
   name: string;
@@ -101,8 +141,8 @@ async function driveRequest(
         attempt -= 1;
         continue;
       }
-      const body = (await res.text()).slice(0, 500);
-      lastError = new DriveApiError(`Google Drive trả lỗi ${res.status}: ${body}`, res.status);
+      const body = await res.text();
+      lastError = new DriveApiError(parseDriveApiErrorMessage(res.status, body), res.status);
       if (res.status !== 429 && res.status < 500) throw lastError;
     } catch (err) {
       if (err instanceof DriveAuthError || err instanceof BackupConfigError) throw err;
@@ -202,8 +242,8 @@ export async function uploadFile(localPath: string, name: string): Promise<Drive
         duplex: 'half'
       });
       if (!res.ok) {
-        const body = (await res.text()).slice(0, 500);
-        throw new DriveApiError(`Upload lên Google Drive lỗi ${res.status}: ${body}`, res.status);
+        const body = await res.text();
+        throw new DriveApiError(parseDriveApiErrorMessage(res.status, body), res.status);
       }
       const file = (await res.json()) as {
         id: string;
@@ -289,9 +329,10 @@ export async function uploadJobToDrive(jobId: string): Promise<void> {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('[backup] Drive upload failed:', message);
+    const prefix = message.startsWith('Google Drive') ? '' : 'Google Drive: ';
     await prisma.backupJob.update({
       where: { id: jobId },
-      data: { driveStatus: 'FAILED', error: `Google Drive: ${message}`.slice(0, 2000) }
+      data: { driveStatus: 'FAILED', error: `${prefix}${message}`.slice(0, 2000) }
     });
   }
 }

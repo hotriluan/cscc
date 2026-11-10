@@ -117,6 +117,28 @@ function allowedScopesFor(kind: BackupKind): BackupKind[] {
   return ['WEBSITE'];
 }
 
+function renderErrorWithLinks(text: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, index) => {
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noreferrer"
+          className="underline font-bold text-blue-700 hover:text-blue-900 break-all inline-block mx-0.5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
 export function AdminBackupView() {
   const [settings, setSettings] = React.useState<BackupSettings | null>(null);
   const [jobs, setJobs] = React.useState<BackupJob[]>([]);
@@ -1203,7 +1225,7 @@ export function AdminBackupView() {
                 connectState.status === 'error') &&
                 connectState.message && (
                   <div className="rounded border border-red-300 bg-red-50 p-2.5 text-xs text-red-800 font-semibold">
-                    {connectState.message}
+                    {renderErrorWithLinks(connectState.message)}
                   </div>
                 )}
 
@@ -1409,7 +1431,7 @@ export function AdminBackupView() {
                         )}
                         {job.error && (
                           <div className="mt-1 text-[11px] font-semibold text-red-600">
-                            Lỗi: {job.error}
+                            Lỗi: {renderErrorWithLinks(job.error)}
                           </div>
                         )}
                       </td>
@@ -1671,7 +1693,7 @@ export function AdminBackupView() {
 
                 {activeRestoreJob.error && (
                   <div className="rounded-lg border border-red-300 bg-red-50 p-3 font-bold text-red-800">
-                    Chi tiết lỗi: {activeRestoreJob.error}
+                    Chi tiết lỗi: {renderErrorWithLinks(activeRestoreJob.error)}
                   </div>
                 )}
 
