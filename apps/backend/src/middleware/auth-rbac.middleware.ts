@@ -73,6 +73,21 @@ export function requireAdminMiddleware(req: Request, res: Response, next: NextFu
 }
 
 /**
+ * Strict variant for sensitive routes (backup/restore): only a verified JWT whose role is ADMIN
+ * passes. The `x-user-role` header and `?role=` query override are ignored entirely.
+ */
+export function requireAdminJwt(req: Request, res: Response, next: NextFunction): void {
+  if (req.authUser?.role !== 'ADMIN') {
+    res.status(403).json({
+      error: 'FORBIDDEN_ADMIN_ACCESS',
+      message: 'Chỉ tài khoản Quản trị viên (ADMIN) đăng nhập hợp lệ mới được truy cập chức năng Sao lưu & Phục hồi.'
+    });
+    return;
+  }
+  next();
+}
+
+/**
  * Blocks `TECHNICAL` role from accessing Coating Cost endpoints (`403 Forbidden`).
  * Only `SALES`, `PROJECT_LEADER`, and `ADMIN` can access Coating Cost (VND/m2).
  */

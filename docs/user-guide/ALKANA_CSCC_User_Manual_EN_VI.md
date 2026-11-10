@@ -675,3 +675,56 @@ Maintain the 5 foundational Master Data tables (Customers, Quotations, Applicati
   *③ Quản lý Danh sách Tài khoản Hệ thống & Đặt lại Mật khẩu: Nhấn nút "Sửa" trên dòng tài khoản bất kỳ khi cần thay đổi vai trò, đổi Salesman phụ trách hoặc cấp lại mật khẩu mới.*
 
 ---
+
+
+## Section 8: System Backup, Restore & Google Drive Offsite Sync (ADMIN Only)
+*Chương 8: Sao lưu, Phục hồi Hệ thống & Đồng bộ Dự phòng Google Drive (Chỉ dành cho ADMIN)*
+
+> **Applicable Roles / *Vai trò áp dụng*:** `ADMIN` (Strict JWT authentication required)  
+> **Objective:** Create manual or scheduled AES-256-GCM encrypted backups of the PostgreSQL Database, Website source/configuration, or Full system; sync an offsite copy to Google Drive; and safely restore the system with automatic pre-restore rollback protection.  
+> *Mục tiêu: Sao lưu thủ công hoặc tự động theo lịch (mã hóa AES-256-GCM) cho Database PostgreSQL, mã nguồn Website hoặc Toàn bộ hệ thống; tự động lưu thêm 1 bản dự phòng lên Google Drive; và phục hồi an toàn với cơ chế tự tạo bản sao lưu trước phục hồi (PRE_RESTORE).*
+
+### 8.1. Setting the Encryption Passphrase & Master Key
+*8.1. Thiết lập Khóa chủ (`BACKUP_MASTER_KEY`) & Mật khẩu Mã hóa Sao lưu*
+
+1. **Server Master Key (`BACKUP_MASTER_KEY`):** On the Ubuntu production server (`apps/backend/.env`), configure a 32-byte base64 key generated via `openssl rand -base64 32`. This master key seals the stored backup passphrase and Google Drive credentials on disk so scheduled backups can run unattended.  
+   *Khóa chủ trên máy chủ (`BACKUP_MASTER_KEY`): Trên máy chủ Ubuntu (`apps/backend/.env`), đặt biến `BACKUP_MASTER_KEY` (tạo bằng `openssl rand -base64 32`). Khóa này dùng để mã hóa mật khẩu sao lưu và thông tin kết nối Google Drive trong cơ sở dữ liệu nhằm phục vụ chạy lịch tự động.*
+2. **Backup Encryption Passphrase (AES-256-GCM):** Open **Sao lưu & Phục hồi** from the left navigation menu (visible only to `ADMIN`). In Section **2. Mật khẩu mã hóa bản sao lưu**, enter a passphrase of at least 12 characters, tick the offline-storage confirmation checkbox, and click **Lưu mật khẩu mã hóa**.  
+   *Mật khẩu mã hóa bản sao lưu: Mở menu **Sao lưu & Phục hồi** (chỉ hiện với `ADMIN`). Tại mục **2. Mật khẩu mã hóa bản sao lưu**, nhập mật khẩu tối thiểu 12 ký tự, đánh dấu xác nhận đã lưu bên ngoài máy chủ và bấm **Lưu mật khẩu mã hóa**.*
+3. **Offline Storage Warning:** Keep an offline copy of both `BACKUP_MASTER_KEY` and your encryption passphrase in a password manager or safe place. There is no password recovery mechanism—without the passphrase, `.cscc-backup` files cannot be decrypted.  
+   *Lưu trữ mật khẩu ngoại tuyến: Bắt buộc lưu mật khẩu mã hóa và `BACKUP_MASTER_KEY` ở nơi an toàn ngoài máy chủ. Hệ thống không có chức năng khôi phục mật khẩu — nếu mất mật khẩu sẽ không thể giải mã file `.cscc-backup`.*
+
+### 8.2. Manual Backups, Automatic Schedules & Retention Policy
+*8.2. Sao lưu Thủ công, Lịch Tự động & Chính sách Lưu giữ*
+
+- **Three Backup Scopes / *Ba phạm vi sao lưu*:**
+  - **Database (`database-yyyymmdd-HHMMSS.cscc-backup`):** Full PostgreSQL custom-format dump (`pg_dump -Fc`) with per-table record counts recorded in `manifest.json`.
+  - **Website (`website-yyyymmdd-HHMMSS.cscc-backup`):** Project source code, `apps/backend/.env`, `deploy.sh`, and readable Nginx/systemd configuration files (excluding `node_modules`, `dist`, `.git`, and the backup directory).
+  - **Toàn bộ / Full (`full-yyyymmdd-HHMMSS.cscc-backup`):** Both Database and Website packaged into a single encrypted archive.
+- **Automatic Schedule & Retention / *Lịch tự động & Lưu giữ*:**
+  - Default schedule: **Database** daily at `02:00` (retains newest **14** scheduled copies) and **Full** weekly on Sunday at `03:00` (retains newest **4** scheduled copies).
+  - Older scheduled backups exceeding the retention count are automatically pruned from both local disk and Google Drive. Manual and uploaded backups are never auto-deleted.
+
+### 8.3. Connecting Google Drive in 4 Steps (OAuth Device Flow)
+*8.3. Hướng dẫn 4 Bước Kết nối Google Drive (OAuth Device Flow)*
+
+1. **Step 1 — Enable Google Drive API:** Sign in to [Google Cloud Console](https://console.cloud.google.com/) with the Gmail account that will store backups, create a project (e.g., `"CSCC Backup"`), and enable **Google Drive API** under *APIs & Services → Library*.  
+   *Bước 1 — Bật Google Drive API: Đăng nhập Google Cloud Console bằng Gmail dùng để lưu bản sao, tạo project `"CSCC Backup"` và bật **Google Drive API**.*
+2. **Step 2 — Configure OAuth Consent Screen & Publish App:** Under *APIs & Services → OAuth consent screen*, choose **External**, fill in the app name and your email, save, and click **Publish App** to move the status to **"In production"** (the `drive.file` scope is non-sensitive and does not require Google verification; leaving the app in "Testing" mode causes refresh tokens to expire after 7 days).  
+   *Bước 2 — Cấu hình màn hình đồng ý OAuth & Publish App: Chọn loại **External**, lưu thông tin rồi bấm **Publish App** để chuyển sang trạng thái **"In production"** (nếu để ở "Testing", token sẽ hết hạn sau 7 ngày).*
+3. **Step 3 — Create OAuth Client ID:** Under *APIs & Services → Credentials → Create Credentials → OAuth client ID*, select application type **TVs and Limited Input devices**, then copy the **Client ID** and **Client Secret**.  
+   *Bước 3 — Tạo OAuth Client ID: Chọn loại **TVs and Limited Input devices**, sao chép **Client ID** và **Client Secret**.*
+4. **Step 4 — Connect in UI via Device Code:** Paste the Client ID and Client Secret into Section **4. Kết nối Google Drive**, click **Lưu Client ID & Secret**, then click **Kết nối bằng mã thiết bị**. Open the verification URL shown, enter the 8-character device code, and approve access (clicking *Advanced → Continue* on the "unverified app" notice is normal for your own self-hosted project).  
+   *Bước 4 — Nhập mã thiết bị trong giao diện: Dán Client ID & Client Secret vào mục **4. Kết nối Google Drive**, bấm **Lưu**, sau đó bấm **Kết nối bằng mã thiết bị**, mở đường link Google và nhập mã hiển thị.*
+
+### 8.4. Safe Restore & Disaster Recovery on a New Server
+*8.4. Phục hồi An toàn & Khôi phục Thảm họa Khi Mất Máy chủ*
+
+- **Restoring from Local Disk or Google Drive / *Phục hồi từ máy chủ hoặc từ Google Drive*:**
+  1. Click **Phục hồi** on any row in the backup list (or click **Xem các bản trên Drive → Phục hồi từ Drive**).
+  2. Choose the restore scope (**Database**, **Website**, or **Toàn bộ**), enter the exact backup filename to confirm, and optionally provide an older/custom encryption passphrase if the backup was created with a different passphrase.
+  3. The system automatically creates a `PRE_RESTORE` safety backup, activates Maintenance Mode (`503` for regular users), restores and verifies table counts against `manifest.json`, and automatically rolls back to `PRE_RESTORE` if any error occurs.
+  4. When restoring **Website** or **Full**, run `./deploy.sh` or `sudo systemctl restart alkana_cscc` on the server after completion to reload the Node.js process.
+- **Disaster Recovery on a Fresh Server / *Khôi phục khi mất toàn bộ máy chủ cũ*:**
+  1. Provision Ubuntu + PostgreSQL 16 + Node.js, clone the repository (or extract the Website backup), set `BACKUP_MASTER_KEY` and `DATABASE_URL` in `apps/backend/.env`, and start the app.
+  2. Sign in as `ADMIN`, go to **Sao lưu & Phục hồi**, upload the `.cscc-backup` file (or connect Google Drive and select the file from **CSCC Backups**), enter your saved encryption passphrase in the Restore dialog, and restore **Toàn bộ (Full)** or **Database**.

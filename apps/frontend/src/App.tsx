@@ -30,12 +30,14 @@ import { ReportsAnalyticsView } from './components/reports/ReportsAnalyticsView'
 import { PrintableSheetA4 } from './components/print/PrintableSheetA4';
 import { UserAuthModal } from './components/auth/UserAuthModal';
 import { LoginPage } from './components/auth/LoginPage';
+import { AdminBackupView } from './components/backup/AdminBackupView';
 import logoWeb from './assets/logo_web.png';
 import {
   ClipboardList,
   Calculator,
   Boxes,
   Database,
+  HardDrive,
   FolderKanban,
   BarChart3,
   Shield,
@@ -66,7 +68,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-export type MainSection = 'WORKSPACE' | 'PROJECTS' | 'REPORTS' | 'MASTER_DATA';
+export type MainSection = 'WORKSPACE' | 'PROJECTS' | 'REPORTS' | 'MASTER_DATA' | 'BACKUP';
 export type WorkspaceTab = 'CS' | 'CC' | 'BOM';
 export type AutoSaveStatus = 'IDLE' | 'PENDING' | 'SAVING' | 'SAVED' | 'ERROR';
 
@@ -147,7 +149,8 @@ function parseNavState(): NavState {
       pSection === 'WORKSPACE' ||
       pSection === 'PROJECTS' ||
       pSection === 'REPORTS' ||
-      pSection === 'MASTER_DATA'
+      pSection === 'MASTER_DATA' ||
+      pSection === 'BACKUP'
     ) {
       section = pSection;
     }
@@ -197,7 +200,8 @@ function parseNavState(): NavState {
           stored.section === 'WORKSPACE' ||
           stored.section === 'PROJECTS' ||
           stored.section === 'REPORTS' ||
-          stored.section === 'MASTER_DATA'
+          stored.section === 'MASTER_DATA' ||
+          stored.section === 'BACKUP'
         ) {
           section = stored.section;
         }
@@ -330,7 +334,10 @@ export function App() {
     if (role === 'TECHNICAL' && workspaceTab === 'CC') {
       setWorkspaceTab('CS');
     }
-  }, [role, workspaceTab]);
+    if (role !== 'ADMIN' && mainSection === 'BACKUP') {
+      setMainSection('WORKSPACE');
+    }
+  }, [role, workspaceTab, mainSection]);
 
   // Keep URL search params and localStorage in sync with user navigation
   React.useEffect(() => {
@@ -1210,6 +1217,29 @@ export function App() {
                 <Database className="h-4 w-4 shrink-0" />
                 <span>Master Data / Quản trị Dữ liệu Gốc</span>
               </button>
+
+              {role === 'ADMIN' && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await flushAutoSave();
+                    setMainSection('BACKUP');
+                  }}
+                  className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-bold transition ${
+                    mainSection === 'BACKUP'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-300 hover:bg-slate-900'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    <HardDrive className="h-4 w-4 shrink-0" />
+                    <span>Sao lưu & Phục hồi</span>
+                  </span>
+                  <span className="rounded bg-amber-900/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
+                    ADMIN
+                  </span>
+                </button>
+              )}
             </nav>
 
             {/* Tier 1: Project & Revision Search + Accordion on Sidebar — Collapsible */}
@@ -1787,7 +1817,9 @@ export function App() {
                     ? 'Projects Explorer / Quản lý & Tra cứu Hồ sơ Dự án'
                     : mainSection === 'REPORTS'
                       ? 'Reports & Analytics / Trung tâm Báo cáo & Phân tích Dữ liệu'
-                      : 'Master Data / Quản trị Cơ sở Dữ liệu Gốc'}
+                      : mainSection === 'BACKUP'
+                        ? 'Sao lưu & Phục hồi Hệ thống (ADMIN)'
+                        : 'Master Data / Quản trị Cơ sở Dữ liệu Gốc'}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -1854,6 +1886,8 @@ export function App() {
               onChangeSubTab={setMasterSubTab}
               onReloadMasterData={reloadMasterData}
             />
+          ) : mainSection === 'BACKUP' && role === 'ADMIN' ? (
+            <AdminBackupView />
           ) : activeRevision ? (
             <>
               {validationErrors.length > 0 && (

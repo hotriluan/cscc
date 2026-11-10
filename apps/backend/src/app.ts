@@ -29,12 +29,16 @@ import { generateRevisionWorkbook } from './services/excel-exporter.service';
 import { generateReportsOverview } from './services/report.service';
 import { generateAnalyticsReportWorkbook } from './services/report-excel.service';
 import { importMasterDataFromExcel } from './services/excel-importer.service';
+import { createBackupRouter } from './routes/backup.routes';
+import { maintenanceMiddleware } from './services/backup/maintenance';
 
 export function createApp() {
   const app = express();
   app.use(cors());
   app.use(express.json({ limit: '25mb' }));
   app.use(extractRoleMiddleware);
+  app.use(maintenanceMiddleware);
+  app.use('/api/admin/backup', createBackupRouter());
 
   // Healthcheck
   app.get('/api/health', async (_req, res) => {

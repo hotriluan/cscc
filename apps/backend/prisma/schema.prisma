@@ -210,3 +210,51 @@ model ScheduleStepItem {
   @@index([stepId, itemOrder])
 }
 
+
+// ---------------------------------------------------------------------------
+// Admin Backup & Restore
+// ---------------------------------------------------------------------------
+
+/// One backup file (local) plus its optional Google Drive copy.
+/// kind: DATABASE|WEBSITE|FULL, trigger: MANUAL|SCHEDULE|PRE_RESTORE|UPLOAD,
+/// status: RUNNING|SUCCESS|FAILED, driveStatus: NONE|PENDING|OK|FAILED.
+model BackupJob {
+  id          String    @id @default(uuid())
+  kind        String
+  trigger     String
+  status      String
+  fileName    String?
+  sizeBytes   BigInt?
+  sha256      String?
+  driveFileId String?
+  driveStatus String    @default("NONE")
+  error       String?
+  createdBy   String
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+  manifest    Json?
+
+  @@index([kind, trigger, startedAt])
+}
+
+/// Single-row (id = 1) backup configuration. `encryptedSecrets` holds a crypto-box payload
+/// (Drive client id/secret, refresh token, backup passphrase) sealed with BACKUP_MASTER_KEY.
+model BackupSetting {
+  id                  Int      @id
+  dbScheduleEnabled   Boolean  @default(true)
+  dbScheduleHour      Int      @default(2)
+  dbScheduleMinute    Int      @default(0)
+  dbRetention         Int      @default(14)
+  fullScheduleEnabled Boolean  @default(true)
+  fullScheduleWeekday Int      @default(0)
+  fullScheduleHour    Int      @default(3)
+  fullScheduleMinute  Int      @default(0)
+  fullRetention       Int      @default(4)
+  driveEnabled        Boolean  @default(false)
+  driveFolderId       String?
+  driveAccountEmail   String?
+  driveNeedsReconnect Boolean  @default(false)
+  encryptedSecrets    String?
+  passphraseHash      String?
+  updatedAt           DateTime @updatedAt
+}
