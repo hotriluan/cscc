@@ -1,4 +1,7 @@
+import fs from 'fs';
+import path from 'path';
 import { prisma } from '../../store/prisma';
+import { getAppRoot } from './backup-paths';
 import {
   hashPassphrase,
   isMasterKeyConfigured,
@@ -68,8 +71,58 @@ export class BackupConfigError extends Error {
   }
 }
 
+/**
+ * Automatically discovers Google Drive OAuth credentials from client_secret*.json or environment variables,
+ * sealing them securely with BACKUP_MASTER_KEY if not already configured.
+ */
+export async function autoDetectAndSeedDriveCredentials(): Promise<boolean> {
+  if (!isMasterKeyConfigured()) return false;
+  try {
+    const row = await getSettingRow();
+    const secrets = readSecrets(row);
+    if (secrets.driveClientId && secrets.driveClientSecret) {
+      return false;
+    }
+
+    const envClientId = process.env.GOOGLE_DRIVE_CLIENT_ID?.trim();
+    const envClientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET?.trim();
+    if (envClientId && envClientSecret) {
+      await updateSecrets({ driveClientId: envClientId, driveClientSecret: envClientSecret });
+      return true;
+    }
+
+    const roots = [getAppRoot(), path.join(getAppRoot(), 'apps', 'backend')];
+    for (const r of roots) {
+      if (!fs.existsSync(r)) continue;
+      const files = fs.readdirSync(r);
+      for (const f of files) {
+        if (f.startsWith('client_secret') && f.endsWith('.json')) {
+          try {
+            const raw = fs.readFileSync(path.join(r, f), 'utf-8');
+            const parsed = JSON.parse(raw);
+            const info = parsed.installed || parsed.web;
+            if (info?.client_id && info?.client_secret) {
+              await updateSecrets({
+                driveClientId: String(info.client_id).trim(),
+                driveClientSecret: String(info.client_secret).trim()
+              });
+              return true;
+            }
+          } catch {
+            // ignore malformed file
+          }
+        }
+      }
+    }
+  } catch {
+    // best-effort discovery
+  }
+  return false;
+}
+
 /** Settings payload for the UI: no secret ever leaves this function. */
 export async function publicSettings() {
+  await autoDetectAndSeedDriveCredentials();
   const row = await getSettingRow();
   let driveConfigured = false;
   let driveConnected = false;

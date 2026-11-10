@@ -12,6 +12,7 @@ import {
 } from './gdrive-oauth';
 import { resolveBackupFile } from './backup-paths';
 import {
+  autoDetectAndSeedDriveCredentials,
   BackupConfigError,
   getSettingRow,
   readSecrets,
@@ -51,6 +52,7 @@ export function resetDriveTokenCache(): void {
 }
 
 async function loadCredentials() {
+  await autoDetectAndSeedDriveCredentials();
   const secrets = readSecrets(await getSettingRow());
   if (!secrets.driveClientId || !secrets.driveClientSecret) {
     throw new BackupConfigError('Chưa cấu hình Client ID / Client Secret của Google Drive.');
