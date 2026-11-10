@@ -345,6 +345,7 @@ export async function startConnect(): Promise<ConnectState> {
   };
 
   let interval = device.interval;
+  let consecutiveNetworkErrors = 0;
   const tick = async (): Promise<void> => {
     if (Date.now() > expiresAtMs) {
       connectState = { status: 'expired', message: 'Mã thiết bị đã hết hạn. Vui lòng thử kết nối lại.' };
@@ -352,6 +353,7 @@ export async function startConnect(): Promise<ConnectState> {
     }
     try {
       const r = await pollDeviceToken(clientId, clientSecret, device.deviceCode);
+      consecutiveNetworkErrors = 0;
       if (r.status === 'pending') {
         if (r.slowDown) interval += 5;
         pollTimer = setTimeout(tick, Math.max(interval * 1000, devicePoll.minIntervalMs));
@@ -369,10 +371,16 @@ export async function startConnect(): Promise<ConnectState> {
       cachedToken = { token: r.accessToken, expiresAt: Date.now() + r.expiresIn * 1000 };
       await prisma.backupSetting.update({ where: { id: 1 }, data: { driveNeedsReconnect: false } });
       const email = await getAccountEmail().catch(() => null);
-      await ensureFolder();
+      await ensureFolder().catch(() => null);
       await prisma.backupSetting.update({ where: { id: 1 }, data: { driveAccountEmail: email } });
       connectState = { status: 'ok' };
     } catch (err) {
+      const isNetwork = err instanceof TypeError && err.message.includes('fetch failed');
+      if (isNetwork && consecutiveNetworkErrors < 5) {
+        consecutiveNetworkErrors += 1;
+        pollTimer = setTimeout(tick, Math.max(interval * 1000, devicePoll.minIntervalMs));
+        return;
+      }
       connectState = { status: 'error', message: err instanceof Error ? err.message : String(err) };
     }
   };

@@ -1,5 +1,13 @@
+import dns from 'dns';
 import fs from 'fs';
 import path from 'path';
+
+// Force IPv4 resolution first to avoid 70s+ timeout on Windows when querying Google APIs
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch {
+  // best effort
+}
 
 export function loadEnv(): void {
   const envCandidates = [
