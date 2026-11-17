@@ -524,6 +524,7 @@ export function buildGoldenDatasetNtr001(master: ImportedMasterData): {
     revisionNo: 0,
     status: 'DRAFT',
     scheduleDate: '2026-10-09',
+    buyer: '',
     productName: 'TABLE',
     colorName: 'SW 90',
     substrate: 'BEECH WOOD',

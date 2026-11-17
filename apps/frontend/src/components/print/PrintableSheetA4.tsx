@@ -152,42 +152,53 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   );
 
   const renderMetadataGrid = () => (
-    <div className="my-1.5 grid grid-cols-3 gap-x-2 gap-y-0.5 border-b border-slate-400 pb-1.5 text-[8.5pt] leading-snug">
-      <div className="min-w-0 space-y-0.5 break-words">
-        <div>
-          <strong>Customer / Khách hàng:</strong> {revision.customer.customerName}
-        </div>
-        <div>
-          <strong>Substrate Type / Loại gỗ:</strong> {revision.substrate}
-        </div>
-        <div>
-          <strong>Product Item / Tên sản phẩm:</strong> {revision.productName}
-        </div>
+    <div className="my-1.5 grid grid-cols-3 items-baseline gap-x-4 gap-y-0.5 border-b border-slate-400 pb-1.5 text-[8.5pt] leading-snug">
+      <div className="col-span-3 min-w-0 break-words">
+        <strong>Customer / Khách hàng:</strong> {revision.customer.customerName}
       </div>
-      <div className="min-w-0 space-y-0.5 break-words">
-        <div>
-          <strong>Positioning / Vị trí:</strong> {revision.positioning}
-        </div>
-        <div>
-          <strong>Finishing System / Hệ sơn:</strong> {revision.finishingSystem}
-        </div>
-        <div>
-          <strong>Gloss Level / Độ bóng:</strong> {revision.glossLevel}
-        </div>
+
+      {/* Row 1 */}
+      <div className="min-w-0 break-words">
+        <strong>Buyer / Nhà mua hàng:</strong> {revision.buyer || ''}
       </div>
-      <div className="min-w-0 space-y-0.5 break-words">
-        <div>
-          <strong>Color / Màu sắc:</strong> {revision.colorName}
-        </div>
-        <div>
-          <strong>MC Wood / Độ ẩm gỗ:</strong> {keepRangesTogether(revision.mcWood)} |{' '}
-          <strong>Humidity / Độ ẩm:</strong> {keepRangesTogether(revision.roomHumidity)}
-        </div>
-        <div>
-          <strong>Room Temp. / Nhiệt độ phòng:</strong>{' '}
-          {keepRangesTogether(revision.roomTemp)}
-        </div>
+      <div className="min-w-0 break-words">
+        <strong>Substrate Type / Loại gỗ:</strong> {revision.substrate}
       </div>
+      <div className="min-w-0 break-words">
+        <strong>MC Wood / Độ ẩm gỗ:</strong> {keepRangesTogether(revision.mcWood)}
+      </div>
+
+      {/* Row 2 */}
+      <div className="min-w-0 break-words">
+        <strong>Product Item / Tên sản phẩm:</strong> {revision.productName}
+      </div>
+      <div className="min-w-0 break-words">
+        <strong>Positioning / Vị trí:</strong> {revision.positioning}
+      </div>
+      <div className="min-w-0 break-words">
+        <strong>Humidity / Độ ẩm:</strong> {keepRangesTogether(revision.roomHumidity)}
+      </div>
+
+      {/* Row 3 */}
+      <div className="min-w-0 break-words">
+        <strong>Color / Màu sắc:</strong> {revision.colorName}
+      </div>
+      <div className="min-w-0 break-words">
+        <strong>Finishing System / Hệ sơn:</strong> {revision.finishingSystem}
+      </div>
+      <div className="min-w-0 break-words">
+        <strong>Room Temp. / Nhiệt độ phòng:</strong>{' '}
+        {keepRangesTogether(revision.roomTemp)}
+      </div>
+
+      {/* Row 4 */}
+      <div className="min-w-0 break-words">
+        <strong>Reference / Tiêu chuẩn tham chiếu:</strong> {revision.referenceStandard}
+      </div>
+      <div className="min-w-0 break-words">
+        <strong>Gloss Level / Độ bóng:</strong> {revision.glossLevel}
+      </div>
+      <div />
     </div>
   );
 

@@ -247,4 +247,87 @@ describe('Auto-Generate Project Code ([SHORT][0001]) & Customer Name Display', (
       'Customer / Khách hàng: DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM'
     );
   });
+
+  it('7. Supports optional buyer field across create, update, clone, and Excel export', async () => {
+    // 7a. Create without buyer -> defaults to ''
+    const createDefault = await fetch(`${baseUrl}/api/projects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
+      body: JSON.stringify({
+        customerId: ntriCustomerId,
+        productName: 'DESK NO BUYER',
+        colorName: 'OAK',
+        substrate: 'OAK',
+        finishingSystem: 'PU'
+      })
+    });
+    assert.equal(createDefault.status, 201);
+    const bodyDefault = (await createDefault.json()) as { revision: ProjectRevision };
+    assert.equal(bodyDefault.revision.buyer, '');
+
+    // 7b. Create with buyer -> persists 'IKEA'
+    const createWithBuyer = await fetch(`${baseUrl}/api/projects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
+      body: JSON.stringify({
+        customerId: ntriCustomerId,
+        buyer: 'IKEA',
+        productName: 'DESK WITH BUYER',
+        colorName: 'OAK',
+        substrate: 'OAK',
+        finishingSystem: 'PU'
+      })
+    });
+    assert.equal(createWithBuyer.status, 201);
+    const bodyWithBuyer = (await createWithBuyer.json()) as { revision: ProjectRevision };
+    assert.equal(bodyWithBuyer.revision.buyer, 'IKEA');
+
+    // 7c. Update buyer and referenceStandard
+    const updateRes = await fetch(`${baseUrl}/api/revisions/${bodyWithBuyer.revision.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
+      body: JSON.stringify({
+        buyer: 'WILLIAMS-SONOMA',
+        referenceStandard: 'ANSI/BIFMA X5.5'
+      })
+    });
+    assert.equal(updateRes.status, 200);
+    const updated = (await updateRes.json()) as { revision: ProjectRevision };
+    assert.equal(updated.revision.buyer, 'WILLIAMS-SONOMA');
+    assert.equal(updated.revision.referenceStandard, 'ANSI/BIFMA X5.5');
+
+    // 7d. Clone revision -> copies buyer
+    const cloneRes = await fetch(`${baseUrl}/api/revisions/${bodyWithBuyer.revision.id}/clone`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
+      body: JSON.stringify({ refreshPricesFromMaster: false })
+    });
+    assert.equal(cloneRes.status, 201);
+    const cloned = (await cloneRes.json()) as ProjectRevision;
+    assert.equal(cloned.buyer, 'WILLIAMS-SONOMA');
+
+    // 7e. Export Excel -> includes Buyer / Nhà mua hàng and Reference / Tiêu chuẩn tham chiếu
+    const exportRes = await fetch(`${baseUrl}/api/revisions/${cloned.id}/export-excel`, {
+      headers: { 'x-user-role': 'PROJECT_LEADER' }
+    });
+    assert.equal(exportRes.status, 200);
+    const buffer = Buffer.from(await exportRes.arrayBuffer());
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
+
+    const csSheet = workbook.getWorksheet('CS');
+    assert.ok(csSheet);
+    assert.equal(csSheet.getCell('D2').value, 'Buyer / Nhà mua hàng:');
+    assert.equal(csSheet.getCell('E2').value, 'WILLIAMS-SONOMA');
+    assert.equal(csSheet.getCell('A5').value, 'Reference / Tiêu chuẩn tham chiếu:');
+    assert.equal(csSheet.getCell('B5').value, 'ANSI/BIFMA X5.5');
+
+    const ccSheet = workbook.getWorksheet('CC');
+    assert.ok(ccSheet);
+    assert.equal(String(ccSheet.getCell('D2').value), 'Buyer / Nhà mua hàng: WILLIAMS-SONOMA');
+    assert.equal(
+      String(ccSheet.getCell('A5').value),
+      'Reference / Tiêu chuẩn tham chiếu: ANSI/BIFMA X5.5'
+    );
+  });
 });

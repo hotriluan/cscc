@@ -799,6 +799,12 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                   </span>
                 )}
               </span>
+              {revision.buyer?.trim() && (
+                <span>
+                  <strong className="text-slate-500">Buyer:</strong>{' '}
+                  <strong className="text-slate-900">{revision.buyer}</strong>
+                </span>
+              )}
               <span>
                 <strong className="text-slate-500">Product / Sản phẩm:</strong>{' '}
                 <strong className="text-slate-900">
@@ -885,6 +891,23 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                     ⚠️ Read-only view: Customer belongs to another Salesman / Chế độ chỉ xem: Khách hàng thuộc Sales man khác ({revision.customer?.salesmanName || 'N/A'}).
                   </div>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase text-slate-600">
+                  Buyer / Nhà mua hàng{' '}
+                  <span className="text-[10px] font-normal normal-case text-slate-400">
+                    (Optional / Tùy chọn)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  disabled={isLocked}
+                  placeholder="Enter buyer name / Nhập nhà mua hàng (nếu có)..."
+                  value={revision.buyer ?? ''}
+                  onChange={(e) => handleHeaderChange('buyer', e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
+                />
               </div>
 
               <div>

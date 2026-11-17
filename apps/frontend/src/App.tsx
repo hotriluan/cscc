@@ -78,6 +78,7 @@ function computeRevisionSignature(rev: ProjectRevision, area: number): string {
     customerId: rev.customer?.id || rev.customer?.customerId || '',
     projectCode: rev.projectCode || '',
     scheduleDate: rev.scheduleDate || '',
+    buyer: rev.buyer || '',
     productName: rev.productName || '',
     colorName: rev.colorName || '',
     substrate: rev.substrate || '',
@@ -745,6 +746,7 @@ export function App() {
                       ? {
                           ...r,
                           scheduleDate: res.revision.scheduleDate,
+                          buyer: res.revision.buyer ?? '',
                           productName: res.revision.productName,
                           colorName: res.revision.colorName,
                           substrate: res.revision.substrate,
@@ -955,6 +957,7 @@ export function App() {
   const handleCreateProjectFromExplorer = async (payload: {
     projectCode: string;
     customerId: string;
+    buyer?: string;
     productName: string;
     colorName: string;
     substrate: string;

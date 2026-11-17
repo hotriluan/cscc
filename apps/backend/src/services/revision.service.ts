@@ -68,6 +68,7 @@ export async function cloneRevision(
         revisionNo: nextRevNo,
         status: 'DRAFT',
         scheduleDate: nowIso.slice(0, 10),
+        buyer: source.buyer ?? '',
         productName: source.productName,
         colorName: source.colorName,
         substrate: source.substrate,

@@ -217,6 +217,12 @@ class PostgresDataStore {
       `)
       .catch(() => undefined);
 
+    await prisma
+      .$executeRawUnsafe(`
+        ALTER TABLE "ProjectRevision" ADD COLUMN IF NOT EXISTS "buyer" TEXT NOT NULL DEFAULT '';
+      `)
+      .catch(() => undefined);
+
     // Ensure RevisionStatus enum includes INACTIVE and RevisionStatusHistory table exists
     await prisma
       .$executeRawUnsafe(`
@@ -446,6 +452,7 @@ class PostgresDataStore {
           revisionNo: revision.revisionNo,
           status: revision.status,
           scheduleDate: revision.scheduleDate,
+          buyer: revision.buyer ?? '',
           productName: revision.productName,
           colorName: revision.colorName,
           substrate: revision.substrate,
@@ -1760,6 +1767,7 @@ class PostgresDataStore {
           revisionNo: r.revisionNo,
           status: r.status as RevisionStatus,
           scheduleDate: r.scheduleDate,
+          buyer: r.buyer ?? '',
           productName: r.productName,
           colorName: r.colorName,
           substrate: r.substrate,
@@ -1851,6 +1859,7 @@ class PostgresDataStore {
   public async createProject(input: {
     projectCode?: string;
     customerId?: string;
+    buyer?: string;
     productName?: string;
     colorName?: string;
     substrate?: string;
@@ -1900,6 +1909,7 @@ class PostgresDataStore {
           revisionNo: 0,
           status: 'DRAFT',
           scheduleDate: nowIso.slice(0, 10),
+          buyer: String(input.buyer || '').trim(),
           productName: String(input.productName || 'SẢN PHẨM MỚI').trim(),
           colorName: String(input.colorName || 'STANDARD').trim(),
           substrate: String(input.substrate || 'OAK / TẦN BÌ').trim(),
@@ -2047,6 +2057,7 @@ class PostgresDataStore {
       revisionNo: r.revisionNo,
       status: r.status as RevisionStatus,
       scheduleDate: r.scheduleDate,
+      buyer: r.buyer ?? '',
       productName: r.productName,
       colorName: r.colorName,
       substrate: r.substrate,
@@ -2208,6 +2219,10 @@ class PostgresDataStore {
             body.scheduleDate !== undefined
               ? String(body.scheduleDate)
               : existing.scheduleDate,
+          buyer:
+            body.buyer !== undefined
+              ? String(body.buyer ?? '')
+              : (existing.buyer ?? ''),
           productName:
             body.productName !== undefined
               ? String(body.productName)

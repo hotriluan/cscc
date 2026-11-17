@@ -119,6 +119,7 @@ export interface ProjectRevisionSummary {
   revisionNo: number;
   status: RevisionStatus;
   scheduleDate: string;
+  buyer?: string;
   productName: string;
   colorName: string;
   substrate?: string;
@@ -146,6 +147,7 @@ export interface ProjectRevision {
   revisionNo: number;
   status: RevisionStatus;
   scheduleDate: string;
+  buyer?: string;
   productName: string;
   colorName: string;
   substrate: string;

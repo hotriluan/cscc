@@ -90,10 +90,10 @@ export async function generateRevisionWorkbook(
   }
 
   const headerRows: Array<[string, string, string, string, string, string]> = [
-    ['Customer / Khách hàng:', revision.customer.customerName, 'Substrate Type / Loại gỗ:', revision.substrate, 'No. / Mã:', revision.projectCode],
-    ['Product Item / Tên sản phẩm:', revision.productName, 'Positioning / Vị trí:', revision.positioning, 'Date / Rev (Ngày / Phiên bản):', `${revision.scheduleDate} (Rev.${revCode})`],
-    ['Color / Màu sắc:', revision.colorName, 'Finishing System / Hệ sơn:', revision.finishingSystem, 'MC Wood / Độ ẩm gỗ:', revision.mcWood],
-    ['Gloss Level / Độ bóng:', revision.glossLevel, 'Reference / Tiêu chuẩn:', revision.referenceStandard, 'Humidity / Temp (Độ ẩm / Nhiệt độ):', `${revision.roomHumidity} / ${revision.roomTemp}`]
+    ['Customer / Khách hàng:', revision.customer.customerName, 'Buyer / Nhà mua hàng:', revision.buyer || '', 'No. / Mã:', revision.projectCode],
+    ['Product Item / Tên sản phẩm:', revision.productName, 'Substrate Type / Loại gỗ:', revision.substrate, 'Date / Rev (Ngày / Phiên bản):', `${revision.scheduleDate} (Rev.${revCode})`],
+    ['Color / Màu sắc:', revision.colorName, 'Positioning / Vị trí:', revision.positioning, 'Finishing System / Hệ sơn:', revision.finishingSystem],
+    ['Reference / Tiêu chuẩn tham chiếu:', revision.referenceStandard, 'Gloss Level / Độ bóng:', revision.glossLevel, 'MC Wood / Humidity / Temp:', `${revision.mcWood} | ${revision.roomHumidity} | ${revision.roomTemp}`]
   ];
 
   headerRows.forEach((r, idx) => {

@@ -117,6 +117,7 @@ model ProjectRevision {
   scheduleDate        String         @default("")
 
   // Header metadata (CS & CC synchronized)
+  buyer               String         @default("")
   productName         String         // e.g., "BÀN NITORI"
   colorName           String         // e.g., "MÀU HICKORY"
   substrate           String         // e.g., "TẦN BÌ"

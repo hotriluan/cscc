@@ -36,6 +36,7 @@ interface ProjectExplorerViewProps {
   onCreateProject: (payload: {
     projectCode: string;
     customerId: string;
+    buyer?: string;
     productName: string;
     colorName: string;
     substrate: string;
@@ -68,6 +69,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
   const [newCustomerId, setNewCustomerId] = React.useState('');
   const [shortNameWarning, setShortNameWarning] = React.useState<string | null>(null);
   const [loadingNextCode, setLoadingNextCode] = React.useState(false);
+  const [newBuyer, setNewBuyer] = React.useState('');
   const [newProduct, setNewProduct] = React.useState('');
   const [newColor, setNewColor] = React.useState('');
   const [newSubstrate, setNewSubstrate] = React.useState('');
@@ -150,7 +152,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
       const revText = proj.revisions
         .map(
           (r) =>
-            `${r.productName} ${r.colorName} ${r.substrate || ''} ${r.finishingSystem || ''} Rev${r.revisionNo}`
+            `${r.buyer || ''} ${r.productName} ${r.colorName} ${r.substrate || ''} ${r.finishingSystem || ''} Rev${r.revisionNo}`
         )
         .join(' ');
       const hay =
@@ -217,6 +219,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
     await onCreateProject({
       projectCode: newCode.trim(),
       customerId: newCustomerId.trim(),
+      buyer: newBuyer.trim(),
       productName: newProduct.trim(),
       colorName: newColor.trim(),
       substrate: newSubstrate.trim(),
@@ -255,6 +258,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
               setNewCustomerId('');
               setNewCode('');
               setShortNameWarning(null);
+              setNewBuyer('');
               setNewProduct('');
               setNewColor('');
               setNewSubstrate('');
@@ -633,6 +637,22 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                     }`}
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-600">
+                  Buyer / Nhà mua hàng{' '}
+                  <span className="text-[10px] font-normal normal-case text-slate-400">
+                    (Optional / Tùy chọn)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. IKEA / Nhập tên nhà mua hàng (nếu có)..."
+                  value={newBuyer}
+                  onChange={(e) => setNewBuyer(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-600 focus:outline-none"
+                />
               </div>
 
               <div className="grid grid-cols-3 gap-3">

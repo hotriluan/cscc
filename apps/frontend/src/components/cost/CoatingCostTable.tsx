@@ -129,7 +129,8 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
             <span className="text-slate-500 font-medium">Customer Name / Khách hàng:</span>{' '}
             <strong className="text-slate-900">{revision.customer.customerName}</strong>
             <div className="text-[11px] text-slate-500">
-              Date / Ngày: {revision.scheduleDate}
+              Buyer / Nhà mua hàng: <strong>{revision.buyer || '—'}</strong> | Date / Ngày:{' '}
+              {revision.scheduleDate}
             </div>
           </div>
           <div>
@@ -144,7 +145,8 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
             <span className="text-slate-500 font-medium">Finishing System / Hệ sơn:</span>{' '}
             <strong className="text-slate-900">{revision.finishingSystem}</strong>
             <div className="text-[11px] text-slate-500">
-              Sheen / Độ bóng: <strong>{revision.glossLevel}</strong>
+              Sheen / Độ bóng: <strong>{revision.glossLevel}</strong> | Reference / Tiêu chuẩn:{' '}
+              <strong>{revision.referenceStandard || '—'}</strong>
             </div>
           </div>
           <div className="text-right">
