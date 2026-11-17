@@ -37,7 +37,7 @@ export interface RevisionStatusHistoryEntry {
   changedAt: string;
 }
 
-export type StepRowType = 'CHEMICAL_STEP' | 'SANDING';
+export type StepRowType = 'CHEMICAL_STEP' | 'SANDING' | 'NOTE';
 
 export interface Customer {
   id: string;
@@ -98,7 +98,7 @@ export interface ScheduleStepItem {
 export interface ScheduleStep {
   id: string;
   stepOrder: number;
-  stepNumber: number | null; // 1..N for CHEMICAL_STEP, null for SANDING
+  stepNumber: number | null; // 1..N for CHEMICAL_STEP, null for SANDING / NOTE
   rowType: StepRowType;
   stepName: string;
   sandingSpec?: string | null;

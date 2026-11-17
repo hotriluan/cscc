@@ -25,6 +25,7 @@ enum RevisionStatus {
 enum StepRowType {
   CHEMICAL_STEP
   SANDING
+  NOTE
 }
 
 model User {

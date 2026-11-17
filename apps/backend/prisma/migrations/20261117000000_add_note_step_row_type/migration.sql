@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "StepRowType" ADD VALUE IF NOT EXISTS 'NOTE';

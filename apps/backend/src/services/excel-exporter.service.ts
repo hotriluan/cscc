@@ -154,6 +154,25 @@ export async function generateRevisionWorkbook(
       continue;
     }
 
+    if (step.rowType === 'NOTE') {
+      const row = csSheet.getRow(currentCsRow);
+      row.getCell(1).value = '';
+      row.getCell(2).value = 'NOTE / GHI CHÚ';
+      row.getCell(3).value = step.stepRemark || '';
+      csSheet.mergeCells(currentCsRow, 3, currentCsRow, 8);
+      for (let c = 1; c <= 8; c++) {
+        row.getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+        row.getCell(c).font = { italic: true, bold: c === 2 };
+        row.getCell(c).alignment = {
+          horizontal: c >= 3 ? 'left' : 'center',
+          vertical: 'middle',
+          wrapText: c >= 3
+        };
+      }
+      currentCsRow += 1;
+      continue;
+    }
+
     const items = step.items.length > 0 ? step.items : [null];
     const rowSpan = items.length;
     const startRow = currentCsRow;

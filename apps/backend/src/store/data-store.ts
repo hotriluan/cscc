@@ -2471,8 +2471,8 @@ class PostgresDataStore {
     let chemCounter = 1;
 
     return steps.map((step, idx) => {
-      const isSanding = step.rowType === 'SANDING';
-      const parsedCa = isSanding
+      const isNonChemical = step.rowType === 'SANDING' || step.rowType === 'NOTE';
+      const parsedCa = isNonChemical
         ? { caMin: null, caMax: null, caAvg: 0 }
         : parseCaInput(step.caInputRaw);
       const cleanMethodName = step.methodName ? step.methodName.trim() : '';
@@ -2481,7 +2481,7 @@ class PostgresDataStore {
         : undefined;
 
       const efficiencySnapshot =
-        isSanding || !cleanMethodName
+        isNonChemical || !cleanMethodName
           ? null
           : preserveExistingSnapshots &&
               typeof step.efficiencySnapshot === 'number' &&
@@ -2491,7 +2491,7 @@ class PostgresDataStore {
             : (methodObj?.efficiency ?? step.efficiencySnapshot ?? 0.6);
 
       const stepId = step.id || `step-${idx + 1}`;
-      const stepVisco = isSanding
+      const stepVisco = isNonChemical
         ? null
         : step.visco !== null && step.visco !== undefined && String(step.visco).trim() !== ''
           ? String(step.visco).trim()
@@ -2501,7 +2501,7 @@ class PostgresDataStore {
             ? String(step.items[0].visco).trim()
             : null;
 
-      const items = isSanding
+      const items = isNonChemical
         ? []
         : (step.items || []).map((item, itemIdx) => {
             const code = (item.materialCode || '').trim();
@@ -2545,11 +2545,11 @@ class PostgresDataStore {
         ...step,
         id: stepId,
         stepOrder: idx + 1,
-        stepNumber: isSanding ? null : chemCounter++,
+        stepNumber: isNonChemical ? null : chemCounter++,
         visco: stepVisco,
         caMin: parsedCa.caMin,
         caMax: parsedCa.caMax,
-        caAvg: isSanding ? null : parsedCa.caAvg,
+        caAvg: isNonChemical ? null : parsedCa.caAvg,
         efficiencySnapshot,
         items
       };

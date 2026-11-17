@@ -19,6 +19,7 @@ import {
   Trash2,
   Layers,
   Sparkles,
+  StickyNote,
   ArrowUp,
   ArrowDown,
   Copy,
@@ -40,6 +41,74 @@ import {
 } from '../common/SearchableCombobox';
 
 export type RevisionChangeMode = 'discrete' | 'typing';
+
+interface MixingRatioInputProps {
+  value: number;
+  disabled?: boolean;
+  hasError: boolean;
+  onChange: (next: number) => void;
+}
+
+/**
+ * Controlled decimal input that preserves intermediate typing states
+ * (e.g., "0", "0.", "0.0") so small ratios like 0.028 can be typed naturally.
+ */
+const MixingRatioInput: React.FC<MixingRatioInputProps> = ({
+  value,
+  disabled,
+  hasError,
+  onChange
+}) => {
+  const [draft, setDraft] = React.useState<string>(() =>
+    value > 0 ? String(value) : ''
+  );
+  const [isFocused, setIsFocused] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isFocused) {
+      setDraft(value > 0 ? String(value) : '');
+    }
+  }, [value, isFocused]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const normalized = e.target.value.trim().replace(',', '.');
+    if (normalized !== '' && !/^\d*\.?\d*$/.test(normalized)) {
+      return;
+    }
+    setDraft(normalized);
+    if (normalized === '' || normalized === '.') {
+      onChange(0);
+      return;
+    }
+    const parsed = Number(normalized);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      onChange(parsed);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    setDraft(value > 0 ? String(value) : '');
+  };
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      disabled={disabled}
+      placeholder="Ratio / Tỷ lệ"
+      value={draft}
+      onFocus={() => setIsFocused(true)}
+      onBlur={handleBlur}
+      onChange={handleChange}
+      className={`w-full min-w-[52px] rounded border px-1.5 py-1 text-center font-semibold focus:outline-none ${
+        hasError
+          ? 'border-amber-400 bg-amber-50/60 text-amber-900 placeholder:italic placeholder:font-normal placeholder:text-amber-700 focus:border-blue-600'
+          : 'border-slate-300 bg-white text-slate-900 focus:border-blue-600'
+      }`}
+    />
+  );
+};
 
 interface CoatingScheduleEditorProps {
   revision: ProjectRevision;
@@ -278,17 +347,17 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
   const reindexSteps = (rawSteps: ScheduleStep[]): ScheduleStep[] => {
     let chemNo = 1;
     return rawSteps.map((s, idx) => {
-      const isSanding = s.rowType === 'SANDING';
-      const parsedCa = isSanding
+      const isNonChemical = s.rowType === 'SANDING' || s.rowType === 'NOTE';
+      const parsedCa = isNonChemical
         ? { caMin: null, caMax: null, caAvg: 0 }
         : parseCaInput(s.caInputRaw);
       const eff =
-        isSanding || !s.methodName
+        isNonChemical || !s.methodName
           ? null
           : methodsMaster.find((m) => m.methodName === s.methodName)?.efficiency ??
             s.efficiencySnapshot ??
             null;
-      const stepVisco = isSanding
+      const stepVisco = isNonChemical
         ? null
         : s.visco !== null && s.visco !== undefined && String(s.visco).trim() !== ''
           ? String(s.visco).trim()
@@ -301,11 +370,11 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
       return {
         ...s,
         stepOrder: idx + 1,
-        stepNumber: isSanding ? null : chemNo++,
+        stepNumber: isNonChemical ? null : chemNo++,
         visco: stepVisco,
         caMin: parsedCa.caMin,
         caMax: parsedCa.caMax,
-        caAvg: isSanding ? null : parsedCa.caAvg,
+        caAvg: isNonChemical ? null : parsedCa.caAvg,
         efficiencySnapshot: eff,
         items: s.items.map((it, iIdx) => ({
           ...it,
@@ -455,6 +524,24 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     items: []
   });
 
+  const createNewNoteStepObject = (): ScheduleStep => ({
+    id: `${revision.id}-note-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
+    stepOrder: revision.steps.length + 1,
+    stepNumber: null,
+    rowType: 'NOTE',
+    stepName: 'NOTE',
+    sandingSpec: null,
+    caInputRaw: null,
+    caMin: null,
+    caMax: null,
+    caAvg: null,
+    methodName: null,
+    efficiencySnapshot: null,
+    dryingTime: null,
+    stepRemark: '',
+    items: []
+  });
+
   // Insert step at end OR immediately after `afterIndex`
   const handleInsertChemicalStep = (afterIndex?: number) => {
     if (isLocked) return;
@@ -482,6 +569,24 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
       nextSteps.splice(afterIndex + 1, 0, sandingStep);
     } else {
       nextSteps.push(sandingStep);
+    }
+    onChangeRevision(
+      {
+        ...revision,
+        steps: reindexSteps(nextSteps)
+      },
+      'discrete'
+    );
+  };
+
+  const handleInsertNoteRow = (afterIndex?: number) => {
+    if (isLocked) return;
+    const noteStep = createNewNoteStepObject();
+    const nextSteps = [...revision.steps];
+    if (afterIndex !== undefined && afterIndex >= 0) {
+      nextSteps.splice(afterIndex + 1, 0, noteStep);
+    } else {
+      nextSteps.push(noteStep);
     }
     onChangeRevision(
       {
@@ -1149,7 +1254,9 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                 }{' '}
                 Chemical Steps / Bước sơn,{' '}
                 {revision.steps.filter((s) => s.rowType === 'SANDING').length}{' '}
-                Sanding / Bước nhám)
+                Sanding / Bước nhám,{' '}
+                {revision.steps.filter((s) => s.rowType === 'NOTE').length}{' '}
+                Note / Ghi chú)
               </h3>
               <p className="text-[11px] text-slate-500">
                 Pinned columns & headers / Cột số thứ tự, thao tác và tiêu đề được ghim tự động khi cuộn.
@@ -1422,6 +1529,85 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                   );
                 }
 
+                // Case A2: Interleaved NOTE row (CS-only, excluded from Coating Cost)
+                if (step.rowType === 'NOTE') {
+                  return (
+                    <tr
+                      key={step.id}
+                      className="bg-slate-100/90 hover:bg-slate-200/70 transition border-b border-slate-200"
+                    >
+                      <td className="sticky left-0 z-10 bg-slate-100 border border-slate-200 px-1.5 py-2 text-center font-bold text-slate-600">
+                        —
+                      </td>
+                      <td className="border border-slate-200 px-2 py-2 font-bold text-slate-800">
+                        NOTE / GHI CHÚ
+                      </td>
+                      <td
+                        colSpan={6}
+                        className="border border-slate-200 px-2 py-1.5"
+                      >
+                        <input
+                          type="text"
+                          disabled={isLocked}
+                          value={step.stepRemark || ''}
+                          placeholder="Enter note / Nhập nội dung ghi chú..."
+                          onChange={(e) =>
+                            handleUpdateStepField(
+                              step.id,
+                              'stepRemark',
+                              e.target.value
+                            )
+                          }
+                          className={`w-full rounded border px-2 py-1 text-left text-xs font-medium italic focus:outline-none ${
+                            !step.stepRemark?.trim()
+                              ? 'border-red-400 bg-red-50/70 text-red-900 placeholder:text-red-500 focus:border-red-600'
+                              : 'border-slate-300 bg-white text-slate-900 focus:border-blue-600'
+                          }`}
+                        />
+                      </td>
+                      <td className="sticky right-0 z-10 bg-slate-100 border border-slate-200 px-1.5 py-1.5 text-center shadow-[-4px_0_8px_rgba(0,0,0,0.04)]">
+                        {!isLocked && (
+                          <div className="flex flex-wrap items-center justify-center gap-0.5">
+                            <button
+                              type="button"
+                              title="Chèn bước sơn ngay bên dưới hàng ghi chú này / Insert chemical step below"
+                              onClick={() => handleInsertChemicalStep(stepIdx)}
+                              className="inline-flex items-center gap-0.5 rounded border border-blue-300 bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 hover:bg-blue-100"
+                            >
+                              <Plus className="h-3 w-3" />
+                              + Step / + Bước
+                            </button>
+                            <button
+                              type="button"
+                              title="Di chuyển lên / Move up"
+                              onClick={() => handleMoveStep(stepIdx, -1)}
+                              className="rounded p-1 text-slate-500 hover:bg-slate-200"
+                            >
+                              <ArrowUp className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              title="Di chuyển xuống / Move down"
+                              onClick={() => handleMoveStep(stepIdx, 1)}
+                              className="rounded p-1 text-slate-500 hover:bg-slate-200"
+                            >
+                              <ArrowDown className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              title="Xóa hàng ghi chú / Delete note row"
+                              onClick={() => handleDeleteStep(step.id)}
+                              className="rounded p-1 text-red-600 hover:bg-red-100"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                }
+
                 // Case B: Multi-row CHEMICAL_STEP with Dynamic rowSpan
                 const rowSpan = Math.max(1, step.items.length);
                 const parsedCa = parseCaInput(step.caInputRaw);
@@ -1533,30 +1719,15 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
 
                       {/* Col 4: Mixing Ratio */}
                       <td className="border border-slate-200 px-1.5 py-1.5 text-center align-middle">
-                        <input
-                          type="number"
-                          step="0.1"
-                          min="0"
+                        <MixingRatioInput
+                          value={Number(item.mixingRatio) || 0}
                           disabled={isLocked}
-                          placeholder="Ratio / Tỷ lệ"
-                          value={
-                            item.mixingRatio && item.mixingRatio > 0
-                              ? item.mixingRatio
-                              : ''
-                          }
-                          onChange={(e) =>
+                          hasError={!item.mixingRatio || item.mixingRatio <= 0}
+                          onChange={(nextRatio) =>
                             handleUpdateItem(step.id, item.id, {
-                              mixingRatio:
-                                e.target.value === ''
-                                  ? 0
-                                  : parseFloat(e.target.value) || 0
+                              mixingRatio: nextRatio
                             })
                           }
-                          className={`w-full min-w-[52px] rounded border px-1.5 py-1 text-center font-semibold focus:outline-none ${
-                            !item.mixingRatio || item.mixingRatio <= 0
-                              ? 'border-amber-400 bg-amber-50/60 text-amber-900 placeholder:italic placeholder:font-normal placeholder:text-amber-700 focus:border-blue-600'
-                              : 'border-slate-300 bg-white text-slate-900 focus:border-blue-600'
-                          }`}
                         />
                       </td>
 
@@ -1688,6 +1859,16 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                                 >
                                   + Nhám
                                 </button>
+                                <button
+                                  type="button"
+                                  title="Chèn hàng ghi chú (NOTE) ngay bên dưới bước này / Insert note below"
+                                  onClick={() =>
+                                    handleInsertNoteRow(stepIdx)
+                                  }
+                                  className="inline-flex items-center rounded border border-slate-300 bg-slate-100 px-1 py-0.5 text-[10px] font-bold text-slate-700 hover:bg-slate-200"
+                                >
+                                  + Note
+                                </button>
                               </div>
 
                               <div className="flex items-center justify-center gap-0.5">
@@ -1813,7 +1994,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             <span className="text-xs font-semibold text-slate-600">
               Quick Actions / Thao tác nhanh cuối bảng:
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => handleInsertSandingRow()}
@@ -1821,6 +2002,14 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               >
                 <Sparkles className="h-3.5 w-3.5 text-amber-600" />
                 Insert SANDING / Chèn nhám vào cuối
+              </button>
+              <button
+                type="button"
+                onClick={() => handleInsertNoteRow()}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition"
+              >
+                <StickyNote className="h-3.5 w-3.5 text-slate-600" />
+                Insert Note / Chèn ghi chú vào cuối
               </button>
               <button
                 type="button"

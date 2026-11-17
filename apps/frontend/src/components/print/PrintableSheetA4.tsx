@@ -256,6 +256,18 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
               </tr>
             );
           }
+          if (step.rowType === 'NOTE') {
+            const noteText = (step.stepRemark || '').trim();
+            return (
+              <tr key={step.id} className="bg-slate-50 text-[8.5pt] font-semibold italic">
+                <td className={CS_CELL} />
+                <td colSpan={7} className={`${CS_CELL} text-left break-words`}>
+                  NOTE / GHI CHÚ
+                  {noteText && <> — {keepRangesTogether(noteText)}</>}
+                </td>
+              </tr>
+            );
+          }
           const rowSpan = Math.max(1, step.items.length);
           return step.items.map((item, idx) => (
             <tr key={item.id}>

@@ -604,6 +604,14 @@ export function App() {
           }
           return;
         }
+        if (step.rowType === 'NOTE') {
+          if (!step.stepRemark?.trim()) {
+            errs.push(
+              `Hàng ghi chú (NOTE) ở vị trí dòng #${idx + 1}: Chưa nhập nội dung ghi chú`
+            );
+          }
+          return;
+        }
 
         const stepLabel = `Bước ${step.stepNumber ?? idx + 1}`;
         if (!step.stepName?.trim()) {

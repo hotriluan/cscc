@@ -71,7 +71,7 @@ export function computeDynamicRowSpanLayout(steps: ScheduleStep[]): Map<
   const orderedSteps = [...(steps || [])].sort((a, b) => a.stepOrder - b.stepOrder);
 
   for (const step of orderedSteps) {
-    if (step.rowType === 'SANDING') {
+    if (step.rowType === 'SANDING' || step.rowType === 'NOTE') {
       layoutMap.set(step.id, {
         rowSpan: 1,
         csExcelStartRow: currentCsRow,
@@ -398,11 +398,17 @@ const CC_FOOTER_BASE_UNITS = 4;
 const WRAP_LINE_UNITS = 0.85;
 /** Length of the band label `SANDING / CHÀ NHÁM — ` and the characters that fit on one band line. */
 const SANDING_LABEL_CHARS = 21;
+const NOTE_LABEL_CHARS = 18;
 const SANDING_BAND_LINE_CHARS = 95;
 
 function estimateCsStepUnits(step: ScheduleStep): number {
   if (step.rowType === 'SANDING') {
     const totalLen = SANDING_LABEL_CHARS + (step.sandingSpec || '').trim().length;
+    const lines = Math.max(1, Math.ceil(totalLen / SANDING_BAND_LINE_CHARS));
+    return 1 + (lines - 1) * 0.8;
+  }
+  if (step.rowType === 'NOTE') {
+    const totalLen = NOTE_LABEL_CHARS + (step.stepRemark || '').trim().length;
     const lines = Math.max(1, Math.ceil(totalLen / SANDING_BAND_LINE_CHARS));
     return 1 + (lines - 1) * 0.8;
   }

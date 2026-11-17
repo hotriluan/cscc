@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   parseCaInput,
   calculateCoatingCostTable,
+  computeDynamicRowSpanLayout,
   calculateBomSummary,
   redactRevisionForRole,
   paginateCsSteps,
@@ -359,6 +360,38 @@ describe('Shared Calculation Engine (@cscc/shared)', () => {
       if (page.steps.length === 0) continue;
       assert.notEqual(page.steps[page.steps.length - 1].rowType, 'SANDING');
     }
+  });
+
+  it('excludes NOTE rows from Coating Cost calculation and CC layout while keeping them in CS pagination', () => {
+    const steps: ScheduleStep[] = [
+      makeChemStep(1, 1, 'WIPING FILLER', 'WIPING', '100-120', true),
+      {
+        id: 'note-1',
+        stepOrder: 2,
+        stepNumber: null,
+        rowType: 'NOTE',
+        stepName: 'NOTE',
+        stepRemark: 'Check wood moisture before top coat',
+        items: []
+      },
+      makeChemStep(3, 2, 'TOP COAT COLOR', 'SPRAY', '100-120', true)
+    ];
+
+    const costSummary = calculateCoatingCostTable('rev-note-test', steps);
+    assert.equal(costSummary.steps.length, 2);
+    assert.ok(costSummary.steps.every((s) => s.stepName !== 'NOTE'));
+
+    const layout = computeDynamicRowSpanLayout(steps);
+    const noteLayout = layout.get('note-1');
+    assert.ok(noteLayout);
+    assert.equal(noteLayout.rowSpan, 1);
+    assert.equal(noteLayout.ccExcelStartRow, -1);
+    assert.equal(noteLayout.ccExcelEndRow, -1);
+
+    const csPages = paginateCsSteps(steps);
+    assert.equal(csPages.length, 1);
+    assert.equal(csPages[0].steps.length, 3);
+    assert.equal(csPages[0].steps[1].rowType, 'NOTE');
   });
 });
 
