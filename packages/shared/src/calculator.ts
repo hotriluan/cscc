@@ -667,16 +667,17 @@ export function isValidCustomerShortName(
 }
 
 /**
- * Formats a customer-scoped project code as `[SHORT] [0001]`.
+ * Formats a customer-scoped project code as `[SHORT][0001]`.
  */
 export function formatCustomerProjectCode(shortName: string, sequenceNumber: number): string {
   const normalized = normalizeCustomerShortName(shortName);
   const seq = Math.max(1, Math.floor(sequenceNumber));
-  return `${normalized} ${String(seq).padStart(4, '0')}`;
+  return `${normalized}${String(seq).padStart(4, '0')}`;
 }
 
 /**
- * Extracts the numeric sequence from a projectCode matching `${shortName} <digits>`.
+ * Extracts the numeric sequence from a projectCode matching `${shortName}<digits>`
+ * (also tolerating legacy space-separated `${shortName} <digits>`).
  */
 export function parseCustomerProjectSequence(
   projectCode: string | null | undefined,
@@ -688,14 +689,14 @@ export function parseCustomerProjectSequence(
   if (!code) return null;
 
   const escapedPrefix = normalizedShort.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = code.match(new RegExp(`^${escapedPrefix}\\s+(\\d+)$`));
+  const match = code.match(new RegExp(`^${escapedPrefix}\\s*(\\d+)$`));
   if (!match) return null;
   const parsed = Number.parseInt(match[1], 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
 /**
- * Computes the next `[SHORT] [0001]` project code by scanning MAX(sequence) + 1
+ * Computes the next `[SHORT][0001]` project code by scanning MAX(sequence) + 1
  * over existing project codes for the customer's short name.
  */
 export function computeNextCustomerProjectCode(

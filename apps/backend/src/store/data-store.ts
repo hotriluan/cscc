@@ -1806,7 +1806,7 @@ class PostgresDataStore {
         ...(excludeProjectId ? { id: { not: excludeProjectId } } : {}),
         OR: [
           { customerId: customer.id },
-          { projectCode: { startsWith: `${normalizedShort} `, mode: 'insensitive' } }
+          { projectCode: { startsWith: normalizedShort, mode: 'insensitive' } }
         ]
       },
       select: { projectCode: true }

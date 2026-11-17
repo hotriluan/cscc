@@ -7,7 +7,7 @@ import { dataStore } from '../src/store/data-store';
 import { prisma } from '../src/store/prisma';
 import type { Customer, Project, ProjectRevision } from '@cscc/shared';
 
-describe('Auto-Generate Project Code ([SHORT] [0001]) & Customer Name Display', () => {
+describe('Auto-Generate Project Code ([SHORT][0001]) & Customer Name Display', () => {
   let server: http.Server;
   let baseUrl = '';
 
@@ -76,14 +76,14 @@ describe('Auto-Generate Project Code ([SHORT] [0001]) & Customer Name Display', 
     await dataStore.disconnect();
   });
 
-  it('1. Auto-generates sequential project codes per customer (NTRI 0001, NTRI 0002)', async () => {
+  it('1. Auto-generates sequential project codes per customer (NTRI0001, NTRI0002)', async () => {
     const previewRes = await fetch(
       `${baseUrl}/api/projects/next-code?customerId=${ntriCustomerId}`,
       { headers: { 'x-user-role': 'PROJECT_LEADER' } }
     );
     assert.equal(previewRes.status, 200);
     const previewBody = (await previewRes.json()) as { nextCode: string };
-    assert.equal(previewBody.nextCode, 'NTRI 0001');
+    assert.equal(previewBody.nextCode, 'NTRI0001');
 
     const create1 = await fetch(`${baseUrl}/api/projects`, {
       method: 'POST',
@@ -98,7 +98,7 @@ describe('Auto-Generate Project Code ([SHORT] [0001]) & Customer Name Display', 
     });
     assert.equal(create1.status, 201);
     const body1 = (await create1.json()) as { project: Project; revision: ProjectRevision };
-    assert.equal(body1.project.projectCode, 'NTRI 0001');
+    assert.equal(body1.project.projectCode, 'NTRI0001');
     ntriProject1Id = body1.project.id;
 
     const create2 = await fetch(`${baseUrl}/api/projects`, {
@@ -114,12 +114,12 @@ describe('Auto-Generate Project Code ([SHORT] [0001]) & Customer Name Display', 
     });
     assert.equal(create2.status, 201);
     const body2 = (await create2.json()) as { project: Project; revision: ProjectRevision };
-    assert.equal(body2.project.projectCode, 'NTRI 0002');
+    assert.equal(body2.project.projectCode, 'NTRI0002');
     ntriProject2Id = body2.project.id;
     ntriRev2Id = body2.revision.id;
   });
 
-  it('2. Prevents code collision when an earlier project is deleted (NTRI 0001 deleted -> next is NTRI 0003)', async () => {
+  it('2. Prevents code collision when an earlier project is deleted (NTRI0001 deleted -> next is NTRI0003)', async () => {
     const delRes = await fetch(`${baseUrl}/api/projects/${ntriProject1Id}`, {
       method: 'DELETE',
       headers: { 'x-user-role': 'PROJECT_LEADER' }
@@ -139,7 +139,7 @@ describe('Auto-Generate Project Code ([SHORT] [0001]) & Customer Name Display', 
     });
     assert.equal(create3.status, 201);
     const body3 = (await create3.json()) as { project: Project };
-    assert.equal(body3.project.projectCode, 'NTRI 0003');
+    assert.equal(body3.project.projectCode, 'NTRI0003');
   });
 
   it('3. Auto-regenerates projectCode when switching customer on a DRAFT revision', async () => {
@@ -153,7 +153,7 @@ describe('Auto-Generate Project Code ([SHORT] [0001]) & Customer Name Display', 
     assert.equal(updateRes.status, 200);
     const updated = (await updateRes.json()) as { revision: ProjectRevision };
     assert.equal(updated.revision.customer.customerId, ikeaCustomerId);
-    assert.equal(updated.revision.projectCode, 'IKEA 0001');
+    assert.equal(updated.revision.projectCode, 'IKEA0001');
   });
 
   it('4. Blocks and warns (HTTP 400 INVALID_CUSTOMER_SHORT_NAME) when customer Short Name is not 2-6 chars', async () => {
