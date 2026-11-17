@@ -460,6 +460,7 @@ export interface ProjectRevisionVarianceRow {
   projectCode: string;
   customerId: string;
   customerShortName: string;
+  customerName?: string;
   salesmanName: string | null;
   productName: string;
   colorName: string;
@@ -494,6 +495,7 @@ export interface PriceDriftRow {
   projectCode: string;
   customerId: string;
   customerShortName: string;
+  customerName?: string;
   salesmanName: string | null;
   revisionNo: number;
   status: RevisionStatus;
@@ -569,6 +571,7 @@ export interface BomForecastRevisionAllocation {
   projectCode: string;
   customerId: string;
   customerShortName: string;
+  customerName?: string;
   salesmanName: string | null;
   revisionNo: number;
   status: RevisionStatus;

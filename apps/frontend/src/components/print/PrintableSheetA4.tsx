@@ -155,7 +155,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
     <div className="my-1.5 grid grid-cols-3 gap-x-2 gap-y-0.5 border-b border-slate-400 pb-1.5 text-[8.5pt] leading-snug">
       <div className="min-w-0 space-y-0.5 break-words">
         <div>
-          <strong>Customer / Khách hàng:</strong> {revision.customer.shortName}
+          <strong>Customer / Khách hàng:</strong> {revision.customer.customerName}
         </div>
         <div>
           <strong>Substrate Type / Loại gỗ:</strong> {revision.substrate}

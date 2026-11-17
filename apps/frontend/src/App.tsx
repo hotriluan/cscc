@@ -561,7 +561,7 @@ export function App() {
         .map((r) => `${r.productName} ${r.colorName} ${r.substrate || ''}`)
         .join(' ');
       const hay =
-        `${p.projectCode} ${p.customer.shortName} ${p.customer.customerId} ${p.customer.salesmanName || ''} ${revText}`.toLowerCase();
+        `${p.projectCode} ${p.customer.shortName} ${p.customer.customerName} ${p.customer.customerId} ${p.customer.salesmanName || ''} ${revText}`.toLowerCase();
       return hay.includes(q);
     });
   }, [projects, sidebarProjectSearch, role, currentUser]);
@@ -1333,7 +1333,7 @@ export function App() {
                                 )}
                                 <div className="min-w-0 flex-1">
                                   <div className="truncate text-xs font-bold text-white">
-                                    {proj.projectCode} — {proj.customer.shortName}
+                                    {proj.projectCode} — {proj.customer.customerName}
                                   </div>
                                   {latestRev && (
                                     <div className="truncate text-[10px] text-slate-400">
@@ -1355,7 +1355,7 @@ export function App() {
                                       e.stopPropagation();
                                       if (
                                         window.confirm(
-                                          `Xóa hồ sơ dự án "${proj.projectCode} — ${proj.customer.shortName}"?`
+                                          `Xóa hồ sơ dự án "${proj.projectCode} — ${proj.customer.customerName}"?`
                                         )
                                       ) {
                                         await handleDeleteProject(proj.id);
@@ -2154,7 +2154,7 @@ export function App() {
                   <p className="text-xs text-slate-500">
                     Project / Hồ sơ: <strong>{activeRevision.projectCode}</strong> — Rev{' '}
                     <strong>{String(activeRevision.revisionNo).padStart(2, '0')}</strong> (
-                    {activeRevision.customer.shortName})
+                    {activeRevision.customer.customerName})
                   </p>
                 </div>
               </div>

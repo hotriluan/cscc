@@ -127,7 +127,7 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
         <div className="grid grid-cols-2 gap-4 bg-emerald-50/40 p-4 text-xs md:grid-cols-4 border-b border-emerald-100">
           <div>
             <span className="text-slate-500 font-medium">Customer Name / Khách hàng:</span>{' '}
-            <strong className="text-slate-900">{revision.customer.shortName}</strong>
+            <strong className="text-slate-900">{revision.customer.customerName}</strong>
             <div className="text-[11px] text-slate-500">
               Date / Ngày: {revision.scheduleDate}
             </div>

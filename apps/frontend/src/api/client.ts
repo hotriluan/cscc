@@ -288,6 +288,19 @@ export const apiClient = {
 
   getProjects: (role: UserRole) => request<Project[]>('/projects', role),
 
+  getNextProjectCode: (role: UserRole, customerId: string, excludeProjectId?: string) => {
+    const params = new URLSearchParams({ customerId });
+    if (excludeProjectId) {
+      params.set('excludeProjectId', excludeProjectId);
+    }
+    return request<{
+      nextCode: string;
+      shortName: string;
+      customerId: string;
+      customerName: string;
+    }>(`/projects/next-code?${params.toString()}`, role);
+  },
+
   createProject: (role: UserRole, payload: Record<string, unknown>) =>
     request<{ project: Project; revision: ProjectRevision }>('/projects', role, {
       method: 'POST',

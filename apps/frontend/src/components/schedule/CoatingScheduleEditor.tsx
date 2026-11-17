@@ -9,8 +9,11 @@ import {
   ApplicationMethod,
   UserAccount,
   UserRole,
-  parseCaInput
+  parseCaInput,
+  isValidCustomerShortName,
+  formatCustomerProjectCode
 } from '@cscc/shared';
+import { apiClient } from '../../api/client';
 import {
   Plus,
   Trash2,
@@ -88,6 +91,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
   const [isHeaderCollapsed, setIsHeaderCollapsed] = React.useState(false);
   const [isTableViewportPinned, setIsTableViewportPinned] = React.useState(false);
   const [hasHorizontalOverflow, setHasHorizontalOverflow] = React.useState(false);
+  const [customerSwitchWarning, setCustomerSwitchWarning] = React.useState<string | null>(null);
   const [scrollMetrics, setScrollMetrics] = React.useState({
     scrollLeft: 0,
     scrollWidth: 1000,
@@ -185,18 +189,17 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
         )
       : customers;
 
-    const list = scopedList.map((c) => ({
-      value: c.customerId,
-      label: c.shortName,
-      sublabel: c.salesmanName
-        ? `${c.customerName} • Sales: ${c.salesmanName}`
-        : c.customerName,
-      badge: c.customerId,
-      badgeColor: (c.shortName !== c.customerName ? 'emerald' : 'slate') as
-        | 'emerald'
-        | 'slate',
-      keywords: `${c.customerId} ${c.shortName} ${c.customerName} ${c.salesmanName || ''}`
-    }));
+    const list = scopedList.map((c) => {
+      const validShort = isValidCustomerShortName(c.shortName, c.customerName);
+      return {
+        value: c.customerId,
+        label: c.customerName,
+        sublabel: `Short: ${c.shortName} • SAP: ${c.customerId}${c.salesmanName ? ` • Sales: ${c.salesmanName}` : ''}`,
+        badge: `${c.shortName} (${c.customerId})`,
+        badgeColor: (validShort ? 'emerald' : 'amber') as 'emerald' | 'amber',
+        keywords: `${c.customerId} ${c.shortName} ${c.customerName} ${c.salesmanName || ''}`
+      };
+    });
     // Ensure active revision customer is always present even if custom
     if (
       revision.customer &&
@@ -204,11 +207,9 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     ) {
       list.unshift({
         value: revision.customer.customerId,
-        label: revision.customer.shortName,
-        sublabel: revision.customer.salesmanName
-          ? `${revision.customer.customerName} • Sales: ${revision.customer.salesmanName}`
-          : revision.customer.customerName,
-        badge: revision.customer.customerId,
+        label: revision.customer.customerName,
+        sublabel: `Short: ${revision.customer.shortName} • SAP: ${revision.customer.customerId}${revision.customer.salesmanName ? ` • Sales: ${revision.customer.salesmanName}` : ''}`,
+        badge: `${revision.customer.shortName} (${revision.customer.customerId})`,
         badgeColor: 'emerald',
         keywords: `${revision.customer.customerId} ${revision.customer.shortName} ${revision.customer.customerName} ${revision.customer.salesmanName || ''}`
       });
@@ -335,12 +336,41 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     );
   };
 
-  const handleCustomerSelect = (customerId: string) => {
+  const handleCustomerSelect = async (customerId: string) => {
     if (isLocked) return;
     const found = customers.find(
       (c) => c.id === customerId || c.customerId === customerId
     );
     if (!found) return;
+    if (found.id === revision.customer?.id) {
+      setCustomerSwitchWarning(null);
+      return;
+    }
+
+    if (!isValidCustomerShortName(found.shortName, found.customerName)) {
+      setCustomerSwitchWarning(
+        `Khách hàng "${found.customerName}" chưa cập nhật Short Name (2–6 ký tự, hiện tại: "${found.shortName}"). Vui lòng vào Master Data -> Customers cập nhật Short Name trước. / Customer "${found.customerName}" needs a valid 2–6 character Short Name in Master Data -> Customers first.`
+      );
+      return;
+    }
+
+    setCustomerSwitchWarning(null);
+
+    let nextCode = formatCustomerProjectCode(found.shortName, 1);
+    try {
+      const res = await apiClient.getNextProjectCode(
+        role || 'PROJECT_LEADER',
+        found.customerId,
+        revision.projectId
+      );
+      nextCode = res.nextCode;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('Short Name')) {
+        setCustomerSwitchWarning(msg);
+        return;
+      }
+    }
 
     const updatedSteps = revision.steps.map((step) => ({
       ...step,
@@ -363,6 +393,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     onChangeRevision(
       {
         ...revision,
+        projectCode: nextCode,
         customer: found,
         steps: reindexSteps(updatedSteps)
       },
@@ -760,7 +791,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               <span>
                 <strong className="text-slate-500">Customer / KH:</strong>{' '}
                 <strong className="text-slate-900">
-                  {revision.customer?.shortName || '—'}
+                  {revision.customer?.customerName || '—'}
                 </strong>
                 {revision.customer?.salesmanName && (
                   <span className="ml-1 text-slate-600">
@@ -820,10 +851,17 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                   value={revision.customer?.customerId || ''}
                   placeholder="-- Select Customer / Chọn Khách hàng --"
                   options={customerOptions}
-                  onChange={(val) => handleCustomerSelect(val)}
+                  onChange={(val) => {
+                    void handleCustomerSelect(val);
+                  }}
                   searchPlaceholder="Search customer name or SAP code / Tìm tên KH hoặc mã SAP..."
                   popoverWidthClass="w-96"
                 />
+                {customerSwitchWarning && (
+                  <div className="mt-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-[11px] font-medium text-amber-900">
+                    ⚠️ {customerSwitchWarning}
+                  </div>
+                )}
                 <p className="mt-1 truncate text-[11px] font-medium text-slate-500">
                   {revision.customer?.customerName || 'No customer selected / Chưa chọn khách hàng'}
                   {revision.customer?.salesmanName && (
@@ -988,21 +1026,16 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col justify-between">
                   <label className="mb-1 block text-xs font-semibold uppercase text-slate-600">
-                    No. / Mã hồ sơ
+                    No. / Mã hồ sơ{' '}
+                    <span className="text-[10px] font-semibold text-blue-600">(Auto)</span>
                   </label>
                   <input
                     type="text"
-                    disabled={isLocked}
-                    placeholder="Enter code / Nhập mã hồ sơ..."
+                    readOnly
+                    disabled
                     value={revision.projectCode}
-                    onChange={(e) =>
-                      handleHeaderChange('projectCode', e.target.value)
-                    }
-                    className={`mt-auto w-full rounded-lg border px-3 py-1.5 text-sm font-semibold focus:outline-none disabled:bg-slate-100 ${
-                      !revision.projectCode?.trim()
-                        ? 'border-amber-400 bg-amber-50/60 placeholder:italic placeholder:text-amber-700 focus:border-blue-600'
-                        : 'border-slate-300 focus:border-blue-600'
-                    }`}
+                    title="Mã hồ sơ tự động sinh theo Short Name của Khách hàng / Auto-generated from customer Short Name"
+                    className="mt-auto w-full cursor-not-allowed rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 font-mono text-sm font-bold text-slate-700 focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col justify-between">
@@ -1443,7 +1476,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                                   'discrete'
                                 )
                               }
-                              emptyMessage={`Customer ${revision.customer?.shortName || revision.customer?.customerId || ''} has no quotation items / KH chưa có vật tư trong báo giá`}
+                              emptyMessage={`Customer ${revision.customer?.customerName || revision.customer?.customerId || ''} has no quotation items / KH chưa có vật tư trong báo giá`}
                               searchPlaceholder="Search material in quotation / Tìm vật tư trong báo giá..."
                               popoverWidthClass="w-96"
                             />

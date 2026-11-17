@@ -6,7 +6,12 @@ import {
   calculateBomSummary,
   redactRevisionForRole,
   paginateCsSteps,
-  paginateCcSteps
+  paginateCcSteps,
+  normalizeCustomerShortName,
+  isValidCustomerShortName,
+  formatCustomerProjectCode,
+  parseCustomerProjectSequence,
+  computeNextCustomerProjectCode
 } from './calculator';
 import { ScheduleStep, ProjectRevision } from './types';
 
@@ -354,6 +359,48 @@ describe('Shared Calculation Engine (@cscc/shared)', () => {
       if (page.steps.length === 0) continue;
       assert.notEqual(page.steps[page.steps.length - 1].rowType, 'SANDING');
     }
+  });
+});
+
+describe('Customer shortName & auto projectCode helpers', () => {
+  it('normalizes and validates shortName length (2-6 chars, no spaces)', () => {
+    assert.equal(normalizeCustomerShortName('  ntri '), 'NTRI');
+    assert.equal(isValidCustomerShortName('NTRI'), true);
+    assert.equal(isValidCustomerShortName('ikea'), true);
+    assert.equal(isValidCustomerShortName('ACG'), true);
+    assert.equal(isValidCustomerShortName('AB'), true);
+    assert.equal(isValidCustomerShortName('ABCDEF'), true);
+    assert.equal(isValidCustomerShortName('A-1'), true);
+
+    assert.equal(isValidCustomerShortName(''), false);
+    assert.equal(isValidCustomerShortName('A'), false);
+    assert.equal(isValidCustomerShortName('ABCDEFG'), false);
+    assert.equal(isValidCustomerShortName('NT RI'), false);
+    assert.equal(
+      isValidCustomerShortName('NITORI-HO CHI MINH', 'NITORI-HO CHI MINH'),
+      false
+    );
+  });
+
+  it('formats and parses project codes and computes MAX(seq) + 1', () => {
+    assert.equal(formatCustomerProjectCode('ntri', 1), 'NTRI 0001');
+    assert.equal(formatCustomerProjectCode('IKEA', 12), 'IKEA 0012');
+
+    assert.equal(parseCustomerProjectSequence('NTRI 0001', 'NTRI'), 1);
+    assert.equal(parseCustomerProjectSequence('ntri 0042', 'NTRI'), 42);
+    assert.equal(parseCustomerProjectSequence('NTR 001', 'NTR'), 1);
+    assert.equal(parseCustomerProjectSequence('IKEA 0001', 'NTRI'), null);
+
+    assert.equal(computeNextCustomerProjectCode('NTRI', []), 'NTRI 0001');
+    assert.equal(
+      computeNextCustomerProjectCode('NTRI', ['NTRI 0001', 'NTRI 0002', 'IKEA 0009']),
+      'NTRI 0003'
+    );
+    // Deleting middle/earlier project code must still advance past MAX
+    assert.equal(
+      computeNextCustomerProjectCode('NTRI', ['NTRI 0001', 'NTRI 0003']),
+      'NTRI 0004'
+    );
   });
 });
 

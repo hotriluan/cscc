@@ -625,3 +625,89 @@ export function paginateCcSteps(
     showTotalAndNotes
   }));
 }
+
+export const CUSTOMER_SHORT_NAME_MIN_LENGTH = 2;
+export const CUSTOMER_SHORT_NAME_MAX_LENGTH = 6;
+
+/**
+ * Normalizes a customer short name by trimming whitespace and converting to uppercase.
+ */
+export function normalizeCustomerShortName(raw: string | null | undefined): string {
+  return (raw ?? '').trim().toUpperCase();
+}
+
+/**
+ * Validates that a customer short name is 2-6 characters long (A-Z, 0-9, or hyphen)
+ * and has not been left as an unshortened long customer name.
+ */
+export function isValidCustomerShortName(
+  shortName: string | null | undefined,
+  customerName?: string | null
+): boolean {
+  const normalized = normalizeCustomerShortName(shortName);
+  if (
+    normalized.length < CUSTOMER_SHORT_NAME_MIN_LENGTH ||
+    normalized.length > CUSTOMER_SHORT_NAME_MAX_LENGTH
+  ) {
+    return false;
+  }
+  if (!/^[A-Z0-9-]+$/.test(normalized)) {
+    return false;
+  }
+  if (customerName) {
+    const normalizedCustomerName = customerName.trim().toUpperCase();
+    if (
+      normalizedCustomerName.length > CUSTOMER_SHORT_NAME_MAX_LENGTH &&
+      normalized === normalizedCustomerName
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Formats a customer-scoped project code as `[SHORT] [0001]`.
+ */
+export function formatCustomerProjectCode(shortName: string, sequenceNumber: number): string {
+  const normalized = normalizeCustomerShortName(shortName);
+  const seq = Math.max(1, Math.floor(sequenceNumber));
+  return `${normalized} ${String(seq).padStart(4, '0')}`;
+}
+
+/**
+ * Extracts the numeric sequence from a projectCode matching `${shortName} <digits>`.
+ */
+export function parseCustomerProjectSequence(
+  projectCode: string | null | undefined,
+  shortName: string
+): number | null {
+  const normalizedShort = normalizeCustomerShortName(shortName);
+  if (!normalizedShort) return null;
+  const code = (projectCode ?? '').trim().toUpperCase();
+  if (!code) return null;
+
+  const escapedPrefix = normalizedShort.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = code.match(new RegExp(`^${escapedPrefix}\\s+(\\d+)$`));
+  if (!match) return null;
+  const parsed = Number.parseInt(match[1], 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/**
+ * Computes the next `[SHORT] [0001]` project code by scanning MAX(sequence) + 1
+ * over existing project codes for the customer's short name.
+ */
+export function computeNextCustomerProjectCode(
+  shortName: string,
+  existingProjectCodes: Array<string | null | undefined>
+): string {
+  let maxSeq = 0;
+  for (const code of existingProjectCodes) {
+    const seq = parseCustomerProjectSequence(code, shortName);
+    if (seq !== null && seq > maxSeq) {
+      maxSeq = seq;
+    }
+  }
+  return formatCustomerProjectCode(shortName, maxSeq + 1);
+}

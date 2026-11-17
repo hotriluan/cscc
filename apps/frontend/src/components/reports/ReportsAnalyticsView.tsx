@@ -296,11 +296,11 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
     for (const c of list) {
       opts.push({
         value: c.customerId,
-        label: c.shortName,
+        label: c.customerName,
         sublabel: c.salesmanName
-          ? `${c.customerName} • Sales: ${c.salesmanName}`
-          : c.customerName,
-        badge: c.customerId,
+          ? `Short: ${c.shortName} • SAP: ${c.customerId} • Sales: ${c.salesmanName}`
+          : `Short: ${c.shortName} • SAP: ${c.customerId}`,
+        badge: c.shortName,
         badgeColor: 'emerald',
         keywords: `${c.customerId} ${c.shortName} ${c.customerName} ${c.salesmanName || ''}`
       });
@@ -1048,7 +1048,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                                   </td>
                                   <td className="px-3 py-2.5">
                                     <div className="font-bold text-slate-900">
-                                      {rev.customerShortName}
+                                      {rev.customerName || rev.customerShortName}
                                     </div>
                                     <div className="text-[10px] text-slate-500">
                                       ID: {rev.customerId}
@@ -1446,11 +1446,11 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                                       {c.customerId}
                                     </span>
                                     <span className="font-extrabold text-slate-900">
-                                      {c.shortName}
+                                      {c.customerName}
                                     </span>
                                   </div>
                                   <div className="text-[11px] text-slate-500">
-                                    {c.customerName}
+                                    Short Name: {c.shortName}
                                   </div>
                                 </td>
                                 <td className="px-3 py-2.5">
@@ -1505,7 +1505,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                                   <td colSpan={canViewCost ? 10 : 7} className="px-6 py-3">
                                     <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
                                       <div className="bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-700">
-                                        CS/CC Revisions of {c.shortName} / Danh sách hồ sơ CS/CC của khách hàng ({c.revisions.length} bản):
+                                        CS/CC Revisions of {c.customerName} / Danh sách hồ sơ CS/CC của khách hàng ({c.revisions.length} bản):
                                       </div>
                                       <table className="w-full text-[11px]">
                                         <thead>
@@ -1666,7 +1666,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                       </option>
                       {projects.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.projectCode} — {p.customer.shortName} (
+                          {p.projectCode} — {p.customer.customerName} (
                           {p.revisions.length} Revs)
                         </option>
                       ))}
@@ -1729,7 +1729,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                     <div>
                       <div className="flex items-center gap-2 text-xs font-extrabold">
                         <span className="text-blue-300">{comp.projectCode}</span>
-                        <span>— {comp.customerShortName}</span>
+                        <span>— {comp.customerName || comp.customerShortName}</span>
                         <span className="rounded bg-slate-800 px-2 py-0.5 text-[10px]">
                           {comp.totalRevisionsCount} Rev(s)
                         </span>
@@ -2112,7 +2112,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                             </td>
                             <td className="px-3 py-2">
                               <div className="font-semibold text-slate-900">
-                                {item.customerShortName}
+                                {item.customerName || item.customerShortName}
                               </div>
                               <div className="text-[10px] text-slate-500">
                                 {item.salesmanName || '-'}
@@ -2516,7 +2516,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                                 {alloc.status})
                               </td>
                               <td className="px-3 py-1.5">
-                                {alloc.customerShortName}
+                                {alloc.customerName || alloc.customerShortName}
                               </td>
                               <td className="px-3 py-1.5 text-slate-600">
                                 {alloc.productName} • {alloc.colorName}

@@ -7,7 +7,9 @@ import {
   PackingMapping,
   UserRole,
   UserAccount,
-  formatVnd
+  formatVnd,
+  isValidCustomerShortName,
+  normalizeCustomerShortName
 } from '@cscc/shared';
 import { apiClient } from '../../api/client';
 import { SearchableCombobox, ComboboxOption } from '../common/SearchableCombobox';
@@ -146,10 +148,10 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
     () =>
       customers.map((c) => ({
         value: c.customerId,
-        label: `${c.customerId} — ${c.shortName}`,
+        label: `${c.customerId} — ${c.customerName} (${c.shortName})`,
         sublabel: c.salesmanName
-          ? `${c.customerName} (Sales: ${c.salesmanName})`
-          : c.customerName
+          ? `Short: ${c.shortName} • Sales: ${c.salesmanName}`
+          : `Short: ${c.shortName}`
       })),
     [customers]
   );
@@ -227,12 +229,19 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
       setFormError(`Không thể lưu Khách hàng. Phần còn trống: ${missing.join(', ')}`);
       return;
     }
+    const normalizedShort = normalizeCustomerShortName(newCustShort);
+    if (!isValidCustomerShortName(normalizedShort, newCustName)) {
+      setFormError(
+        'Short Name phải từ 2 đến 6 ký tự (chữ in hoa, số hoặc "-", không có khoảng trắng) / Short Name must be 2–6 characters (uppercase/digits/hyphen, no spaces).'
+      );
+      return;
+    }
     setFormError(null);
     try {
       await apiClient.saveCustomer(role, {
         ...(editingCustId ? { id: editingCustId } : {}),
         customerId: newCustId.trim(),
-        shortName: newCustShort.trim(),
+        shortName: normalizedShort,
         customerName: newCustName.trim(),
         salesmanName: newCustSalesman.trim() || null
       });
@@ -925,10 +934,11 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
             />
             <input
               type="text"
-              placeholder="Short Name (VD: NITORI-HO CHI MINH)"
+              placeholder="Short Name (2-6 ký tự, VD: NTRI)"
+              maxLength={6}
               value={newCustShort}
-              onChange={(e) => setNewCustShort(e.target.value)}
-              className="rounded border border-slate-300 px-3 py-1.5 text-xs"
+              onChange={(e) => setNewCustShort(e.target.value.toUpperCase())}
+              className="rounded border border-slate-300 px-3 py-1.5 font-mono text-xs uppercase"
             />
             <input
               type="text"
@@ -1046,7 +1056,15 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                       {c.customerId}
                     </td>
                     <td className="border border-slate-200 px-3 py-1.5 font-semibold">
-                      {c.shortName}
+                      <span>{c.shortName}</span>
+                      {!isValidCustomerShortName(c.shortName, c.customerName) && (
+                        <span
+                          title="Short Name cần cập nhật về 2-6 ký tự để tạo hồ sơ mới / Needs 2-6 char Short Name"
+                          className="ml-1.5 inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-300"
+                        >
+                          Cần rút gọn (2-6 ký tự)
+                        </span>
+                      )}
                     </td>
                     <td className="border border-slate-200 px-3 py-1.5 text-slate-700">
                       {c.customerName}

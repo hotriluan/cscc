@@ -125,7 +125,7 @@ export async function generateAnalyticsReportWorkbook(
         row.materialCode,
         row.materialName,
         row.customerId,
-        row.customerShortName,
+        row.customerName || row.customerShortName,
         row.salesmanName || '-',
         row.projectCode,
         revStr,
@@ -271,7 +271,7 @@ export async function generateAnalyticsReportWorkbook(
     for (const p of overview.revisionVariance.projectComparisons) {
       const vals: (string | number)[] = [
         p.projectCode,
-        p.customerShortName,
+        p.customerName || p.customerShortName,
         p.salesmanName || '-',
         p.productName,
         `Rev ${String(p.baseRevisionNo).padStart(2, '0')} (${p.baseStatus})`,
@@ -346,7 +346,7 @@ export async function generateAnalyticsReportWorkbook(
         item.alertStatus,
         item.projectCode,
         `Rev ${String(item.revisionNo).padStart(2, '0')}`,
-        item.customerShortName,
+        item.customerName || item.customerShortName,
         item.salesmanName || '-',
         item.stepName,
         item.materialCode,

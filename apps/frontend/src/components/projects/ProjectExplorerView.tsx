@@ -4,8 +4,11 @@ import {
   Customer,
   UserRole,
   UserAccount,
-  formatVnd
+  formatVnd,
+  isValidCustomerShortName,
+  computeNextCustomerProjectCode
 } from '@cscc/shared';
+import { apiClient } from '../../api/client';
 import {
   FolderKanban,
   Search,
@@ -63,6 +66,8 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
   // New Project Form State (All empty by default so user never confuses pre-filled values)
   const [newCode, setNewCode] = React.useState('');
   const [newCustomerId, setNewCustomerId] = React.useState('');
+  const [shortNameWarning, setShortNameWarning] = React.useState<string | null>(null);
+  const [loadingNextCode, setLoadingNextCode] = React.useState(false);
   const [newProduct, setNewProduct] = React.useState('');
   const [newColor, setNewColor] = React.useState('');
   const [newSubstrate, setNewSubstrate] = React.useState('');
@@ -99,14 +104,15 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
       }
     ];
     for (const c of scopedCustomers) {
+      const validShort = isValidCustomerShortName(c.shortName, c.customerName);
       base.push({
         value: c.customerId,
-        label: c.shortName,
+        label: c.customerName,
         sublabel: c.salesmanName
-          ? `${c.customerName} • Sales: ${c.salesmanName}`
-          : c.customerName,
-        badge: c.customerId,
-        badgeColor: c.shortName !== c.customerName ? 'emerald' : 'slate',
+          ? `Short: ${c.shortName} • SAP: ${c.customerId} • Sales: ${c.salesmanName}`
+          : `Short: ${c.shortName} • SAP: ${c.customerId}`,
+        badge: c.shortName,
+        badgeColor: validShort ? 'emerald' : 'amber',
         keywords: `${c.customerId} ${c.shortName} ${c.customerName} ${c.salesmanName || ''}`
       });
     }
@@ -153,8 +159,47 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
     });
   }, [projects, searchQuery, customerFilter, statusFilter, assignedSalesman]);
 
+  const handleSelectNewCustomer = async (customerId: string) => {
+    setNewCustomerId(customerId);
+    const found = scopedCustomers.find((c) => c.customerId === customerId);
+    if (!found) {
+      setNewCode('');
+      setShortNameWarning(null);
+      return;
+    }
+
+    if (!isValidCustomerShortName(found.shortName, found.customerName)) {
+      setNewCode('');
+      setShortNameWarning(
+        `Khách hàng "${found.customerName}" chưa cập nhật Short Name hợp lệ (2–6 ký tự, hiện tại: "${found.shortName}"). Vui lòng vào Master Data -> Customers cập nhật Short Name trước. / Customer "${found.customerName}" needs a valid 2–6 character Short Name in Master Data -> Customers first.`
+      );
+      return;
+    }
+
+    setShortNameWarning(null);
+    const optimistic = computeNextCustomerProjectCode(
+      found.shortName,
+      projects.map((p) => p.projectCode)
+    );
+    setNewCode(optimistic);
+    setLoadingNextCode(true);
+    try {
+      const res = await apiClient.getNextProjectCode(role, found.customerId);
+      setNewCode(res.nextCode);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('Short Name')) {
+        setNewCode('');
+        setShortNameWarning(msg);
+      }
+    } finally {
+      setLoadingNextCode(false);
+    }
+  };
+
   const handleSubmitCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (shortNameWarning) return;
     const missing: string[] = [];
     if (!newCustomerId.trim()) missing.push('Khách hàng (Customer)');
     if (!newCode.trim()) missing.push('Mã Hồ sơ (No.)');
@@ -209,6 +254,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
             onClick={() => {
               setNewCustomerId('');
               setNewCode('');
+              setShortNameWarning(null);
               setNewProduct('');
               setNewColor('');
               setNewSubstrate('');
@@ -337,11 +383,10 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                       </td>
                       <td className="border border-slate-200 px-3.5 py-3">
                         <div className="font-bold text-slate-900">
-                          {proj.customer.shortName}
+                          {proj.customer.customerName}
                         </div>
                         <div className="text-[11px] text-slate-500 truncate max-w-[250px]">
-                          SAP: {proj.customer.customerId} •{' '}
-                          {proj.customer.customerName}
+                          Short: {proj.customer.shortName} • SAP: {proj.customer.customerId}
                           {proj.customer.salesmanName && (
                             <span className="font-semibold text-blue-700">
                               {' '}• Sales: {proj.customer.salesmanName}
@@ -481,7 +526,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                               onClick={async () => {
                                 if (
                                   window.confirm(
-                                    `Xác nhận xóa hồ sơ dự án "${proj.projectCode} — ${proj.customer.shortName}"?`
+                                    `Xác nhận xóa hồ sơ dự án "${proj.projectCode} — ${proj.customer.customerName}"?`
                                   )
                                 ) {
                                   await onDeleteProject(proj.id);
@@ -542,27 +587,34 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                   value={newCustomerId}
                   placeholder="-- Select Customer / Chọn Khách hàng --"
                   options={customerCreateOptions}
-                  onChange={(val) => setNewCustomerId(val)}
+                  onChange={(val) => {
+                    void handleSelectNewCustomer(val);
+                  }}
                   searchPlaceholder="Search customer or SAP code / Gõ tên KH hoặc mã SAP..."
                   popoverWidthClass="w-full"
                 />
+                {shortNameWarning && (
+                  <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+                    ⚠️ {shortNameWarning}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-600">
-                    No. / Mã Hồ sơ <span className="text-red-500">*</span>
+                    No. / Mã Hồ sơ <span className="text-[10px] font-semibold text-blue-600">(Auto / Tự động)</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. NTR 002 / Nhập mã hồ sơ..."
+                    readOnly
+                    placeholder={
+                      loadingNextCode
+                        ? 'Đang tính mã... / Computing...'
+                        : 'Chọn khách hàng để cấp mã tự động'
+                    }
                     value={newCode}
-                    onChange={(e) => setNewCode(e.target.value)}
-                    className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm font-bold focus:outline-none ${
-                      !newCode.trim()
-                        ? 'border-amber-400 bg-amber-50/50 placeholder:italic placeholder:font-normal placeholder:text-amber-700 focus:border-blue-600'
-                        : 'border-slate-300 focus:border-blue-600'
-                    }`}
+                    className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 font-mono text-sm font-bold text-slate-700 cursor-not-allowed focus:outline-none"
                   />
                 </div>
                 <div>
@@ -644,7 +696,8 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-sm"
+                  disabled={Boolean(shortNameWarning) || !newCode.trim() || loadingNextCode}
+                  className="rounded-lg bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 shadow-sm"
                 >
                   Create Project / Tạo Hồ sơ (Rev 00)
                 </button>

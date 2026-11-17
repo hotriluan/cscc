@@ -190,7 +190,7 @@ describe('CSCC Reports & Analytics System — 7 Reports, Revision Scope, Salesma
       headers: { 'Content-Type': 'application/json', 'x-user-role': 'ADMIN' },
       body: JSON.stringify({
         customerId: '1200001169',
-        shortName: 'NITORI-HO CHI MINH',
+        shortName: 'NTRI',
         customerName: 'DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM',
         salesmanName: 'Salesman Alpha'
       })
@@ -201,7 +201,7 @@ describe('CSCC Reports & Analytics System — 7 Reports, Revision Scope, Salesma
       headers: { 'Content-Type': 'application/json', 'x-user-role': 'ADMIN' },
       body: JSON.stringify({
         customerId: '99990001',
-        shortName: 'BETA FURNITURE',
+        shortName: 'BETA',
         customerName: 'CONG TY NOI THAT BETA',
         salesmanName: 'Salesman Beta'
       })
@@ -283,7 +283,7 @@ describe('CSCC Reports & Analytics System — 7 Reports, Revision Scope, Salesma
         headers: { 'Content-Type': 'application/json', 'x-user-role': 'ADMIN' },
         body: JSON.stringify({
           customerId: '1200001169',
-          shortName: 'NITORI-HO CHI MINH',
+          shortName: 'NTRI',
           customerName: 'DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM',
           salesmanName: null
         })

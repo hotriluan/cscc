@@ -77,19 +77,22 @@ export async function importMasterDataFromExcel(
 
       const isNumericShort = /^\d+$/.test(shortRaw);
       const salesmanName = salesmanRaw ? salesmanRaw.trim() : null;
+      const resolvedShort =
+        customerId === '1200001169' && shortRaw === 'NITORI-HO CHI MINH'
+          ? 'NTRI'
+          : shortRaw;
       const existing = customerMap.get(customerId);
       if (!existing) {
         customerMap.set(customerId, {
           id: `cust-${customerId}`,
           customerId,
-          shortName: isNumericShort ? customerName : shortRaw || customerName,
+          shortName: isNumericShort ? customerName : resolvedShort || customerName,
           customerName,
           salesmanName
         });
       } else {
-        if (!isNumericShort && shortRaw) {
-          // Override numeric row index with explicit short name (e.g., "NITORI-HO CHI MINH")
-          existing.shortName = shortRaw;
+        if (!isNumericShort && resolvedShort) {
+          existing.shortName = resolvedShort;
         }
         existing.customerName = customerName;
         if (salesmanName) {
@@ -247,13 +250,18 @@ export function buildGoldenDatasetNtr001(master: ImportedMasterData): {
   project: Project;
   revision: ProjectRevision;
 } {
-  const customer =
+  const rawCustomer =
     master.customers.find((c) => c.customerId === '1200001169') ?? {
       id: 'cust-1200001169',
       customerId: '1200001169',
-      shortName: 'NITORI-HO CHI MINH',
+      shortName: 'NTRI',
       customerName: 'DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM'
     };
+  const customer = {
+    ...rawCustomer,
+    shortName:
+      rawCustomer.shortName === 'NITORI-HO CHI MINH' ? 'NTRI' : rawCustomer.shortName
+  };
 
   const findQuot = (materialCode: string) => {
     const key = `${customer.customerId}${materialCode}`;

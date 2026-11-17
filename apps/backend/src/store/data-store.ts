@@ -14,8 +14,25 @@ import {
   UserRole,
   PaginatedResponse,
   parseCaInput,
-  calculateCoatingCostTable
+  calculateCoatingCostTable,
+  normalizeCustomerShortName,
+  isValidCustomerShortName,
+  formatCustomerProjectCode,
+  parseCustomerProjectSequence,
+  computeNextCustomerProjectCode
 } from '@cscc/shared';
+
+export class BusinessValidationError extends Error {
+  public readonly status: number;
+  public readonly code: string;
+
+  constructor(status: number, code: string, message: string) {
+    super(message);
+    this.name = 'BusinessValidationError';
+    this.status = status;
+    this.code = code;
+  }
+}
 import type { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
 import {
@@ -874,7 +891,14 @@ class PostgresDataStore {
   }): Promise<{ customer: Customer; created: boolean }> {
     const cleanCode = input.customerId.trim();
     const cleanName = input.customerName.trim();
-    const cleanShort = (input.shortName || cleanName).trim();
+    const cleanShort = normalizeCustomerShortName(input.shortName);
+    if (!isValidCustomerShortName(cleanShort, cleanName)) {
+      throw new BusinessValidationError(
+        400,
+        'INVALID_CUSTOMER_SHORT_NAME',
+        'Short Name phải từ 2 đến 6 ký tự (chữ in hoa/số, không khoảng trắng) / Short Name must be 2–6 characters (uppercase/digits, no spaces).'
+      );
+    }
     const cleanSalesman =
       input.salesmanName !== undefined
         ? input.salesmanName
@@ -917,17 +941,33 @@ class PostgresDataStore {
     const existing = await prisma.customer.findUnique({ where: { id } });
     if (!existing) return null;
 
+    const nextCustomerName =
+      input.customerName !== undefined
+        ? String(input.customerName).trim()
+        : existing.customerName;
+    const nextShortName =
+      input.shortName !== undefined
+        ? normalizeCustomerShortName(String(input.shortName))
+        : existing.shortName;
+
+    if (
+      input.shortName !== undefined &&
+      !isValidCustomerShortName(nextShortName, nextCustomerName)
+    ) {
+      throw new BusinessValidationError(
+        400,
+        'INVALID_CUSTOMER_SHORT_NAME',
+        'Short Name phải từ 2 đến 6 ký tự (chữ in hoa/số, không khoảng trắng) / Short Name must be 2–6 characters (uppercase/digits, no spaces).'
+      );
+    }
+
     const updated = await prisma.customer.update({
       where: { id },
       data: {
         customerId:
           input.customerId !== undefined ? String(input.customerId).trim() : existing.customerId,
-        shortName:
-          input.shortName !== undefined ? String(input.shortName).trim() : existing.shortName,
-        customerName:
-          input.customerName !== undefined
-            ? String(input.customerName).trim()
-            : existing.customerName,
+        shortName: nextShortName,
+        customerName: nextCustomerName,
         salesmanName:
           input.salesmanName !== undefined
             ? input.salesmanName
@@ -1734,6 +1774,80 @@ class PostgresDataStore {
     }));
   }
 
+  private buildInvalidShortNameMessage(customer: {
+    customerName: string;
+    customerId: string;
+    shortName: string;
+  }): string {
+    return `Khách hàng "${customer.customerName}" (${customer.customerId}) chưa có Short Name hợp lệ (2–6 ký tự, hiện tại: "${customer.shortName}"). Vui lòng cập nhật Short Name cho khách hàng này tại mục Master Data -> Customers trước. / Customer "${customer.customerName}" (${customer.customerId}) does not have a valid 2–6 character Short Name (current: "${customer.shortName}"). Please update it in Master Data -> Customers first.`;
+  }
+
+  private async computeUniqueNextCode(
+    db: Pick<typeof prisma, 'project'>,
+    customer: {
+      id: string;
+      customerId: string;
+      shortName: string;
+      customerName: string;
+    },
+    excludeProjectId?: string
+  ): Promise<string> {
+    if (!isValidCustomerShortName(customer.shortName, customer.customerName)) {
+      throw new BusinessValidationError(
+        400,
+        'INVALID_CUSTOMER_SHORT_NAME',
+        this.buildInvalidShortNameMessage(customer)
+      );
+    }
+
+    const normalizedShort = normalizeCustomerShortName(customer.shortName);
+    const matchingProjects = await db.project.findMany({
+      where: {
+        ...(excludeProjectId ? { id: { not: excludeProjectId } } : {}),
+        OR: [
+          { customerId: customer.id },
+          { projectCode: { startsWith: `${normalizedShort} `, mode: 'insensitive' } }
+        ]
+      },
+      select: { projectCode: true }
+    });
+
+    const codes = matchingProjects.map((p) => p.projectCode);
+    let candidate = computeNextCustomerProjectCode(normalizedShort, codes);
+    let seq = parseCustomerProjectSequence(candidate, normalizedShort) ?? 1;
+
+    while (true) {
+      const collision = await db.project.findFirst({
+        where: {
+          projectCode: candidate,
+          ...(excludeProjectId ? { id: { not: excludeProjectId } } : {})
+        },
+        select: { id: true }
+      });
+      if (!collision) break;
+      seq += 1;
+      candidate = formatCustomerProjectCode(normalizedShort, seq);
+    }
+
+    return candidate;
+  }
+
+  public async previewNextProjectCode(
+    customerIdOrCode: string,
+    excludeProjectId?: string
+  ): Promise<{ customer: Customer; nextCode: string }> {
+    const customerRecord = await prisma.customer.findFirst({
+      where: {
+        OR: [{ id: customerIdOrCode }, { customerId: customerIdOrCode }]
+      }
+    });
+    if (!customerRecord) {
+      throw new BusinessValidationError(404, 'CUSTOMER_NOT_FOUND', 'Customer not found');
+    }
+    const nextCode = await this.computeUniqueNextCode(prisma, customerRecord, excludeProjectId);
+    return { customer: mapCustomerDto(customerRecord), nextCode };
+  }
+
   public async createProject(input: {
     projectCode?: string;
     customerId?: string;
@@ -1758,23 +1872,17 @@ class PostgresDataStore {
       throw new Error('Valid customer is required');
     }
 
-    const totalProjects = await prisma.project.count();
     const now = new Date();
     const nowIso = now.toISOString();
     const projId = `proj-${Date.now().toString(36)}`;
     const revId = `rev-${projId}-00`;
-    let code = String(input.projectCode || `PRJ-${totalProjects + 1}`).trim();
-
-    // Ensure unique projectCode if user supplied an existing one
-    const existingCode = await prisma.project.findUnique({ where: { projectCode: code } });
-    if (existingCode) {
-      code = `${code}-${Date.now().toString(36).slice(-3).toUpperCase()}`;
-    }
 
     const stepId = `${revId}-step-1`;
     const itemId = `${revId}-step-1-item-1`;
 
     await prisma.$transaction(async (tx) => {
+      const code = await this.computeUniqueNextCode(tx, customerRecord);
+
       await tx.project.create({
         data: {
           id: projId,
@@ -2039,7 +2147,12 @@ class PostgresDataStore {
     }
 
     let activeCustomerCode = existing.customer.customerId;
-    let newCustomerId: string | undefined;
+    let newCustomerRecord: {
+      id: string;
+      customerId: string;
+      shortName: string;
+      customerName: string;
+    } | null = null;
 
     if (body.customerId && typeof body.customerId === 'string') {
       const foundCustomer = await prisma.customer.findFirst({
@@ -2047,14 +2160,22 @@ class PostgresDataStore {
           OR: [{ id: body.customerId }, { customerId: body.customerId }]
         }
       });
-      if (foundCustomer) {
-        newCustomerId = foundCustomer.id;
+      if (!foundCustomer) {
+        return { ok: false, status: 404, error: 'CUSTOMER_NOT_FOUND', message: 'Customer not found' };
+      }
+      if (foundCustomer.id !== existing.customer.id) {
+        if (!isValidCustomerShortName(foundCustomer.shortName, foundCustomer.customerName)) {
+          return {
+            ok: false,
+            status: 400,
+            error: 'INVALID_CUSTOMER_SHORT_NAME',
+            message: this.buildInvalidShortNameMessage(foundCustomer)
+          };
+        }
+        newCustomerRecord = foundCustomer;
         activeCustomerCode = foundCustomer.customerId;
       }
     }
-
-    const newProjectCode =
-      body.projectCode !== undefined ? String(body.projectCode).trim() : undefined;
 
     const enrichedSteps = Array.isArray(body.steps)
       ? await this.enrichRevisionStepsWithMasterData(
@@ -2065,12 +2186,17 @@ class PostgresDataStore {
       : null;
 
     await prisma.$transaction(async (tx) => {
-      if (newCustomerId || newProjectCode) {
+      if (newCustomerRecord) {
+        const nextProjectCode = await this.computeUniqueNextCode(
+          tx,
+          newCustomerRecord,
+          existing.projectId
+        );
         await tx.project.update({
           where: { id: existing.projectId },
           data: {
-            ...(newCustomerId ? { customerId: newCustomerId } : {}),
-            ...(newProjectCode ? { projectCode: newProjectCode } : {})
+            customerId: newCustomerRecord.id,
+            projectCode: nextProjectCode
           }
         });
       }

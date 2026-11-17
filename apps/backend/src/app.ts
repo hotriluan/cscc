@@ -12,7 +12,7 @@ import {
   RevisionStatus,
   UserRole
 } from '@cscc/shared';
-import { dataStore } from './store/data-store';
+import { BusinessValidationError, dataStore } from './store/data-store';
 import {
   extractRoleMiddleware,
   requireCostAccessMiddleware,
@@ -250,6 +250,10 @@ export function createApp() {
       }
       res.json(updated);
     } catch (err) {
+      if (err instanceof BusinessValidationError) {
+        res.status(err.status).json({ error: err.code, message: err.message });
+        return;
+      }
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
   });
@@ -317,6 +321,10 @@ export function createApp() {
       });
       res.status(created ? 201 : 200).json(customer);
     } catch (err) {
+      if (err instanceof BusinessValidationError) {
+        res.status(err.status).json({ error: err.code, message: err.message });
+        return;
+      }
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
   });
@@ -330,7 +338,7 @@ export function createApp() {
         const sheet = workbook.addWorksheet('Customer');
         sheet.addRow(['Short Name', 'Customer ID', 'Customer Name', 'Salesman Name']);
         sheet.addRow([
-          'NITORI-HO CHI MINH',
+          'NTRI',
           '1200001169',
           'DOANH NGHIỆP CHẾ XUẤT NITORI VIỆT NAM',
           'Nguyễn Văn A'
@@ -419,6 +427,10 @@ export function createApp() {
       }
       res.json(updated);
     } catch (err) {
+      if (err instanceof BusinessValidationError) {
+        res.status(err.status).json({ error: err.code, message: err.message });
+        return;
+      }
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
   });
@@ -627,6 +639,10 @@ export function createApp() {
       }
       res.json(updated);
     } catch (err) {
+      if (err instanceof BusinessValidationError) {
+        res.status(err.status).json({ error: err.code, message: err.message });
+        return;
+      }
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
   });
@@ -713,6 +729,10 @@ export function createApp() {
       }
       res.json(updated);
     } catch (err) {
+      if (err instanceof BusinessValidationError) {
+        res.status(err.status).json({ error: err.code, message: err.message });
+        return;
+      }
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
   });
@@ -763,6 +783,10 @@ export function createApp() {
       }
       res.json(updated);
     } catch (err) {
+      if (err instanceof BusinessValidationError) {
+        res.status(err.status).json({ error: err.code, message: err.message });
+        return;
+      }
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
   });
@@ -823,6 +847,10 @@ export function createApp() {
       }
       res.json(updated);
     } catch (err) {
+      if (err instanceof BusinessValidationError) {
+        res.status(err.status).json({ error: err.code, message: err.message });
+        return;
+      }
       res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
     }
   });
@@ -918,6 +946,37 @@ export function createApp() {
     }
   });
 
+  app.get('/api/projects/next-code', async (req, res) => {
+    try {
+      const customerId =
+        typeof req.query.customerId === 'string' ? req.query.customerId.trim() : '';
+      if (!customerId) {
+        res.status(400).json({ error: 'customerId is required' });
+        return;
+      }
+      const excludeProjectId =
+        typeof req.query.excludeProjectId === 'string'
+          ? req.query.excludeProjectId.trim()
+          : undefined;
+      const { customer, nextCode } = await dataStore.previewNextProjectCode(
+        customerId,
+        excludeProjectId || undefined
+      );
+      res.json({
+        nextCode,
+        shortName: customer.shortName,
+        customerId: customer.customerId,
+        customerName: customer.customerName
+      });
+    } catch (err) {
+      if (err instanceof BusinessValidationError) {
+        res.status(err.status).json({ error: err.code, message: err.message });
+        return;
+      }
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
   app.post('/api/projects', async (req, res) => {
     try {
       const { project, revision } = await dataStore.createProject(req.body || {});
@@ -926,6 +985,10 @@ export function createApp() {
         revision: redactRevisionForRole(revision, req.userRole)
       });
     } catch (err) {
+      if (err instanceof BusinessValidationError) {
+        res.status(err.status).json({ error: err.code, message: err.message });
+        return;
+      }
       res.status(400).json({
         error: err instanceof Error ? err.message : String(err)
       });
