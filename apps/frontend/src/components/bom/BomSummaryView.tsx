@@ -24,6 +24,27 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
 }) => {
   const showPrice = role !== 'TECHNICAL';
 
+  const sortedItems = React.useMemo(
+    () =>
+      [...bomSummary.items].sort((a, b) =>
+        (a.materialName || a.materialCode).localeCompare(
+          b.materialName || b.materialCode,
+          'vi',
+          { sensitivity: 'base' }
+        )
+      ),
+    [bomSummary.items]
+  );
+
+  const totalCaPlusLossGramPerM2 = React.useMemo(
+    () =>
+      bomSummary.items.reduce(
+        (sum, item) => sum + item.totalCaPlusLossGramPerM2Raw,
+        0
+      ),
+    [bomSummary.items]
+  );
+
   return (
     <div className="space-y-5">
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -121,7 +142,7 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
               </tr>
             </thead>
             <tbody>
-              {bomSummary.items.map((item, idx) => (
+              {sortedItems.map((item, idx) => (
                 <tr
                   key={item.materialCode}
                   className="hover:bg-slate-50 transition border-b border-slate-200"
@@ -151,21 +172,30 @@ export const BomSummaryView: React.FC<BomSummaryViewProps> = ({
                 </tr>
               ))}
             </tbody>
-            {showPrice && (
-              <tfoot>
-                <tr className="bg-slate-50">
-                  <td
-                    colSpan={5}
-                    className="border border-slate-200 px-3 py-2.5 text-right font-bold uppercase text-red-600"
-                  >
-                    Total / Tổng cộng
-                  </td>
-                  <td className="border border-slate-200 bg-emerald-50/40 px-3 py-2.5 text-right font-extrabold text-red-600">
-                    {formatVnd(bomSummary.totalProjectMaterialCostDisplay)}
-                  </td>
-                </tr>
-              </tfoot>
-            )}
+            <tfoot>
+              <tr className="bg-slate-50">
+                <td
+                  colSpan={2}
+                  className="border border-slate-200 px-3 py-2.5 text-right font-bold uppercase text-red-600"
+                >
+                  Total / Tổng cộng
+                </td>
+                <td className="border border-slate-200 px-3 py-2.5 text-right font-extrabold text-red-600">
+                  {totalCaPlusLossGramPerM2.toFixed(2)} g/m²
+                </td>
+                <td className="border border-slate-200 bg-blue-50/40 px-3 py-2.5 text-right font-extrabold text-red-600">
+                  {bomSummary.totalRequiredKgOrLtrDisplay.toFixed(2)} Kg
+                </td>
+                {showPrice && (
+                  <>
+                    <td className="border border-slate-200 px-3 py-2.5" />
+                    <td className="border border-slate-200 bg-emerald-50/40 px-3 py-2.5 text-right font-extrabold text-red-600">
+                      {formatVnd(bomSummary.totalProjectMaterialCostDisplay)}
+                    </td>
+                  </>
+                )}
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
