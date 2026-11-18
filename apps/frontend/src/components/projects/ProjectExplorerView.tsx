@@ -619,8 +619,8 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-bold uppercase text-slate-600">
                     No. / Mã Hồ sơ <span className="text-[10px] font-semibold text-blue-600">(Auto / Tự động)</span>
                   </label>
                   <input
@@ -632,11 +632,11 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                         : 'Chọn khách hàng để cấp mã tự động'
                     }
                     value={newCode}
-                    className="mt-1 w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 font-mono text-sm font-bold text-slate-700 cursor-not-allowed focus:outline-none"
+                    className="mt-auto w-full rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 font-mono text-sm font-bold text-slate-700 cursor-not-allowed focus:outline-none"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-bold uppercase text-slate-600">
                     Product Item / Tên Sản phẩm <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -644,7 +644,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                     placeholder="e.g. TABLE / Nhập sản phẩm..."
                     value={newProduct}
                     onChange={(e) => setNewProduct(e.target.value)}
-                    className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
+                    className={`mt-auto w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
                       !newProduct.trim()
                         ? 'border-amber-400 bg-amber-50/50 placeholder:italic placeholder:text-amber-700 focus:border-blue-600'
                         : 'border-slate-300 focus:border-blue-600'
@@ -670,8 +670,8 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-bold uppercase text-slate-600">
                     Color / Màu sắc <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -679,15 +679,15 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                     placeholder="Enter color / Nhập màu..."
                     value={newColor}
                     onChange={(e) => setNewColor(e.target.value)}
-                    className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
+                    className={`mt-auto w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
                       !newColor.trim()
                         ? 'border-amber-400 bg-amber-50/50 placeholder:italic placeholder:text-amber-700 focus:border-blue-600'
                         : 'border-slate-300 focus:border-blue-600'
                     }`}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-bold uppercase text-slate-600">
                     Substrate Type / Loại Vật Liệu <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -695,18 +695,18 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                     placeholder="Enter substrate / Nhập loại gỗ..."
                     value={newSubstrate}
                     onChange={(e) => setNewSubstrate(e.target.value)}
-                    className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
+                    className={`mt-auto w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
                       !newSubstrate.trim()
                         ? 'border-amber-400 bg-amber-50/50 placeholder:italic placeholder:text-amber-700 focus:border-blue-600'
                         : 'border-slate-300 focus:border-blue-600'
                     }`}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase text-slate-600">
+                <div className="flex flex-col justify-between">
+                  <label className="mb-1 block text-xs font-bold uppercase text-slate-600">
                     Finishing System / Hệ sơn <span className="text-red-500">*</span>
                   </label>
-                  <div className="mt-1">
+                  <div className="mt-auto">
                     <SearchableCombobox
                       value={newSystem}
                       options={finishingSystemOptions}
