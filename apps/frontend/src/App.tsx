@@ -1957,6 +1957,24 @@ export function App() {
                 <CoatingCostTable
                   revision={activeRevision}
                   costSummary={liveCostSummary}
+                  isReadOnly={
+                    activeRevision.status === 'LOCKED' ||
+                    activeRevision.status === 'APPROVED' ||
+                    activeRevision.status === 'INACTIVE' ||
+                    isCustomerOutOfScopeForRevision(activeRevision)
+                  }
+                  onChangeRemark={(nextRemark) => {
+                    const updated: ProjectRevision = {
+                      ...activeRevision,
+                      remark: nextRemark
+                    };
+                    latestRevisionRef.current = updated;
+                    setActiveRevision(updated);
+                    scheduleAutoSave(updated, latestAreaRef.current, 'typing');
+                  }}
+                  onFlushAutoSave={() => {
+                    void flushAutoSave();
+                  }}
                 />
               )}
 

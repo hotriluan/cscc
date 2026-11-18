@@ -13,17 +13,26 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  FileText,
+  Lock,
+  X
 } from 'lucide-react';
 
 interface CoatingCostTableProps {
   revision: ProjectRevision;
   costSummary: CoatingCostSummary;
+  isReadOnly?: boolean;
+  onChangeRemark?: (remark: string) => void;
+  onFlushAutoSave?: () => void;
 }
 
 export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
   revision,
-  costSummary
+  costSummary,
+  isReadOnly = false,
+  onChangeRemark,
+  onFlushAutoSave
 }) => {
   const revCode = String(revision.revisionNo).padStart(2, '0');
 
@@ -416,16 +425,69 @@ export const CoatingCostTable: React.FC<CoatingCostTableProps> = ({
         )}
 
         {/* Notes & Remark Footer matching reference image */}
-        <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700 space-y-1">
+        <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700 space-y-2.5">
           <div className="italic text-slate-600">
             Notes: The price above is not including VAT 8% and valid for 30 days / Ghi chú: Đơn giá trên chưa bao gồm thuế VAT 8% và có hiệu lực trong 30 ngày.
           </div>
-          {revision.remark && (
-            <div>
-              <strong>REMARK / GHI CHÚ:</strong> {revision.remark}
+
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+              <label
+                htmlFor="cc-manual-remark"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800"
+              >
+                <FileText className="h-3.5 w-3.5 text-emerald-700" />
+                <span>REMARK / GHI CHÚ:</span>
+                <span className="font-normal text-[11px] text-slate-500">
+                  (Hiển thị trên bản in A4 / PDF)
+                </span>
+              </label>
+
+              {isReadOnly ? (
+                <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                  <Lock className="h-3 w-3" />
+                  Đã khóa chỉnh sửa
+                </span>
+              ) : (
+                onChangeRemark &&
+                Boolean(revision.remark) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChangeRemark('');
+                      onFlushAutoSave?.();
+                    }}
+                    className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                  >
+                    <X className="h-3 w-3" />
+                    Xóa ghi chú
+                  </button>
+                )
+              )}
             </div>
-          )}
-          <div className="flex items-center gap-1.5 pt-1 text-[11px] text-slate-500">
+
+            {onChangeRemark && !isReadOnly ? (
+              <textarea
+                id="cc-manual-remark"
+                rows={2}
+                value={revision.remark ?? ''}
+                onChange={(e) => onChangeRemark(e.target.value)}
+                onBlur={() => onFlushAutoSave?.()}
+                placeholder="Nhập Remark / Ghi chú thủ công (ví dụ: THỰC TẾ HAO HỤT KHOẢNG 40%, điều kiện báo giá bổ sung...)..."
+                className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+              />
+            ) : revision.remark?.trim() ? (
+              <div className="whitespace-pre-line rounded-md bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800">
+                {revision.remark}
+              </div>
+            ) : (
+              <div className="text-[11px] italic text-slate-400">
+                Chưa có Remark / Ghi chú.
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 pt-0.5 text-[11px] text-slate-500">
             <Info className="h-3.5 w-3.5 text-emerald-700 shrink-0" />
             <span>
               Exact IEEE-754 precision maintained for intermediate steps, rounded only for final display / Giữ nguyên độ chính xác số thực IEEE-754 ở các bước trung gian, chỉ làm tròn ở bước hiển thị cuối cùng.

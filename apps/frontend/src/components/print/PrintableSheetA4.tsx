@@ -162,7 +162,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
         <strong>Buyer / Nhà mua hàng:</strong> {revision.buyer || ''}
       </div>
       <div className="min-w-0 break-words">
-        <strong>Substrate Type / Loại gỗ:</strong> {revision.substrate}
+        <strong>Substrate Type / Loại Vật Liệu:</strong> {revision.substrate}
       </div>
       <div className="min-w-0 break-words">
         <strong>MC Wood / Độ ẩm gỗ:</strong> {keepRangesTogether(revision.mcWood)}
@@ -176,7 +176,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
         <strong>Positioning / Vị trí:</strong> {revision.positioning}
       </div>
       <div className="min-w-0 break-words">
-        <strong>Humidity / Độ ẩm:</strong> {keepRangesTogether(revision.roomHumidity)}
+        <strong>Max Humidity / Độ ẩm Tối Đa:</strong> {keepRangesTogether(revision.roomHumidity)}
       </div>
 
       {/* Row 3 */}
@@ -357,7 +357,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
           CUSTOMER / KHÁCH HÀNG
         </div>
         <div className="flex items-center justify-center border-r border-slate-900 p-1">
-          PD/PM / PHÒNG DỰ ÁN
+          PD / PHÒNG PHÁT TRIỂN SẢN PHẨM
         </div>
         <div className="flex items-center justify-center border-r border-slate-900 p-1">
           TA / KỸ THUẬT
@@ -553,9 +553,9 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
         Ghi chú: Đơn giá trên chưa bao gồm thuế VAT 8% và có hiệu lực trong 30
         ngày.
       </div>
-      {revision.remark && (
-        <div>
-          <strong>REMARK / GHI CHÚ:</strong> {revision.remark}
+      {revision.remark?.trim() && (
+        <div className="whitespace-pre-line">
+          <strong>REMARK / GHI CHÚ:</strong> {revision.remark.trim()}
         </div>
       )}
     </div>
