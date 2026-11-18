@@ -330,4 +330,35 @@ describe('Auto-Generate Project Code ([SHORT][0001]) & Customer Name Display', (
       'Reference / Tiêu chuẩn tham chiếu: ANSI/BIFMA X5.5'
     );
   });
+
+  it('8. Leaves unentered Coating Schedule fields empty on new project creation', async () => {
+    const createRes = await fetch(`${baseUrl}/api/projects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
+      body: JSON.stringify({
+        customerId: ntriCustomerId
+      })
+    });
+    assert.equal(createRes.status, 201);
+    const { revision } = (await createRes.json()) as { revision: ProjectRevision };
+
+    assert.equal(revision.buyer, '');
+    assert.equal(revision.productName, '');
+    assert.equal(revision.colorName, '');
+    assert.equal(revision.substrate, '');
+    assert.equal(revision.positioning, '');
+    assert.equal(revision.finishingSystem, '');
+    assert.equal(revision.glossLevel, '');
+    assert.equal(revision.referenceStandard, '');
+    assert.equal(revision.mcWood, '');
+    assert.equal(revision.roomHumidity, '');
+    assert.equal(revision.roomTemp, '');
+    assert.equal(revision.lineSpeed, '');
+    assert.equal(revision.dryingCondition, '');
+    assert.equal(revision.remark, '');
+    assert.equal(revision.preparedByTa, '');
+    assert.equal(revision.checkedByLeader, '');
+    assert.equal(revision.approvedByPdPm, '');
+    assert.equal(revision.customerConfirmName, '');
+  });
 });

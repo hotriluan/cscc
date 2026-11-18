@@ -135,9 +135,9 @@ model ProjectRevision {
   referenceStandard   String         // e.g., "THEO MẪU KHÁCH HÀNG"
 
   // Finishing conditions
-  mcWood              String         @default("<12%")
-  roomHumidity        String         @default("<80%")
-  roomTemp            String         @default("<35 oC")
+  mcWood              String         @default("")
+  roomHumidity        String         @default("")
+  roomTemp            String         @default("")
   lineSpeed           String?
   dryingCondition     String?
   remark              String?
