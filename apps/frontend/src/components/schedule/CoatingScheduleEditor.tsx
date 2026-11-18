@@ -6,6 +6,7 @@ import {
   Customer,
   QuotationItem,
   ApplicationStepMaster,
+  FinishingSystemMaster,
   ApplicationMethod,
   UserAccount,
   UserRole,
@@ -119,6 +120,7 @@ interface CoatingScheduleEditorProps {
   customers: Customer[];
   quotations: QuotationItem[];
   stepsMaster: ApplicationStepMaster[];
+  finishingSystemsMaster: FinishingSystemMaster[];
   methodsMaster: ApplicationMethod[];
   role?: UserRole;
   currentUser?: UserAccount | null;
@@ -132,6 +134,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
   customers,
   quotations,
   stepsMaster,
+  finishingSystemsMaster,
   methodsMaster,
   role,
   currentUser,
@@ -158,6 +161,17 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
     revision.status === 'APPROVED' ||
     revision.status === 'INACTIVE' ||
     isCustomerOutOfScope;
+
+  const finishingSystemOptions = React.useMemo<ComboboxOption[]>(
+    () =>
+      finishingSystemsMaster.map((fs) => ({
+        value: fs.systemName,
+        label: fs.systemName,
+        badge: `#${fs.sortOrder}`,
+        badgeColor: 'slate'
+      })),
+    [finishingSystemsMaster]
+  );
   const revCode = String(revision.revisionNo).padStart(2, '0');
 
   // UX/UI Scroll & Layout states
@@ -1156,20 +1170,21 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
                   <label className="mb-1 block text-xs font-semibold uppercase text-slate-600">
                     Finishing System / Hệ sơn
                   </label>
-                  <input
-                    type="text"
-                    disabled={isLocked}
-                    placeholder="Enter system / Nhập hệ sơn..."
-                    value={revision.finishingSystem}
-                    onChange={(e) =>
-                      handleHeaderChange('finishingSystem', e.target.value)
-                    }
-                    className={`mt-auto w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none disabled:bg-slate-100 ${
-                      !revision.finishingSystem?.trim()
-                        ? 'border-amber-400 bg-amber-50/60 placeholder:italic placeholder:text-amber-700 focus:border-blue-600'
-                        : 'border-slate-300 focus:border-blue-600'
-                    }`}
-                  />
+                  <div className="mt-auto">
+                    <SearchableCombobox
+                      disabled={isLocked}
+                      value={revision.finishingSystem || ''}
+                      displayValue={revision.finishingSystem || undefined}
+                      options={finishingSystemOptions}
+                      placeholder="-- Select System / Chọn Hệ sơn --"
+                      searchPlaceholder="Search finishing system / Tìm hệ sơn..."
+                      emptyMessage="Không tìm thấy hệ sơn phù hợp trong Master Data"
+                      highlightEmpty={true}
+                      onChange={(val) =>
+                        handleHeaderChange('finishingSystem', val, 'discrete')
+                      }
+                    />
+                  </div>
                 </div>
                 <div className="flex flex-col justify-between">
                   <label className="mb-1 block text-xs font-semibold uppercase text-slate-600">

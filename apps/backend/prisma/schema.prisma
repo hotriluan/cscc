@@ -69,6 +69,13 @@ model ApplicationStepMaster {
   sortOrder Int    @default(0)
 }
 
+// 3b. Sheet: Finishing System Master
+model FinishingSystemMaster {
+  id         String @id @default(uuid())
+  systemName String @unique // e.g., "WATERBASE", "NC-PU", "PU", "UV"
+  sortOrder  Int    @default(0)
+}
+
 // 4. Sheet: app-method
 model ApplicationMethod {
   id         String @id @default(uuid())

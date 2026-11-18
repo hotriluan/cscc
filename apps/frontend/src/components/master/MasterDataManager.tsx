@@ -3,6 +3,7 @@ import {
   Customer,
   QuotationItem,
   ApplicationStepMaster,
+  FinishingSystemMaster,
   ApplicationMethod,
   PackingMapping,
   UserRole,
@@ -20,6 +21,7 @@ import {
   Users,
   FileSpreadsheet,
   ListChecks,
+  Layers,
   Gauge,
   Package,
   Plus,
@@ -39,6 +41,7 @@ export type MasterSubTab =
   | 'CUSTOMERS'
   | 'QUOTATIONS'
   | 'STEPS'
+  | 'FINISHING_SYSTEMS'
   | 'METHODS'
   | 'PACKINGS'
   | 'USERS';
@@ -49,6 +52,7 @@ interface MasterDataManagerProps {
   customers: Customer[];
   quotations: QuotationItem[];
   stepsMaster: ApplicationStepMaster[];
+  finishingSystemsMaster: FinishingSystemMaster[];
   methodsMaster: ApplicationMethod[];
   packingsMaster: PackingMapping[];
   activeSubTab?: MasterSubTab;
@@ -62,6 +66,7 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
   customers,
   quotations,
   stepsMaster,
+  finishingSystemsMaster,
   methodsMaster,
   packingsMaster,
   activeSubTab,
@@ -124,6 +129,11 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
   const [newStepName, setNewStepName] = React.useState('');
   const [newStepOrder, setNewStepOrder] = React.useState('');
   const [editingStepId, setEditingStepId] = React.useState<string | null>(null);
+
+  // New Finishing System Form (Empty by default)
+  const [newSystemName, setNewSystemName] = React.useState('');
+  const [newSystemOrder, setNewSystemOrder] = React.useState('');
+  const [editingSystemId, setEditingSystemId] = React.useState<string | null>(null);
 
   // New Method Form (All empty by default)
   const [newMethodName, setNewMethodName] = React.useState('');
@@ -488,6 +498,62 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
     setNewStepOrder(String(s.sortOrder));
   };
 
+  const filteredFinishingSystems = React.useMemo(() => {
+    const q = debouncedQuery.toLowerCase();
+    if (!q) return finishingSystemsMaster;
+    return finishingSystemsMaster.filter((fs) =>
+      fs.systemName.toLowerCase().includes(q)
+    );
+  }, [finishingSystemsMaster, debouncedQuery]);
+
+  const resetFinishingSystemForm = () => {
+    setEditingSystemId(null);
+    setNewSystemName('');
+    setNewSystemOrder('');
+  };
+
+  const startEditFinishingSystem = (fs: FinishingSystemMaster) => {
+    setFormError(null);
+    setEditingSystemId(fs.id);
+    setNewSystemName(fs.systemName);
+    setNewSystemOrder(String(fs.sortOrder));
+  };
+
+  const handleSaveFinishingSystem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSystemName.trim()) {
+      setFormError('Không thể lưu Hệ sơn. Phần còn trống: Tên Hệ sơn');
+      return;
+    }
+    const trimmedOrder = newSystemOrder.trim();
+    const order = trimmedOrder ? parseInt(trimmedOrder, 10) : undefined;
+    if (trimmedOrder && !(Number.isInteger(order) && (order as number) >= 1)) {
+      setFormError('Không thể lưu Hệ sơn. Thứ tự phải là số nguyên >= 1');
+      return;
+    }
+    setFormError(null);
+    try {
+      if (editingSystemId) {
+        await apiClient.updateFinishingSystemMaster(role, editingSystemId, {
+          systemName: newSystemName.trim().toUpperCase(),
+          sortOrder: order
+        });
+      } else {
+        await apiClient.saveFinishingSystemMaster(role, {
+          systemName: newSystemName.trim().toUpperCase(),
+          sortOrder: order ?? finishingSystemsMaster.length + 1
+        });
+      }
+    } catch (err) {
+      setFormError(
+        `Không thể lưu Hệ sơn: ${err instanceof Error ? err.message : String(err)}`
+      );
+      return;
+    }
+    resetFinishingSystemForm();
+    await onReloadMasterData();
+  };
+
   const resetPackingForm = () => {
     setEditingPackId(null);
     setPackCode('');
@@ -793,6 +859,18 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
             >
               <ListChecks className="h-3.5 w-3.5" />
               Application Step / Bước thi công ({stepsMaster.length})
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSelectSubTab('FINISHING_SYSTEMS')}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition ${subTab === 'FINISHING_SYSTEMS'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+            >
+              <Layers className="h-3.5 w-3.5" />
+              Finishing Systems / Hệ sơn ({finishingSystemsMaster.length})
             </button>
 
             <button
@@ -1542,6 +1620,110 @@ export const MasterDataManager: React.FC<MasterDataManagerProps> = ({
                   </td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* TAB 3b: FINISHING SYSTEMS */}
+      {subTab === 'FINISHING_SYSTEMS' && (
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+          <form
+            onSubmit={handleSaveFinishingSystem}
+            className="flex flex-wrap gap-3 bg-slate-50 p-3.5 rounded-lg border border-slate-200"
+          >
+            <input
+              type="text"
+              placeholder="Tên Hệ sơn chuẩn mới (VD: WATERBASE, NC-PU, PU, UV...)"
+              value={newSystemName}
+              onChange={(e) => setNewSystemName(e.target.value)}
+              className="flex-1 min-w-[220px] rounded border border-slate-300 px-3 py-1.5 text-xs"
+            />
+            <input
+              type="number"
+              min={1}
+              step={1}
+              placeholder="Thứ tự (tùy chọn)"
+              value={newSystemOrder}
+              onChange={(e) => setNewSystemOrder(e.target.value)}
+              className="w-32 rounded border border-slate-300 px-3 py-1.5 text-xs"
+            />
+            <button
+              type="submit"
+              className="inline-flex items-center gap-1.5 rounded bg-blue-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
+            >
+              {editingSystemId ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+              {editingSystemId ? 'Cập nhật Hệ sơn' : 'Thêm Hệ sơn'}
+            </button>
+            {editingSystemId && (
+              <button
+                type="button"
+                onClick={resetFinishingSystemForm}
+                className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                Hủy
+              </button>
+            )}
+          </form>
+
+          <table className="w-full border-collapse text-xs">
+            <thead className="bg-slate-800 text-white">
+              <tr>
+                <th className="border border-slate-700 px-3 py-2 text-center w-20">
+                  Thứ tự
+                </th>
+                <th className="border border-slate-700 px-3 py-2 text-left">
+                  Finishing System / Hệ sơn
+                </th>
+                <th className="border border-slate-700 px-3 py-2 text-center w-24">
+                  Sửa / Xóa
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredFinishingSystems.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={3}
+                    className="border border-slate-200 px-3 py-6 text-center text-slate-500 italic"
+                  >
+                    Không tìm thấy Hệ sơn nào phù hợp.
+                  </td>
+                </tr>
+              ) : (
+                filteredFinishingSystems.map((fs) => (
+                  <tr key={fs.id} className="hover:bg-slate-50 border-b border-slate-200">
+                    <td className="border border-slate-200 px-3 py-2 text-center font-semibold">
+                      {fs.sortOrder}
+                    </td>
+                    <td className="border border-slate-200 px-3 py-2 font-bold text-slate-900">
+                      {fs.systemName}
+                    </td>
+                    <td className="border border-slate-200 px-3 py-2 text-center whitespace-nowrap">
+                      <button
+                        type="button"
+                        title="Sửa"
+                        onClick={() => startEditFinishingSystem(fs)}
+                        className="rounded p-1 text-blue-700 hover:bg-blue-50"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Xóa"
+                        onClick={async () => {
+                          await apiClient.deleteFinishingSystemMaster(role, fs.id);
+                          if (editingSystemId === fs.id) resetFinishingSystemForm();
+                          await onReloadMasterData();
+                        }}
+                        className="rounded p-1 text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -3,6 +3,7 @@ import {
   Customer,
   QuotationItem,
   ApplicationStepMaster,
+  FinishingSystemMaster,
   ApplicationMethod,
   PackingMapping,
   Project,
@@ -264,6 +265,7 @@ export function App() {
   const [customers, setCustomers] = React.useState<Customer[]>([]);
   const [quotations, setQuotations] = React.useState<QuotationItem[]>([]);
   const [stepsMaster, setStepsMaster] = React.useState<ApplicationStepMaster[]>([]);
+  const [finishingSystemsMaster, setFinishingSystemsMaster] = React.useState<FinishingSystemMaster[]>([]);
   const [methodsMaster, setMethodsMaster] = React.useState<ApplicationMethod[]>([]);
   const [packingsMaster, setPackingsMaster] = React.useState<PackingMapping[]>([]);
 
@@ -458,10 +460,11 @@ export function App() {
         setLoading(true);
       }
       try {
-        const [custs, quots, steps, methods, packings, projs] = await Promise.all([
+        const [custs, quots, steps, finishingSystems, methods, packings, projs] = await Promise.all([
           apiClient.getCustomers(role),
           apiClient.getQuotations(role, '', '', 10000),
           apiClient.getStepsMaster(role),
+          apiClient.getFinishingSystemsMaster(role),
           apiClient.getMethodsMaster(role),
           apiClient.getPackingsMaster(role),
           apiClient.getProjects(role)
@@ -470,6 +473,7 @@ export function App() {
         setCustomers(custs);
         setQuotations(quots);
         setStepsMaster(steps);
+        setFinishingSystemsMaster(finishingSystems);
         setMethodsMaster(methods);
         setPackingsMaster(packings);
         setProjects(projs);
@@ -500,16 +504,18 @@ export function App() {
 
   const reloadMasterData = React.useCallback(async () => {
     try {
-      const [custs, quots, steps, methods, packings] = await Promise.all([
+      const [custs, quots, steps, finishingSystems, methods, packings] = await Promise.all([
         apiClient.getCustomers(role),
         apiClient.getQuotations(role, '', '', 10000),
         apiClient.getStepsMaster(role),
+        apiClient.getFinishingSystemsMaster(role),
         apiClient.getMethodsMaster(role),
         apiClient.getPackingsMaster(role)
       ]);
       setCustomers(custs);
       setQuotations(quots);
       setStepsMaster(steps);
+      setFinishingSystemsMaster(finishingSystems);
       setMethodsMaster(methods);
       setPackingsMaster(packings);
     } catch (err) {
@@ -1867,6 +1873,7 @@ export function App() {
             <ProjectExplorerView
               projects={projects}
               customers={customers}
+              finishingSystemsMaster={finishingSystemsMaster}
               activeRevisionId={activeRevision?.id}
               role={role}
               currentUser={currentUser}
@@ -1891,6 +1898,7 @@ export function App() {
               customers={customers}
               quotations={quotations}
               stepsMaster={stepsMaster}
+              finishingSystemsMaster={finishingSystemsMaster}
               methodsMaster={methodsMaster}
               packingsMaster={packingsMaster}
               activeSubTab={masterSubTab}
@@ -1935,6 +1943,7 @@ export function App() {
                   customers={customers}
                   quotations={quotations}
                   stepsMaster={stepsMaster}
+                  finishingSystemsMaster={finishingSystemsMaster}
                   methodsMaster={methodsMaster}
                   role={role}
                   currentUser={currentUser}

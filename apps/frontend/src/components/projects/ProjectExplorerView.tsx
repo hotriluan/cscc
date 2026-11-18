@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Project,
   Customer,
+  FinishingSystemMaster,
   UserRole,
   UserAccount,
   formatVnd,
@@ -29,6 +30,7 @@ import {
 interface ProjectExplorerViewProps {
   projects: Project[];
   customers: Customer[];
+  finishingSystemsMaster: FinishingSystemMaster[];
   activeRevisionId?: string;
   role: UserRole;
   currentUser?: UserAccount | null;
@@ -49,6 +51,7 @@ interface ProjectExplorerViewProps {
 export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
   projects,
   customers,
+  finishingSystemsMaster,
   activeRevisionId,
   role,
   currentUser,
@@ -73,6 +76,17 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
   const [newProduct, setNewProduct] = React.useState('');
   const [newColor, setNewColor] = React.useState('');
   const [newSubstrate, setNewSubstrate] = React.useState('');
+
+  const finishingSystemOptions = React.useMemo<ComboboxOption[]>(
+    () =>
+      finishingSystemsMaster.map((fs) => ({
+        value: fs.systemName,
+        label: fs.systemName,
+        badge: `#${fs.sortOrder}`,
+        badgeColor: 'slate'
+      })),
+    [finishingSystemsMaster]
+  );
   const [newSystem, setNewSystem] = React.useState('');
   const [createErrors, setCreateErrors] = React.useState<string[]>([]);
 
@@ -692,17 +706,17 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                   <label className="block text-xs font-bold uppercase text-slate-600">
                     Finishing System / Hệ sơn <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Enter system / Nhập hệ sơn..."
-                    value={newSystem}
-                    onChange={(e) => setNewSystem(e.target.value)}
-                    className={`mt-1 w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none ${
-                      !newSystem.trim()
-                        ? 'border-amber-400 bg-amber-50/50 placeholder:italic placeholder:text-amber-700 focus:border-blue-600'
-                        : 'border-slate-300 focus:border-blue-600'
-                    }`}
-                  />
+                  <div className="mt-1">
+                    <SearchableCombobox
+                      value={newSystem}
+                      options={finishingSystemOptions}
+                      placeholder="-- Select System / Chọn Hệ sơn --"
+                      searchPlaceholder="Search finishing system / Tìm hệ sơn..."
+                      emptyMessage="Không tìm thấy hệ sơn phù hợp trong Master Data"
+                      highlightEmpty={true}
+                      onChange={(val) => setNewSystem(val)}
+                    />
+                  </div>
                 </div>
               </div>
 

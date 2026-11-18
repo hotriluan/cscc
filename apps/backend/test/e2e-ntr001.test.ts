@@ -262,4 +262,75 @@ describe('CSCC Backend E2E Verification — Golden Dataset NTR 001, RBAC & Dynam
       headers: { 'x-user-role': 'PROJECT_LEADER' }
     });
   });
+
+  it('auto-seeds FinishingSystemMaster from ProjectRevisions and supports CRUD on /api/master/finishing-systems', async () => {
+    const listRes = await fetch(`${baseUrl}/api/master/finishing-systems`, {
+      headers: { 'x-user-role': 'PROJECT_LEADER' }
+    });
+    assert.equal(listRes.status, 200);
+    const systems = (await listRes.json()) as Array<{
+      id: string;
+      systemName: string;
+      sortOrder: number;
+    }>;
+    assert.ok(systems.length > 0, 'Expected FinishingSystemMaster to be seeded');
+    assert.ok(
+      systems.some((s) => s.systemName === 'WATERBASE'),
+      'Expected WATERBASE from NTR 001 to be present in FinishingSystemMaster'
+    );
+
+    const uniqueName = `TEST-SYS-${Date.now().toString(36).toUpperCase()}`;
+    const createRes = await fetch(`${baseUrl}/api/master/finishing-systems`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
+      body: JSON.stringify({ systemName: uniqueName.toLowerCase(), sortOrder: 99 })
+    });
+    assert.equal(createRes.status, 201);
+    const created = (await createRes.json()) as {
+      id: string;
+      systemName: string;
+      sortOrder: number;
+    };
+    assert.equal(created.systemName, uniqueName);
+    assert.equal(created.sortOrder, 99);
+
+    // Idempotent POST with same name -> 200
+    const dupPostRes = await fetch(`${baseUrl}/api/master/finishing-systems`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
+      body: JSON.stringify({ systemName: uniqueName })
+    });
+    assert.equal(dupPostRes.status, 200);
+
+    // PUT update systemName and sortOrder
+    const renamed = `${uniqueName}-UPD`;
+    const updateRes = await fetch(`${baseUrl}/api/master/finishing-systems/${created.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
+      body: JSON.stringify({ systemName: renamed, sortOrder: 100 })
+    });
+    assert.equal(updateRes.status, 200);
+    const updated = (await updateRes.json()) as {
+      id: string;
+      systemName: string;
+      sortOrder: number;
+    };
+    assert.equal(updated.systemName, renamed);
+    assert.equal(updated.sortOrder, 100);
+
+    // PUT rename to an existing systemName -> 409 conflict
+    const conflictRes = await fetch(`${baseUrl}/api/master/finishing-systems/${created.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-user-role': 'PROJECT_LEADER' },
+      body: JSON.stringify({ systemName: 'WATERBASE' })
+    });
+    assert.equal(conflictRes.status, 409);
+
+    // DELETE cleanup
+    const delRes = await fetch(`${baseUrl}/api/master/finishing-systems/${created.id}`, {
+      method: 'DELETE',
+      headers: { 'x-user-role': 'PROJECT_LEADER' }
+    });
+    assert.equal(delRes.status, 200);
+  });
 });

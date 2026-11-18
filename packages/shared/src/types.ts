@@ -61,6 +61,12 @@ export interface ApplicationStepMaster {
   sortOrder: number;
 }
 
+export interface FinishingSystemMaster {
+  id: string;
+  systemName: string;
+  sortOrder: number;
+}
+
 export interface ApplicationMethod {
   id: string;
   methodName: string; // e.g., "SPRAY", "WIPING"

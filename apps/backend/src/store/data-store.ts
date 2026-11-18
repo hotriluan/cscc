@@ -3,6 +3,7 @@ import {
   QuotationItem,
   PackingMapping,
   ApplicationStepMaster,
+  FinishingSystemMaster,
   ApplicationMethod,
   Project,
   ProjectRevision,
@@ -53,6 +54,7 @@ export interface DatabaseCounts {
   quotations: number;
   packingMappings: number;
   applicationSteps: number;
+  finishingSystems: number;
   applicationMethods: number;
   projects: number;
   revisions: number;
@@ -256,6 +258,24 @@ class PostgresDataStore {
       `)
       .catch(() => undefined);
 
+    await prisma
+      .$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "FinishingSystemMaster" (
+          "id" TEXT NOT NULL,
+          "systemName" TEXT NOT NULL,
+          "sortOrder" INTEGER NOT NULL DEFAULT 0,
+          CONSTRAINT "FinishingSystemMaster_pkey" PRIMARY KEY ("id")
+        );
+      `)
+      .catch(() => undefined);
+
+    await prisma
+      .$executeRawUnsafe(`
+        CREATE UNIQUE INDEX IF NOT EXISTS "FinishingSystemMaster_systemName_key"
+        ON "FinishingSystemMaster"("systemName");
+      `)
+      .catch(() => undefined);
+
     const [customerCount, ntrRev, packingCount, stepsCount] = await Promise.all([
       prisma.customer.count(),
       prisma.projectRevision.findUnique({
@@ -282,6 +302,7 @@ class PostgresDataStore {
     }
 
     await this.ensureDefaultUsersSeeded();
+    await this.ensureFinishingSystemsSeeded();
 
     // Migrate any legacy LOCKED revisions to APPROVED
     await prisma.projectRevision
@@ -293,6 +314,46 @@ class PostgresDataStore {
 
     this.initialized = true;
     return this.getCounts();
+  }
+
+  public async ensureFinishingSystemsSeeded(): Promise<void> {
+    const [existingRows, revisionRows] = await Promise.all([
+      prisma.finishingSystemMaster.findMany({ orderBy: { sortOrder: 'asc' } }),
+      prisma.projectRevision.findMany({ select: { finishingSystem: true } })
+    ]);
+
+    const existingNames = new Set(existingRows.map((r) => r.systemName.trim().toUpperCase()));
+    const candidates: string[] = [];
+
+    if (existingRows.length === 0) {
+      candidates.push('WATERBASE', 'NC-PU', 'PU', 'NC', 'UV', 'ACRYLIC');
+    }
+
+    for (const rev of revisionRows) {
+      const normalized = String(rev.finishingSystem || '').trim().toUpperCase();
+      if (normalized && !candidates.includes(normalized)) {
+        candidates.push(normalized);
+      }
+    }
+
+    let nextOrder =
+      existingRows.reduce((max, r) => Math.max(max, r.sortOrder), 0) + 1;
+
+    for (const systemName of candidates) {
+      if (!existingNames.has(systemName)) {
+        await prisma.finishingSystemMaster
+          .create({
+            data: {
+              id: `fs-master-${nextOrder}-${Date.now().toString(36)}`,
+              systemName,
+              sortOrder: nextOrder
+            }
+          })
+          .catch(() => undefined);
+        existingNames.add(systemName);
+        nextOrder += 1;
+      }
+    }
   }
 
   public async ensureDefaultUsersSeeded(): Promise<void> {
@@ -583,6 +644,7 @@ class PostgresDataStore {
       quotations,
       packingMappings,
       applicationSteps,
+      finishingSystems,
       applicationMethods,
       projects,
       revisions
@@ -592,6 +654,7 @@ class PostgresDataStore {
       prisma.quotationItem.count(),
       prisma.packingMapping.count(),
       prisma.applicationStepMaster.count(),
+      prisma.finishingSystemMaster.count(),
       prisma.applicationMethod.count(),
       prisma.project.count(),
       prisma.projectRevision.count()
@@ -603,6 +666,7 @@ class PostgresDataStore {
       quotations,
       packingMappings,
       applicationSteps,
+      finishingSystems,
       applicationMethods,
       projects,
       revisions
@@ -1547,6 +1611,112 @@ class PostgresDataStore {
 
   public async deleteApplicationStep(id: string): Promise<void> {
     await prisma.applicationStepMaster.deleteMany({ where: { id } });
+  }
+
+  // ===========================================================================
+  // 3b. FINISHING SYSTEMS MASTER
+  // ===========================================================================
+  public async getFinishingSystems(): Promise<FinishingSystemMaster[]> {
+    const rows = await prisma.finishingSystemMaster.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { systemName: 'asc' }]
+    });
+    return rows.map((fs) => ({
+      id: fs.id,
+      systemName: fs.systemName,
+      sortOrder: fs.sortOrder
+    }));
+  }
+
+  public async upsertFinishingSystem(input: {
+    systemName: string;
+    sortOrder?: number;
+  }): Promise<{ finishingSystem: FinishingSystemMaster; created: boolean }> {
+    const systemName = input.systemName.trim().toUpperCase();
+    const existing = await prisma.finishingSystemMaster.findUnique({
+      where: { systemName }
+    });
+    if (existing) {
+      return {
+        finishingSystem: {
+          id: existing.id,
+          systemName: existing.systemName,
+          sortOrder: existing.sortOrder
+        },
+        created: false
+      };
+    }
+
+    const total = await prisma.finishingSystemMaster.count();
+    const created = await prisma.finishingSystemMaster.create({
+      data: {
+        id: `fs-master-${Date.now().toString(36)}`,
+        systemName,
+        sortOrder:
+          input.sortOrder !== undefined && Number.isFinite(Number(input.sortOrder))
+            ? Number(input.sortOrder)
+            : total + 1
+      }
+    });
+    return {
+      finishingSystem: {
+        id: created.id,
+        systemName: created.systemName,
+        sortOrder: created.sortOrder
+      },
+      created: true
+    };
+  }
+
+  public async updateFinishingSystem(
+    id: string,
+    input: Partial<FinishingSystemMaster>
+  ): Promise<FinishingSystemMaster | null> {
+    const existing = await prisma.finishingSystemMaster.findUnique({ where: { id } });
+    if (!existing) return null;
+
+    const nextSystemName =
+      input.systemName !== undefined
+        ? String(input.systemName).trim().toUpperCase()
+        : existing.systemName;
+
+    if (!nextSystemName) {
+      throw new BusinessValidationError(
+        400,
+        'INVALID_FINISHING_SYSTEM',
+        'systemName is required'
+      );
+    }
+
+    if (nextSystemName !== existing.systemName) {
+      const duplicate = await prisma.finishingSystemMaster.findUnique({
+        where: { systemName: nextSystemName }
+      });
+      if (duplicate && duplicate.id !== id) {
+        throw new BusinessValidationError(
+          409,
+          'DUPLICATE_FINISHING_SYSTEM',
+          `Hệ sơn "${nextSystemName}" đã tồn tại trong Master Data.`
+        );
+      }
+    }
+
+    const updated = await prisma.finishingSystemMaster.update({
+      where: { id },
+      data: {
+        systemName: nextSystemName,
+        sortOrder:
+          input.sortOrder !== undefined ? Number(input.sortOrder) : existing.sortOrder
+      }
+    });
+    return {
+      id: updated.id,
+      systemName: updated.systemName,
+      sortOrder: updated.sortOrder
+    };
+  }
+
+  public async deleteFinishingSystem(id: string): Promise<void> {
+    await prisma.finishingSystemMaster.deleteMany({ where: { id } });
   }
 
   // ===========================================================================

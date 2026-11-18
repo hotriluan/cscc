@@ -746,6 +746,59 @@ export function createApp() {
     }
   });
 
+  // 3b. Finishing Systems Master
+  app.get('/api/master/finishing-systems', async (_req, res) => {
+    try {
+      const systems = await dataStore.getFinishingSystems();
+      res.json(systems);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.post('/api/master/finishing-systems', async (req, res) => {
+    try {
+      const systemName = String(req.body.systemName || '').trim().toUpperCase();
+      if (!systemName) {
+        res.status(400).json({ error: 'systemName is required' });
+        return;
+      }
+      const { finishingSystem, created } = await dataStore.upsertFinishingSystem({
+        systemName,
+        sortOrder: req.body.sortOrder
+      });
+      res.status(created ? 201 : 200).json(finishingSystem);
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.put('/api/master/finishing-systems/:id', async (req, res) => {
+    try {
+      const updated = await dataStore.updateFinishingSystem(req.params.id, req.body);
+      if (!updated) {
+        res.status(404).json({ error: 'Finishing system not found' });
+        return;
+      }
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof BusinessValidationError) {
+        res.status(err.status).json({ error: err.code, message: err.message });
+        return;
+      }
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  app.delete('/api/master/finishing-systems/:id', async (req, res) => {
+    try {
+      await dataStore.deleteFinishingSystem(req.params.id);
+      res.json({ deleted: true });
+    } catch (err) {
+      res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
   // 4. Application Methods (Efficiency %)
   app.get('/api/master/methods', async (_req, res) => {
     try {

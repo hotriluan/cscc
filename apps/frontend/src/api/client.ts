@@ -2,6 +2,7 @@ import {
   Customer,
   QuotationItem,
   ApplicationStepMaster,
+  FinishingSystemMaster,
   ApplicationMethod,
   PackingMapping,
   Project,
@@ -238,6 +239,33 @@ export const apiClient = {
 
   deleteStepMaster: (role: UserRole, id: string) =>
     request<{ deleted: boolean }>(`/master/steps/${id}`, role, { method: 'DELETE' }),
+
+  getFinishingSystemsMaster: (role: UserRole) =>
+    request<FinishingSystemMaster[]>('/master/finishing-systems', role),
+
+  saveFinishingSystemMaster: (
+    role: UserRole,
+    data: { systemName: string; sortOrder?: number }
+  ) =>
+    request<FinishingSystemMaster>('/master/finishing-systems', role, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+
+  updateFinishingSystemMaster: (
+    role: UserRole,
+    id: string,
+    data: Partial<FinishingSystemMaster>
+  ) =>
+    request<FinishingSystemMaster>(`/master/finishing-systems/${id}`, role, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }),
+
+  deleteFinishingSystemMaster: (role: UserRole, id: string) =>
+    request<{ deleted: boolean }>(`/master/finishing-systems/${id}`, role, {
+      method: 'DELETE'
+    }),
 
   getMethodsMaster: (role: UserRole) =>
     request<ApplicationMethod[]>('/master/methods', role),
