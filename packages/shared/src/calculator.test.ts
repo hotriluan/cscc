@@ -12,7 +12,11 @@ import {
   isValidCustomerShortName,
   formatCustomerProjectCode,
   parseCustomerProjectSequence,
-  computeNextCustomerProjectCode
+  computeNextCustomerProjectCode,
+  parseConditionRange,
+  formatConditionRange,
+  parseHumidityInput,
+  formatHumidityValue
 } from './calculator';
 import { ScheduleStep, ProjectRevision } from './types';
 
@@ -435,6 +439,35 @@ describe('Customer shortName & auto projectCode helpers', () => {
       computeNextCustomerProjectCode('NTRI', ['NTRI0001', 'NTRI0003']),
       'NTRI0004'
     );
+  });
+});
+
+describe('Finishing condition range helpers', () => {
+  it('parses MC Wood and Room Temp strings into [min, max] pairs', () => {
+    assert.deepEqual(parseConditionRange('8-12%'), ['8', '12']);
+    assert.deepEqual(parseConditionRange('8-12 %'), ['8', '12']);
+    assert.deepEqual(parseConditionRange('25 – 40°C'), ['25', '40']);
+    assert.deepEqual(parseConditionRange('25-40 oC'), ['25', '40']);
+    assert.deepEqual(parseConditionRange('<12%'), ['<12', '']);
+    assert.deepEqual(parseConditionRange('<35 oC'), ['<35', '']);
+    assert.deepEqual(parseConditionRange(''), ['', '']);
+  });
+
+  it('formats [min, max] pairs into standard MC Wood and Room Temp strings', () => {
+    assert.equal(formatConditionRange('8', '12', 'percent'), '8-12 %');
+    assert.equal(formatConditionRange('8', '', 'percent'), '8 %');
+    assert.equal(formatConditionRange('', '12', 'percent'), '12 %');
+    assert.equal(formatConditionRange('', '', 'percent'), '');
+
+    assert.equal(formatConditionRange('25', '40', 'celsius'), '25 – 40°C');
+    assert.equal(formatConditionRange('25', '', 'celsius'), '25°C');
+    assert.equal(formatConditionRange('', '40', 'celsius'), '40°C');
+    assert.equal(formatConditionRange('', '', 'celsius'), '');
+
+    assert.equal(parseHumidityInput('<80%'), '<80');
+    assert.equal(parseHumidityInput('40-80 %'), '40-80');
+    assert.equal(formatHumidityValue('<80'), '<80 %');
+    assert.equal(formatHumidityValue(''), '');
   });
 });
 

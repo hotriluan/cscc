@@ -11,7 +11,11 @@ import {
   UserRole,
   parseCaInput,
   isValidCustomerShortName,
-  formatCustomerProjectCode
+  formatCustomerProjectCode,
+  parseConditionRange,
+  formatConditionRange,
+  parseHumidityInput,
+  formatHumidityValue
 } from '@cscc/shared';
 import { apiClient } from '../../api/client';
 import {
@@ -403,6 +407,58 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
       },
       mode
     );
+  };
+
+  const [mcRange, setMcRange] = React.useState<[string, string]>(() =>
+    parseConditionRange(revision.mcWood)
+  );
+  const [tempRange, setTempRange] = React.useState<[string, string]>(() =>
+    parseConditionRange(revision.roomTemp)
+  );
+  const [humidityInput, setHumidityInput] = React.useState<string>(() =>
+    parseHumidityInput(revision.roomHumidity)
+  );
+
+  React.useEffect(() => {
+    setMcRange((prev) => {
+      const formatted = formatConditionRange(prev[0], prev[1], 'percent');
+      if (formatted === (revision.mcWood || '')) return prev;
+      return parseConditionRange(revision.mcWood);
+    });
+  }, [revision.id, revision.mcWood]);
+
+  React.useEffect(() => {
+    setTempRange((prev) => {
+      const formatted = formatConditionRange(prev[0], prev[1], 'celsius');
+      if (formatted === (revision.roomTemp || '')) return prev;
+      return parseConditionRange(revision.roomTemp);
+    });
+  }, [revision.id, revision.roomTemp]);
+
+  React.useEffect(() => {
+    setHumidityInput((prev) => {
+      const formatted = formatHumidityValue(prev);
+      if (formatted === (revision.roomHumidity || '')) return prev;
+      return parseHumidityInput(revision.roomHumidity);
+    });
+  }, [revision.id, revision.roomHumidity]);
+
+  const handleMcWoodChange = (minVal: string, maxVal: string) => {
+    if (isLocked) return;
+    setMcRange([minVal, maxVal]);
+    handleHeaderChange('mcWood', formatConditionRange(minVal, maxVal, 'percent'));
+  };
+
+  const handleRoomTempChange = (minVal: string, maxVal: string) => {
+    if (isLocked) return;
+    setTempRange([minVal, maxVal]);
+    handleHeaderChange('roomTemp', formatConditionRange(minVal, maxVal, 'celsius'));
+  };
+
+  const handleHumidityChange = (val: string) => {
+    if (isLocked) return;
+    setHumidityInput(val);
+    handleHeaderChange('roomHumidity', formatHumidityValue(val));
   };
 
   const handleCustomerSelect = async (customerId: string) => {
@@ -1061,7 +1117,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col justify-between">
                   <label className="mb-1 block text-xs font-semibold uppercase text-slate-600">
-                    Substrate / Loại gỗ
+                    Substrate Type / Loại Vật Liệu
                   </label>
                   <input
                     type="text"
@@ -1184,54 +1240,107 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
 
               {/* Finishing Conditions */}
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                <div className="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-600">
                   Finishing Condition / Điều kiện môi trường
                 </div>
-                <div className="grid grid-cols-3 gap-2.5 items-stretch">
-                  <div className="flex flex-col justify-between">
-                    <label className="mb-1.5 block text-[11px] font-medium leading-snug text-slate-600">
-                      <span className="block">MC Wood /</span>
+                <div className="space-y-2">
+                  {/* MC Wood */}
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="min-w-0 text-[11px] leading-tight">
+                      <span className="block font-semibold text-slate-700">MC Wood</span>
                       <span className="block text-slate-500">Độ ẩm gỗ</span>
                     </label>
-                    <input
-                      type="text"
-                      disabled={isLocked}
-                      value={revision.mcWood}
-                      onChange={(e) =>
-                        handleHeaderChange('mcWood', e.target.value)
-                      }
-                      className="mt-auto w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
-                    />
+                    <div className="flex w-[148px] shrink-0 items-center gap-1.5">
+                      <div className="flex min-w-0 flex-1 items-center gap-1">
+                        <input
+                          type="text"
+                          size={4}
+                          disabled={isLocked}
+                          value={mcRange[0]}
+                          placeholder="8"
+                          aria-label="MC Wood min"
+                          onChange={(e) => handleMcWoodChange(e.target.value, mcRange[1])}
+                          className="min-w-0 w-full flex-1 rounded-md border border-slate-300 bg-white px-1.5 py-1.5 text-center text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
+                        />
+                        <span className="w-2.5 shrink-0 text-center text-xs font-medium text-slate-400">
+                          -
+                        </span>
+                        <input
+                          type="text"
+                          size={4}
+                          disabled={isLocked}
+                          value={mcRange[1]}
+                          placeholder="12"
+                          aria-label="MC Wood max"
+                          onChange={(e) => handleMcWoodChange(mcRange[0], e.target.value)}
+                          className="min-w-0 w-full flex-1 rounded-md border border-slate-300 bg-white px-1.5 py-1.5 text-center text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
+                        />
+                      </div>
+                      <span className="w-5 shrink-0 text-left text-xs font-medium text-slate-600">
+                        %
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col justify-between">
-                    <label className="mb-1.5 block text-[11px] font-medium leading-snug text-slate-600">
-                      <span className="block">Humidity /</span>
-                      <span className="block text-slate-500">Độ ẩm</span>
+
+                  {/* Max Humidity */}
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="min-w-0 text-[11px] leading-tight">
+                      <span className="block font-semibold text-slate-700">Max Humidity</span>
+                      <span className="block text-slate-500">Độ ẩm Tối Đa</span>
                     </label>
-                    <input
-                      type="text"
-                      disabled={isLocked}
-                      value={revision.roomHumidity}
-                      onChange={(e) =>
-                        handleHeaderChange('roomHumidity', e.target.value)
-                      }
-                      className="mt-auto w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
-                    />
+                    <div className="flex w-[148px] shrink-0 items-center gap-1.5">
+                      <input
+                        type="text"
+                        size={8}
+                        disabled={isLocked}
+                        value={humidityInput}
+                        placeholder="<80"
+                        aria-label="Max Humidity"
+                        onChange={(e) => handleHumidityChange(e.target.value)}
+                        className="min-w-0 w-full flex-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-center text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
+                      />
+                      <span className="w-5 shrink-0 text-left text-xs font-medium text-slate-600">
+                        %
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col justify-between">
-                    <label className="mb-1.5 block text-[11px] font-medium leading-snug text-slate-600">
-                      <span className="block">Room Temp /</span>
+
+                  {/* Room Temp */}
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="min-w-0 text-[11px] leading-tight">
+                      <span className="block font-semibold text-slate-700">Room Temp</span>
                       <span className="block text-slate-500">Nhiệt độ phòng</span>
                     </label>
-                    <input
-                      type="text"
-                      disabled={isLocked}
-                      value={revision.roomTemp}
-                      onChange={(e) =>
-                        handleHeaderChange('roomTemp', e.target.value)
-                      }
-                      className="mt-auto w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
-                    />
+                    <div className="flex w-[148px] shrink-0 items-center gap-1.5">
+                      <div className="flex min-w-0 flex-1 items-center gap-1">
+                        <input
+                          type="text"
+                          size={4}
+                          disabled={isLocked}
+                          value={tempRange[0]}
+                          placeholder="25"
+                          aria-label="Room Temp min"
+                          onChange={(e) => handleRoomTempChange(e.target.value, tempRange[1])}
+                          className="min-w-0 w-full flex-1 rounded-md border border-slate-300 bg-white px-1.5 py-1.5 text-center text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
+                        />
+                        <span className="w-2.5 shrink-0 text-center text-xs font-medium text-slate-400">
+                          –
+                        </span>
+                        <input
+                          type="text"
+                          size={4}
+                          disabled={isLocked}
+                          value={tempRange[1]}
+                          placeholder="40"
+                          aria-label="Room Temp max"
+                          onChange={(e) => handleRoomTempChange(tempRange[0], e.target.value)}
+                          className="min-w-0 w-full flex-1 rounded-md border border-slate-300 bg-white px-1.5 py-1.5 text-center text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none disabled:bg-slate-100"
+                        />
+                      </div>
+                      <span className="w-5 shrink-0 text-left text-xs font-medium text-slate-600">
+                        °C
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2048,7 +2157,7 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             </div>
             <div className="flex flex-col justify-between">
               <label className="mb-1 block text-[11px] font-semibold text-slate-500">
-                APPROVED BY / PHÊ DUYỆT (PD/PM)
+                APPROVED BY / PHÊ DUYỆT (PD)
               </label>
               <input
                 type="text"

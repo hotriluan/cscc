@@ -718,3 +718,57 @@ export function computeNextCustomerProjectCode(
   }
   return formatCustomerProjectCode(shortName, maxSeq + 1);
 }
+
+/**
+ * Parses a finishing-condition string (e.g. "8-12 %", "25 – 40°C", "<12%", "<35 oC")
+ * into a `[min, max]` tuple for two-box range editing.
+ */
+export function parseConditionRange(raw: string | null | undefined): [string, string] {
+  const cleaned = (raw ?? '')
+    .trim()
+    .replace(/(?:\s*(?:°\s*C|o\s*C|%))+$/i, '')
+    .trim();
+  if (!cleaned) return ['', ''];
+  const rangeMatch = cleaned.match(
+    /^([<>≤≥]?\s*-?\d+(?:[.,]\d+)?)\s*[-–—]\s*(-?\d+(?:[.,]\d+)?)$/
+  );
+  if (rangeMatch) {
+    return [rangeMatch[1].trim(), rangeMatch[2].trim()];
+  }
+  return [cleaned, ''];
+}
+
+/**
+ * Formats a `[min, max]` finishing-condition pair into a display/storage string:
+ * - `'percent'` -> `"8-12 %"` (or `"8 %"` when only one side is filled)
+ * - `'celsius'` -> `"25 – 40°C"` (or `"25°C"` when only one side is filled)
+ */
+export function formatConditionRange(
+  minVal: string,
+  maxVal: string,
+  unit: 'percent' | 'celsius'
+): string {
+  const a = minVal.trim();
+  const b = maxVal.trim();
+  if (!a && !b) return '';
+  if (unit === 'percent') {
+    return a && b ? `${a}-${b} %` : `${a || b} %`;
+  }
+  return a && b ? `${a} – ${b}°C` : `${a || b}°C`;
+}
+
+/**
+ * Strips trailing `%` from a humidity string (e.g. `"<80%"`, `"40-80 %"`)
+ * for editing in a textbox that already shows `%` as a unit suffix.
+ */
+export function parseHumidityInput(raw: string | null | undefined): string {
+  return (raw ?? '').trim().replace(/\s*%+$/g, '').trim();
+}
+
+/**
+ * Formats a humidity textbox value into a display/storage string with `%`.
+ */
+export function formatHumidityValue(val: string): string {
+  const trimmed = val.trim();
+  return trimmed ? `${trimmed} %` : '';
+}
