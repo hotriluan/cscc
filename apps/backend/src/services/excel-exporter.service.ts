@@ -91,7 +91,7 @@ export async function generateRevisionWorkbook(
 
   const headerRows: Array<[string, string, string, string, string, string]> = [
     ['Customer / Khách hàng:', revision.customer.customerName, 'Buyer / Nhà mua hàng:', revision.buyer || '', 'No. / Mã:', revision.projectCode],
-    ['Product Item / Tên sản phẩm:', revision.productName, 'Substrate Type / Loại gỗ:', revision.substrate, 'Date / Rev (Ngày / Phiên bản):', `${revision.scheduleDate} (Rev.${revCode})`],
+    ['Product Item / Tên sản phẩm:', revision.productName, 'Substrate Type / Loại Vật Liệu:', revision.substrate, 'Date / Rev (Ngày / Phiên bản):', `${revision.scheduleDate} (Rev.${revCode})`],
     ['Color / Màu sắc:', revision.colorName, 'Positioning / Vị trí:', revision.positioning, 'Finishing System / Hệ sơn:', revision.finishingSystem],
     ['Reference / Tiêu chuẩn tham chiếu:', revision.referenceStandard, 'Gloss Level / Độ bóng:', revision.glossLevel, 'MC Wood / Humidity / Temp:', `${revision.mcWood} | ${revision.roomHumidity} | ${revision.roomTemp}`]
   ];
@@ -230,7 +230,7 @@ export async function generateRevisionWorkbook(
   currentCsRow += 2;
   const sigBoxes: Array<[string, string, string]> = [
     ['A', 'B', `CUSTOMER / KHÁCH HÀNG\n${revision.customerConfirmName || ''}`],
-    ['C', 'D', `PD/PM / PHÒNG DỰ ÁN\n${revision.approvedByPdPm || ''}`],
+    ['C', 'D', `PD / PHÒNG PHÁT TRIỂN SẢN PHẨM\n${revision.approvedByPdPm || ''}`],
     ['E', 'F', `TA / KỸ THUẬT\n${revision.preparedByTa || ''}`],
     ['G', 'H', `PROJECT LEADER / TRƯỞNG DỰ ÁN\n${revision.checkedByLeader || ''}`]
   ];

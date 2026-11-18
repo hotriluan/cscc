@@ -2302,7 +2302,7 @@ export const ReportsAnalyticsView: React.FC<ReportsAnalyticsViewProps> = ({
                         <th className="px-3 py-2.5">
                           Finishing System / Hệ sơn
                         </th>
-                        <th className="px-3 py-2.5">Substrate / Loại gỗ</th>
+                        <th className="px-3 py-2.5">Substrate Type / Loại Vật Liệu</th>
                         <th className="px-3 py-2.5 text-center">
                           Revisions / Số bản CS
                         </th>

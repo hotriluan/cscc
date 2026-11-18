@@ -674,7 +674,7 @@ export const ProjectExplorerView: React.FC<ProjectExplorerViewProps> = ({
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-600">
-                    Substrate / Loại gỗ <span className="text-red-500">*</span>
+                    Substrate Type / Loại Vật Liệu <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
