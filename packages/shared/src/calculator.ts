@@ -432,17 +432,38 @@ function estimateCsStepUnits(step: ScheduleStep): number {
   return Math.max(itemUnits, minMergedUnits);
 }
 
+export const DEFAULT_CS_REMARK = [
+  'ALKANA VIET NAM does not assure the quality of the final product if: / ALKANA VIỆT NAM không đảm bảo chất lượng của sản phẩm cuối cùng nếu:',
+  '1. The production process does not use 100% ALKANA materials. / 1. Quy trình sản xuất không sử dụng 100% nguyên vật liệu của ALKANA.',
+  '2. The production process does not follow the ALKANA coating schedule. / 2. Quy trình sản xuất không tuân thủ theo qui trình sơn của ALKANA.'
+].join('\n');
+
+/**
+ * Resolves the Coating Schedule (CS) Remark text.
+ * Legacy/uninitialized revisions (`null` or `undefined`) fall back to `DEFAULT_CS_REMARK`,
+ * while an explicitly cleared string (`""`) stays empty.
+ */
+export function resolveCsRemark(csRemark?: string | null): string {
+  if (csRemark === null || csRemark === undefined) {
+    return DEFAULT_CS_REMARK;
+  }
+  return csRemark;
+}
+
 /**
  * Splits Coating Schedule (CS) steps across A4 portrait pages without breaking
  * any coating step (or its paired preceding SANDING row) across page boundaries.
  */
-export function paginateCsSteps(steps: ScheduleStep[]): CsPageSlice[] {
+export function paginateCsSteps(
+  steps: ScheduleStep[],
+  hasRemark = true
+): CsPageSlice[] {
   if (!steps || steps.length === 0) {
     return [
       {
         steps: [],
         showMetadata: true,
-        showRemark: true,
+        showRemark: hasRemark,
         showSignatures: true
       }
     ];
@@ -499,7 +520,7 @@ export function paginateCsSteps(steps: ScheduleStep[]): CsPageSlice[] {
   }
 
   const lastPage = pages[pages.length - 1];
-  const fullFooterUnits = CS_REMARK_UNITS + CS_SIGNATURES_UNITS;
+  const fullFooterUnits = (hasRemark ? CS_REMARK_UNITS : 0) + CS_SIGNATURES_UNITS;
   // Pages without the metadata grid have ~6 extra row units of vertical room (~90pt / 14pt),
   // of which only 2 are claimed to keep the safety margin.
   const effectiveFooterBudget = lastPage.showMetadata
@@ -507,14 +528,14 @@ export function paginateCsSteps(steps: ScheduleStep[]): CsPageSlice[] {
     : lastPage.maxUnits + 2;
 
   if (lastPage.usedUnits + fullFooterUnits <= effectiveFooterBudget) {
-    lastPage.showRemark = true;
+    lastPage.showRemark = hasRemark;
     lastPage.showSignatures = true;
   } else {
     // Keep Remark and 4 Signature boxes together on the next page so Page 2 never overflows A4 height
     pages.push({
       steps: [],
       showMetadata: false,
-      showRemark: true,
+      showRemark: hasRemark,
       showSignatures: true,
       usedUnits: fullFooterUnits,
       maxUnits: CS_NEXT_PAGE_MAX_UNITS

@@ -5,7 +5,8 @@ import {
   ProjectRevision,
   UserRole,
   calculateCoatingCostTable,
-  calculateBomSummary
+  calculateBomSummary,
+  resolveCsRemark
 } from '@cscc/shared';
 
 function resolveLogoBuffer(): Buffer | null {
@@ -220,12 +221,16 @@ export async function generateRevisionWorkbook(
   }
 
   // Remark & Signatures on CS
-  currentCsRow += 1;
-  csSheet.getCell(`A${currentCsRow}`).value = 'Remark / Ghi chú:';
-  csSheet.getCell(`A${currentCsRow}`).font = { bold: true };
-  csSheet.getCell(`B${currentCsRow}`).value =
-    'ALKANA VIET NAM does not assure the quality of the final product if: 1. The production process does not use 100% ALKANA materials. 2. The production process does not follow the ALKANA coating schedule. / ALKANA VIỆT NAM không đảm bảo chất lượng của sản phẩm cuối cùng nếu: 1. Quy trình sản xuất không sử dụng 100% nguyên vật liệu của ALKANA. 2. Quy trình sản xuất không tuân thủ theo qui trình sơn của ALKANA.';
-  csSheet.mergeCells(`B${currentCsRow}:H${currentCsRow}`);
+  const csRemarkText = resolveCsRemark(revision.csRemark).trim();
+  if (csRemarkText) {
+    currentCsRow += 1;
+    csSheet.getCell(`A${currentCsRow}`).value = 'Remark / Ghi chú:';
+    csSheet.getCell(`A${currentCsRow}`).font = { bold: true };
+    const remarkCell = csSheet.getCell(`B${currentCsRow}`);
+    remarkCell.value = csRemarkText;
+    remarkCell.alignment = { vertical: 'top', wrapText: true };
+    csSheet.mergeCells(`B${currentCsRow}:H${currentCsRow}`);
+  }
 
   currentCsRow += 2;
   const sigBoxes: Array<[string, string, string]> = [

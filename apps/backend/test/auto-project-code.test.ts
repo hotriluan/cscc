@@ -356,9 +356,27 @@ describe('Auto-Generate Project Code ([SHORT][0001]) & Customer Name Display', (
     assert.equal(revision.lineSpeed, '');
     assert.equal(revision.dryingCondition, '');
     assert.equal(revision.remark, '');
+    assert.ok(revision.csRemark && revision.csRemark.includes('ALKANA VIET NAM'));
     assert.equal(revision.preparedByTa, '');
     assert.equal(revision.checkedByLeader, '');
     assert.equal(revision.approvedByPdPm, '');
     assert.equal(revision.customerConfirmName, '');
+
+    // Verify csRemark can be edited and persisted independently from CC remark
+    const updateRes = await fetch(`${baseUrl}/api/revisions/${revision.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-role': 'PROJECT_LEADER'
+      },
+      body: JSON.stringify({
+        csRemark: 'Custom CS Remark line 1\nLine 2',
+        remark: 'Custom CC Remark'
+      })
+    });
+    assert.equal(updateRes.status, 200);
+    const updated = (await updateRes.json()) as { revision: ProjectRevision };
+    assert.equal(updated.revision.csRemark, 'Custom CS Remark line 1\nLine 2');
+    assert.equal(updated.revision.remark, 'Custom CC Remark');
   });
 });

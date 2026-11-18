@@ -167,6 +167,7 @@ export interface ProjectRevision {
   lineSpeed?: string | null;
   dryingCondition?: string | null;
   remark?: string | null;
+  csRemark?: string | null;
   defaultAreaM2: number;
   preparedByTa?: string | null;
   checkedByLeader?: string | null;

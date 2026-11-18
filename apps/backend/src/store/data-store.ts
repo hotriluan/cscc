@@ -20,7 +20,8 @@ import {
   isValidCustomerShortName,
   formatCustomerProjectCode,
   parseCustomerProjectSequence,
-  computeNextCustomerProjectCode
+  computeNextCustomerProjectCode,
+  DEFAULT_CS_REMARK
 } from '@cscc/shared';
 
 export class BusinessValidationError extends Error {
@@ -527,6 +528,7 @@ class PostgresDataStore {
           lineSpeed: revision.lineSpeed ?? null,
           dryingCondition: revision.dryingCondition ?? null,
           remark: revision.remark ?? null,
+          csRemark: revision.csRemark ?? null,
           defaultAreaM2: revision.defaultAreaM2,
           preparedByTa: revision.preparedByTa ?? null,
           checkedByLeader: revision.checkedByLeader ?? null,
@@ -2093,6 +2095,7 @@ class PostgresDataStore {
           lineSpeed: '',
           dryingCondition: '',
           remark: '',
+          csRemark: DEFAULT_CS_REMARK,
           defaultAreaM2: 100,
           preparedByTa: '',
           checkedByLeader: '',
@@ -2241,6 +2244,7 @@ class PostgresDataStore {
       lineSpeed: r.lineSpeed,
       dryingCondition: r.dryingCondition,
       remark: r.remark,
+      csRemark: r.csRemark,
       defaultAreaM2: r.defaultAreaM2,
       preparedByTa: r.preparedByTa,
       checkedByLeader: r.checkedByLeader,
@@ -2440,6 +2444,12 @@ class PostgresDataStore {
                 ? null
                 : String(body.remark)
               : existing.remark,
+          csRemark:
+            body.csRemark !== undefined
+              ? body.csRemark === null
+                ? null
+                : String(body.csRemark)
+              : existing.csRemark,
           defaultAreaM2:
             body.defaultAreaM2 !== undefined
               ? Number(body.defaultAreaM2) || 100

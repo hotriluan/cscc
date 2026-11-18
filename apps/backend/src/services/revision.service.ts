@@ -82,6 +82,7 @@ export async function cloneRevision(
         lineSpeed: source.lineSpeed ?? null,
         dryingCondition: source.dryingCondition ?? null,
         remark: source.remark ?? null,
+        csRemark: source.csRemark ?? null,
         defaultAreaM2: source.defaultAreaM2,
         preparedByTa: source.preparedByTa ?? null,
         checkedByLeader: source.checkedByLeader ?? null,

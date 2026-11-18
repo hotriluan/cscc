@@ -179,6 +179,7 @@ function enrichProjectRevision(
     lineSpeed: string | null;
     dryingCondition: string | null;
     remark: string | null;
+    csRemark: string | null;
     defaultAreaM2: number;
     preparedByTa: string | null;
     checkedByLeader: string | null;
@@ -240,6 +241,7 @@ function enrichProjectRevision(
     lineSpeed: rawRev.lineSpeed,
     dryingCondition: rawRev.dryingCondition,
     remark: rawRev.remark,
+    csRemark: rawRev.csRemark,
     defaultAreaM2: rawRev.defaultAreaM2 > 0 ? rawRev.defaultAreaM2 : 100,
     preparedByTa: rawRev.preparedByTa,
     checkedByLeader: rawRev.checkedByLeader,

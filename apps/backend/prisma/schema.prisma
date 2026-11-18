@@ -141,6 +141,7 @@ model ProjectRevision {
   lineSpeed           String?
   dryingCondition     String?
   remark              String?
+  csRemark            String?
 
   // BOM calculation parameter
   defaultAreaM2       Float          @default(100)

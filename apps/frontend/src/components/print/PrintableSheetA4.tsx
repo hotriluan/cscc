@@ -9,7 +9,8 @@ import {
   formatDecimal2,
   formatCoverage,
   paginateCsSteps,
-  paginateCcSteps
+  paginateCcSteps,
+  resolveCsRemark
 } from '@cscc/shared';
 import { Printer, X } from 'lucide-react';
 import logoPropan from '../../assets/LOGO PROPAN.png';
@@ -66,9 +67,14 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   );
   const revCode = String(revision.revisionNo).padStart(2, '0');
 
+  const csRemarkText = React.useMemo(
+    () => resolveCsRemark(revision.csRemark).trim(),
+    [revision.csRemark]
+  );
+
   const csPages = React.useMemo(
-    () => paginateCsSteps(revision.steps),
-    [revision.steps]
+    () => paginateCsSteps(revision.steps, Boolean(csRemarkText)),
+    [revision.steps, csRemarkText]
   );
 
   const ccPages = React.useMemo(
@@ -115,7 +121,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
           </span>
           <span>|</span>
           <span>
-            Rev. / Phiên bản: <strong className="text-slate-900">{revCode}</strong>
+            Rev. / Phiên Bản: <strong className="text-slate-900">{revCode}</strong>
           </span>
           <span>|</span>
           <span>
@@ -123,7 +129,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
           </span>
           <span>|</span>
           <span>
-            Status / Trạng thái:{' '}
+            Status / Trạng Thái:{' '}
             <strong className="text-slate-900">
               {revision.status === 'LOCKED' || revision.status === 'APPROVED'
                 ? 'APPROVED / ĐÃ PHÊ DUYỆT'
@@ -154,49 +160,49 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
   const renderMetadataGrid = () => (
     <div className="my-1.5 grid grid-cols-3 items-baseline gap-x-4 gap-y-0.5 border-b border-slate-400 pb-1.5 text-[8.5pt] leading-snug">
       <div className="col-span-3 min-w-0 break-words">
-        <strong>Customer / Khách hàng:</strong> {revision.customer.customerName}
+        <strong>Customer / Khách Hàng:</strong> {revision.customer.customerName}
       </div>
 
       {/* Row 1 */}
       <div className="min-w-0 break-words">
-        <strong>Buyer / Nhà mua hàng:</strong> {revision.buyer || ''}
+        <strong>Buyer / Nhà Mua Hàng:</strong> {revision.buyer || ''}
       </div>
       <div className="min-w-0 break-words">
         <strong>Substrate Type / Loại Vật Liệu:</strong> {revision.substrate}
       </div>
       <div className="min-w-0 break-words">
-        <strong>MC Wood / Độ ẩm gỗ:</strong> {keepRangesTogether(revision.mcWood)}
+        <strong>MC Wood / Độ Ẩm Gỗ:</strong> {keepRangesTogether(revision.mcWood)}
       </div>
 
       {/* Row 2 */}
       <div className="min-w-0 break-words">
-        <strong>Product Item / Tên sản phẩm:</strong> {revision.productName}
+        <strong>Product Item / Tên Sản Phẩm:</strong> {revision.productName}
       </div>
       <div className="min-w-0 break-words">
-        <strong>Positioning / Vị trí:</strong> {revision.positioning}
+        <strong>Positioning / Vị Trí:</strong> {revision.positioning}
       </div>
       <div className="min-w-0 break-words">
-        <strong>Max Humidity / Độ ẩm Tối Đa:</strong> {keepRangesTogether(revision.roomHumidity)}
+        <strong>Max Humidity / Độ Ẩm Tối Đa:</strong> {keepRangesTogether(revision.roomHumidity)}
       </div>
 
       {/* Row 3 */}
       <div className="min-w-0 break-words">
-        <strong>Color / Màu sắc:</strong> {revision.colorName}
+        <strong>Color / Màu Sắc:</strong> {revision.colorName}
       </div>
       <div className="min-w-0 break-words">
-        <strong>Finishing System / Hệ sơn:</strong> {revision.finishingSystem}
+        <strong>Finishing System / Hệ Sơn:</strong> {revision.finishingSystem}
       </div>
       <div className="min-w-0 break-words">
-        <strong>Room Temp. / Nhiệt độ phòng:</strong>{' '}
+        <strong>Room Temp. / Nhiệt Độ Phòng:</strong>{' '}
         {keepRangesTogether(revision.roomTemp)}
       </div>
 
       {/* Row 4 */}
       <div className="min-w-0 break-words">
-        <strong>Reference / Tiêu chuẩn tham chiếu:</strong> {revision.referenceStandard}
+        <strong>Reference / Tiêu Chuẩn Tham Chiếu:</strong> {revision.referenceStandard}
       </div>
       <div className="min-w-0 break-words">
-        <strong>Gloss Level / Độ bóng:</strong> {revision.glossLevel}
+        <strong>Gloss Level / Độ Bóng:</strong> {revision.glossLevel}
       </div>
       <div />
     </div>
@@ -220,25 +226,25 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
             No.<br />STT
           </th>
           <th className={CS_TH}>
-            Application Step<br />Bước thi công
-          </th>
-          <th className={`${CS_TH} !px-[3pt] !text-left`}>
-            Product Name<br />Tên sản phẩm
+            Application Step<br />Bước Thi Công
           </th>
           <th className={CS_TH}>
-            Ratio<br />Tỉ lệ pha
+            Product Name<br />Tên Sản Phẩm
           </th>
           <th className={CS_TH}>
-            Visco<br />Độ nhớt
+            Ratio<br />Tỉ Lệ Pha
           </th>
           <th className={CS_TH}>
-            CA (g/m²)<br />Lượng sơn
+            Visco<br />Độ Nhớt
           </th>
           <th className={CS_TH}>
-            Method<br />PP thi công
+            CA (g/m²)<br />Lượng Sơn
           </th>
           <th className={CS_TH}>
-            Drying Time<br />Thời gian khô
+            Method<br />PP Thi Công
+          </th>
+          <th className={CS_TH}>
+            Drying Time<br />Thời Gian Khô
           </th>
         </tr>
       </thead>
@@ -328,27 +334,17 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
     </table>
   );
 
-  const renderCsRemark = (hasTableAbove: boolean) => (
-    <div
-      className={`${
-        hasTableAbove ? 'mt-1.5 border-t border-slate-900 pt-1' : 'mt-1.5'
-      } space-y-0 text-[8pt] leading-snug`}
-    >
-      <div className="font-semibold">Remark / Ghi chú:</div>
-      <div>
-        ALKANA VIET NAM does not assure the quality of the final product if: /
-        ALKANA VIỆT NAM không đảm bảo chất lượng của sản phẩm cuối cùng nếu:
+  const renderCsRemark = (hasTableAbove: boolean) =>
+    csRemarkText ? (
+      <div
+        className={`${
+          hasTableAbove ? 'mt-1.5 border-t border-slate-900 pt-1' : 'mt-1.5'
+        } space-y-0 text-[8pt] leading-snug`}
+      >
+        <div className="font-semibold">Remark / Ghi Chú:</div>
+        <div className="whitespace-pre-line">{csRemarkText}</div>
       </div>
-      <div>
-        1. The production process does not use 100% ALKANA materials. / 1. Quy
-        trình sản xuất không sử dụng 100% nguyên vật liệu của ALKANA.
-      </div>
-      <div>
-        2. The production process does not follow the ALKANA coating schedule. /
-        2. Quy trình sản xuất không tuân thủ theo qui trình sơn của ALKANA.
-      </div>
-    </div>
-  );
+    ) : null;
 
   const renderCsSignatures = () => (
     <div className="mt-1.5 border border-slate-900 text-center text-[8pt] leading-tight break-inside-avoid">
@@ -421,37 +417,37 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
           <thead>
             <tr className="bg-slate-100 text-[7pt] font-bold">
               <th className={CC_TH}>
-                Item<br />Bước thi công
-              </th>
-              <th className={`${CC_TH} !px-[3pt] !text-left`}>
-                Product Name<br />Tên sản phẩm
+                Item<br />Bước Thi Công
               </th>
               <th className={CC_TH}>
-                Price<br />Đơn giá<br />(VND/Ltr)
+                Product Name<br />Tên Sản Phẩm
               </th>
               <th className={CC_TH}>
-                Ratio<br />Tỉ lệ pha
+                Price<br />Đơn Giá<br />(VND/Ltr)
+              </th>
+              <th className={CC_TH}>
+                Ratio<br />Tỉ Lệ Pha
               </th>
               <th className={CC_TH}>
                 Mixed Price<br />Giá HH<br />(VND/Ltr)
               </th>
               <th className={CC_TH}>
-                Method<br />PP thi công
+                Method<br />PP Thi Công
               </th>
               <th className={CC_TH}>
-                CA (g/m²)<br />Lượng sơn
+                CA (g/m²)<br />Lượng Sơn
               </th>
               <th className={CC_TH}>
-                Efficiency<br />Hiệu suất
+                Efficiency<br />Hiệu Suất
               </th>
               <th className={CC_TH}>
-                CA + Loss<br />Gồm hao hụt<br />(g/m²)
+                CA + Loss<br />Gồm Hao Hụt<br />(g/m²)
               </th>
               <th className={CC_TH}>
-                Coverage<br />Định mức phủ<br />(m²/Ltr)
+                Coverage<br />Định Mức Phủ<br />(m²/Ltr)
               </th>
               <th className={CC_TH}>
-                Coating Cost<br />Chi phí<br />(VND/m²)
+                Coating Cost<br />Chi Phí<br />(VND/m²)
               </th>
             </tr>
           </thead>
@@ -587,7 +583,7 @@ export const PrintableSheetA4: React.FC<PrintableSheetA4Props> = ({
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
               }`}
             >
-              Coating Cost (CC) / Chi phí sơn
+              Coating Cost (CC) / Chi Phí Sơn
             </button>
           )}
           <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600">

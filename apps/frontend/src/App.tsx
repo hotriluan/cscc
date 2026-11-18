@@ -93,6 +93,7 @@ function computeRevisionSignature(rev: ProjectRevision, area: number): string {
     lineSpeed: rev.lineSpeed ?? null,
     dryingCondition: rev.dryingCondition ?? null,
     remark: rev.remark ?? null,
+    csRemark: rev.csRemark ?? null,
     defaultAreaM2: Number(area) || 100,
     preparedByTa: rev.preparedByTa ?? null,
     checkedByLeader: rev.checkedByLeader ?? null,

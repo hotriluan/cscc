@@ -16,7 +16,9 @@ import {
   parseConditionRange,
   formatConditionRange,
   parseHumidityInput,
-  formatHumidityValue
+  formatHumidityValue,
+  DEFAULT_CS_REMARK,
+  resolveCsRemark
 } from '@cscc/shared';
 import { apiClient } from '../../api/client';
 import {
@@ -38,7 +40,10 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Maximize2,
-  Minimize2
+  Minimize2,
+  FileText,
+  X,
+  RotateCcw
 } from 'lucide-react';
 import {
   SearchableCombobox,
@@ -2149,6 +2154,80 @@ export const CoatingScheduleEditor: React.FC<CoatingScheduleEditorProps> = ({
             </div>
           </div>
         )}
+
+        {/* 2.5 REMARK / GHI CHÚ (Editable, synced to A4 & Excel) */}
+        <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-700">
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+              <label
+                htmlFor="cs-manual-remark"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-800"
+              >
+                <FileText className="h-3.5 w-3.5 text-blue-700" />
+                <span>REMARK / GHI CHÚ:</span>
+                <span className="font-normal text-[11px] text-slate-500">
+                  (Hiển thị trên bản in A4 / PDF &amp; Excel)
+                </span>
+              </label>
+
+              {isLocked ? (
+                <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                  <Lock className="h-3 w-3" />
+                  Đã khóa chỉnh sửa
+                </span>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  {resolveCsRemark(revision.csRemark) !== DEFAULT_CS_REMARK && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleHeaderChange('csRemark', DEFAULT_CS_REMARK);
+                        onFlushAutoSave?.();
+                      }}
+                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      Khôi phục mặc định
+                    </button>
+                  )}
+                  {Boolean(resolveCsRemark(revision.csRemark)) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleHeaderChange('csRemark', '');
+                        onFlushAutoSave?.();
+                      }}
+                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
+                    >
+                      <X className="h-3 w-3" />
+                      Xóa ghi chú
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {!isLocked ? (
+              <textarea
+                id="cs-manual-remark"
+                rows={3}
+                value={resolveCsRemark(revision.csRemark)}
+                onChange={(e) => handleHeaderChange('csRemark', e.target.value)}
+                onBlur={() => onFlushAutoSave?.()}
+                placeholder="Nhập Remark / Ghi chú cho Coating Schedule (bản in A4 / PDF & Excel)..."
+                className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              />
+            ) : resolveCsRemark(revision.csRemark).trim() ? (
+              <div className="whitespace-pre-line rounded-md bg-slate-50 px-2.5 py-1.5 text-xs text-slate-800">
+                {resolveCsRemark(revision.csRemark)}
+              </div>
+            ) : (
+              <div className="text-[11px] italic text-slate-400">
+                Chưa có Remark / Ghi chú.
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* 3. FOOTER SIGNATURE NAMES */}
         <div className="border-t border-slate-200 bg-slate-50 p-4 rounded-b-xl">

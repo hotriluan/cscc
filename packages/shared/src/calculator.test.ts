@@ -16,7 +16,9 @@ import {
   parseConditionRange,
   formatConditionRange,
   parseHumidityInput,
-  formatHumidityValue
+  formatHumidityValue,
+  DEFAULT_CS_REMARK,
+  resolveCsRemark
 } from './calculator';
 import { ScheduleStep, ProjectRevision } from './types';
 
@@ -396,6 +398,18 @@ describe('Shared Calculation Engine (@cscc/shared)', () => {
     assert.equal(csPages.length, 1);
     assert.equal(csPages[0].steps.length, 3);
     assert.equal(csPages[0].steps[1].rowType, 'NOTE');
+    assert.equal(csPages[0].showRemark, true);
+
+    const csPagesNoRemark = paginateCsSteps(steps, false);
+    assert.equal(csPagesNoRemark.length, 1);
+    assert.equal(csPagesNoRemark[0].showRemark, false);
+  });
+
+  it('resolves Coating Schedule remark with default fallback for null/undefined and preserves empty or custom strings', () => {
+    assert.equal(resolveCsRemark(null), DEFAULT_CS_REMARK);
+    assert.equal(resolveCsRemark(undefined), DEFAULT_CS_REMARK);
+    assert.equal(resolveCsRemark(''), '');
+    assert.equal(resolveCsRemark('Custom CS remark'), 'Custom CS remark');
   });
 });
 
